@@ -11,6 +11,7 @@ export interface Cat {
   color: string;
   healthNotes?: string;
   images: string[];
+  pedigreeImage?: string;
   createdAt: string;
 }
 

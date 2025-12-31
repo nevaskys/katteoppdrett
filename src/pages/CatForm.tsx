@@ -27,6 +27,7 @@ const catSchema = z.object({
   color: z.string().min(1, 'Color is required'),
   healthNotes: z.string().optional(),
   imageUrl: z.string().optional(),
+  pedigreeImageUrl: z.string().optional(),
 });
 
 type CatFormData = z.infer<typeof catSchema>;
@@ -51,6 +52,7 @@ export default function CatForm() {
       color: existingCat.color,
       healthNotes: existingCat.healthNotes || '',
       imageUrl: existingCat.images[0] || '',
+      pedigreeImageUrl: existingCat.pedigreeImage || '',
     } : {
       gender: 'female',
     },
@@ -68,6 +70,7 @@ export default function CatForm() {
       color: data.color,
       healthNotes: data.healthNotes || undefined,
       images: data.imageUrl ? [data.imageUrl] : [],
+      pedigreeImage: data.pedigreeImageUrl || undefined,
       createdAt: existingCat?.createdAt || new Date().toISOString(),
     };
 
@@ -145,6 +148,11 @@ export default function CatForm() {
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="imageUrl">Image URL</Label>
             <Input id="imageUrl" {...register('imageUrl')} placeholder="https://..." />
+          </div>
+
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="pedigreeImageUrl">Pedigree Image URL (Stamtavle)</Label>
+            <Input id="pedigreeImageUrl" {...register('pedigreeImageUrl')} placeholder="https://..." />
           </div>
 
           <div className="space-y-2 sm:col-span-2">

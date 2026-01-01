@@ -1,5 +1,12 @@
 export type Gender = 'male' | 'female';
 
+export interface HealthTest {
+  id: string;
+  name: string;
+  completed: boolean;
+  date?: string;
+}
+
 export interface Cat {
   id: string;
   name: string;
@@ -9,6 +16,7 @@ export interface Cat {
   chipNumber?: string;
   registration?: string;
   color: string;
+  healthTests?: HealthTest[];
   healthNotes?: string;
   images: string[];
   pedigreeImage?: string;

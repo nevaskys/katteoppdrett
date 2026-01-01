@@ -2,12 +2,13 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft, Upload, Clipboard, Loader2, Sparkles } from 'lucide-react';
+import { ArrowLeft, Upload, Clipboard, Loader2, Sparkles, Plus, X } from 'lucide-react';
 import { useData } from '@/context/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -18,6 +19,13 @@ import {
 import { toast } from 'sonner';
 import { useRef, useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { HealthTest } from '@/types';
+
+const DEFAULT_HEALTH_TESTS = [
+  { id: 'helseattest', name: 'Helseattest', completed: false },
+  { id: 'hcm', name: 'HCM Screening', completed: false },
+  { id: 'pkd', name: 'PKD Screening', completed: false },
+];
 
 const catSchema = z.object({
   name: z.string().min(1, 'Navn er påkrevd'),
@@ -41,9 +49,18 @@ export default function CatForm() {
   const pedigreeInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [isParsingPedigree, setIsParsingPedigree] = useState(false);
+  const [newTestName, setNewTestName] = useState('');
   
   const existingCat = id ? cats.find(c => c.id === id) : null;
   const isEditing = !!existingCat;
+
+  // Initialize health tests from existing cat or defaults
+  const [healthTests, setHealthTests] = useState<HealthTest[]>(() => {
+    if (existingCat?.healthTests && existingCat.healthTests.length > 0) {
+      return existingCat.healthTests;
+    }
+    return DEFAULT_HEALTH_TESTS.map(t => ({ ...t }));
+  });
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<CatFormData>({
     resolver: zodResolver(catSchema),
@@ -62,6 +79,35 @@ export default function CatForm() {
       gender: 'female',
     },
   });
+
+  const toggleHealthTest = (testId: string) => {
+    setHealthTests(prev => prev.map(test => 
+      test.id === testId ? { ...test, completed: !test.completed } : test
+    ));
+  };
+
+  const updateTestDate = (testId: string, date: string) => {
+    setHealthTests(prev => prev.map(test => 
+      test.id === testId ? { ...test, date } : test
+    ));
+  };
+
+  const addCustomTest = () => {
+    if (!newTestName.trim()) return;
+    const newTest: HealthTest = {
+      id: crypto.randomUUID(),
+      name: newTestName.trim(),
+      completed: false,
+    };
+    setHealthTests(prev => [...prev, newTest]);
+    setNewTestName('');
+  };
+
+  const removeCustomTest = (testId: string) => {
+    // Only allow removing custom tests (not default ones)
+    if (DEFAULT_HEALTH_TESTS.some(t => t.id === testId)) return;
+    setHealthTests(prev => prev.filter(test => test.id !== testId));
+  };
 
   const pedigreeImageUrl = watch('pedigreeImageUrl');
   const imageUrl = watch('imageUrl');
@@ -198,6 +244,7 @@ export default function CatForm() {
       chipNumber: data.chipNumber || undefined,
       registration: data.registration || undefined,
       color: data.color,
+      healthTests: healthTests,
       healthNotes: data.healthNotes || undefined,
       images: data.imageUrl ? [data.imageUrl] : [],
       pedigreeImage: data.pedigreeImageUrl || undefined,
@@ -374,9 +421,74 @@ export default function CatForm() {
             )}
           </div>
 
+          {/* Helsetester */}
+          <div className="space-y-4 sm:col-span-2">
+            <Label>Helsetester</Label>
+            <div className="space-y-3">
+              {healthTests.map((test) => (
+                <div key={test.id} className="flex items-center gap-4 p-3 rounded-lg border bg-background">
+                  <Checkbox
+                    id={test.id}
+                    checked={test.completed}
+                    onCheckedChange={() => toggleHealthTest(test.id)}
+                  />
+                  <label 
+                    htmlFor={test.id} 
+                    className="flex-1 text-sm font-medium cursor-pointer"
+                  >
+                    {test.name}
+                  </label>
+                  <Input
+                    type="date"
+                    value={test.date || ''}
+                    onChange={(e) => updateTestDate(test.id, e.target.value)}
+                    className="w-40"
+                    placeholder="Dato"
+                  />
+                  {!DEFAULT_HEALTH_TESTS.some(t => t.id === test.id) && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeCustomTest(test.id)}
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+            
+            {/* Legg til ny test */}
+            <div className="flex gap-2">
+              <Input
+                value={newTestName}
+                onChange={(e) => setNewTestName(e.target.value)}
+                placeholder="Legg til ny test..."
+                className="flex-1"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addCustomTest();
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addCustomTest}
+                disabled={!newTestName.trim()}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Legg til
+              </Button>
+            </div>
+          </div>
+
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="healthNotes">Helsenotater</Label>
-            <Textarea id="healthNotes" {...register('healthNotes')} rows={4} />
+            <Label htmlFor="healthNotes">Andre helsenotater</Label>
+            <Textarea id="healthNotes" {...register('healthNotes')} rows={3} placeholder="Tilleggsinformasjon om helse..." />
           </div>
         </div>
 

@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { Upload, Clipboard, Heart, Loader2, Sparkles, Info } from 'lucide-react';
-import { useData } from '@/context/DataContext';
+import { useCats } from '@/hooks/useCats';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,7 +22,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { calculateCOI, getCOIRiskLevel, PedigreeData, CommonAncestor } from '@/lib/coiCalculator';
 
 export default function TestMating() {
-  const { cats } = useData();
+  const { data: cats = [] } = useCats();
   const [damId, setDamId] = useState<string>('');
   const [sireId, setSireId] = useState<string>('');
   const [externalSirePedigree, setExternalSirePedigree] = useState<string>('');

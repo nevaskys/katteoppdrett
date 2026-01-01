@@ -1,6 +1,6 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash2, Cat as CatIcon } from 'lucide-react';
-import { useData } from '@/context/DataContext';
+import { ArrowLeft, Edit, Trash2, Cat as CatIcon, Loader2 } from 'lucide-react';
+import { useCat, useDeleteCat } from '@/hooks/useCats';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -18,25 +18,34 @@ import {
 export default function CatDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { cats, deleteCat } = useData();
-  
-  const cat = cats.find(c => c.id === id);
+  const { data: cat, isLoading } = useCat(id);
+  const deleteCatMutation = useDeleteCat();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   if (!cat) {
     return (
       <div className="empty-state">
-        <p>Cat not found</p>
+        <p>Katt ikke funnet</p>
         <Button asChild className="mt-4">
-          <Link to="/cats">Back to Cats</Link>
+          <Link to="/cats">Tilbake til Katter</Link>
         </Button>
       </div>
     );
   }
 
   const handleDelete = () => {
-    deleteCat(cat.id);
-    navigate('/cats');
+    deleteCatMutation.mutate(cat.id, {
+      onSuccess: () => navigate('/cats'),
+    });
   };
+
 
   const age = () => {
     const birth = new Date(cat.birthDate);

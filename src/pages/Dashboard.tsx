@@ -1,13 +1,28 @@
 import { Link } from 'react-router-dom';
-import { Cat, Users, ClipboardList, CheckSquare, Plus } from 'lucide-react';
-import { useData } from '@/context/DataContext';
+import { Cat, Users, ClipboardList, CheckSquare, Plus, Loader2 } from 'lucide-react';
+import { useCats } from '@/hooks/useCats';
+import { useLitters } from '@/hooks/useLitters';
+import { useWaitlist } from '@/hooks/useWaitlist';
+import { useTasks } from '@/hooks/useTasks';
 import { Button } from '@/components/ui/button';
 
 export default function Dashboard() {
-  const { cats, litters, waitlist, tasks } = useData();
+  const { data: cats = [], isLoading: catsLoading } = useCats();
+  const { data: litters = [], isLoading: littersLoading } = useLitters();
+  const { data: waitlist = [], isLoading: waitlistLoading } = useWaitlist();
+  const { data: tasks = [], isLoading: tasksLoading } = useTasks();
   
+  const isLoading = catsLoading || littersLoading || waitlistLoading || tasksLoading;
   const pendingTasks = tasks.filter(t => t.status === 'pending');
   const totalKittens = litters.reduce((sum, l) => sum + l.kittens.length, 0);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   const stats = [
     { label: 'Katter', value: cats.length, icon: Cat, href: '/cats', color: 'text-primary' },

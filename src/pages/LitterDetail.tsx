@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash2, Plus, Scale } from 'lucide-react';
-import { useData } from '@/context/DataContext';
+import { ArrowLeft, Edit, Trash2, Plus, Scale, Loader2 } from 'lucide-react';
+import { useLitter, useUpdateLitter, useDeleteLitter } from '@/hooks/useLitters';
+import { useCats } from '@/hooks/useCats';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -37,9 +38,11 @@ import { toast } from 'sonner';
 export default function LitterDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { litters, cats, updateLitter, deleteLitter } = useData();
+  const { data: litter, isLoading: litterLoading } = useLitter(id);
+  const { data: cats = [], isLoading: catsLoading } = useCats();
+  const updateLitterMutation = useUpdateLitter();
+  const deleteLitterMutation = useDeleteLitter();
   
-  const litter = litters.find(l => l.id === id);
   const [kittenDialogOpen, setKittenDialogOpen] = useState(false);
   const [weightDialogOpen, setWeightDialogOpen] = useState(false);
   const [selectedKitten, setSelectedKitten] = useState<Kitten | null>(null);
@@ -47,12 +50,22 @@ export default function LitterDetail() {
   const [newKitten, setNewKitten] = useState<{ name: string; gender: 'male' | 'female'; color: string; markings: string }>({ name: '', gender: 'female', color: '', markings: '' });
   const [newWeight, setNewWeight] = useState({ date: new Date().toISOString().split('T')[0], weight: '' });
 
+  const isLoading = litterLoading || catsLoading;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   if (!litter) {
     return (
       <div className="empty-state">
-        <p>Litter not found</p>
+        <p>Kull ikke funnet</p>
         <Button asChild className="mt-4">
-          <Link to="/litters">Back to Litters</Link>
+          <Link to="/litters">Tilbake til Kull</Link>
         </Button>
       </div>
     );
@@ -62,13 +75,14 @@ export default function LitterDetail() {
   const father = cats.find(c => c.id === litter.fatherId);
 
   const handleDelete = () => {
-    deleteLitter(litter.id);
-    navigate('/litters');
+    deleteLitterMutation.mutate(litter.id, {
+      onSuccess: () => navigate('/litters'),
+    });
   };
 
   const handleAddKitten = () => {
     if (!newKitten.name || !newKitten.color) {
-      toast.error('Name and color are required');
+      toast.error('Navn og farge er påkrevd');
       return;
     }
     const kitten: Kitten = {
@@ -79,10 +93,13 @@ export default function LitterDetail() {
       markings: newKitten.markings || undefined,
       weightLog: [],
     };
-    updateLitter({ ...litter, kittens: [...litter.kittens, kitten] });
-    setNewKitten({ name: '', gender: 'female', color: '', markings: '' });
-    setKittenDialogOpen(false);
-    toast.success('Kitten added');
+    updateLitterMutation.mutate({ ...litter, kittens: [...litter.kittens, kitten] }, {
+      onSuccess: () => {
+        setNewKitten({ name: '', gender: 'female', color: '', markings: '' });
+        setKittenDialogOpen(false);
+        toast.success('Kattunge lagt til');
+      },
+    });
   };
 
   const handleAddWeight = () => {
@@ -97,15 +114,19 @@ export default function LitterDetail() {
         ? { ...k, weightLog: [...k.weightLog, entry].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) }
         : k
     );
-    updateLitter({ ...litter, kittens: updatedKittens });
-    setNewWeight({ date: new Date().toISOString().split('T')[0], weight: '' });
-    setWeightDialogOpen(false);
-    toast.success('Weight recorded');
+    updateLitterMutation.mutate({ ...litter, kittens: updatedKittens }, {
+      onSuccess: () => {
+        setNewWeight({ date: new Date().toISOString().split('T')[0], weight: '' });
+        setWeightDialogOpen(false);
+        toast.success('Vekt registrert');
+      },
+    });
   };
 
   const handleDeleteKitten = (kittenId: string) => {
-    updateLitter({ ...litter, kittens: litter.kittens.filter(k => k.id !== kittenId) });
-    toast.success('Kitten removed');
+    updateLitterMutation.mutate({ ...litter, kittens: litter.kittens.filter(k => k.id !== kittenId) }, {
+      onSuccess: () => toast.success('Kattunge fjernet'),
+    });
   };
 
   return (

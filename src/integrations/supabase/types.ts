@@ -14,7 +14,275 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      cats: {
+        Row: {
+          breed: string
+          breeder: string | null
+          color: string | null
+          created_at: string
+          date_of_birth: string | null
+          ems_code: string | null
+          gender: string
+          id: string
+          images: string[] | null
+          microchip: string | null
+          name: string
+          notes: string | null
+          owner: string | null
+          pedigree_url: string | null
+          registration_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          breed: string
+          breeder?: string | null
+          color?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          ems_code?: string | null
+          gender: string
+          id?: string
+          images?: string[] | null
+          microchip?: string | null
+          name: string
+          notes?: string | null
+          owner?: string | null
+          pedigree_url?: string | null
+          registration_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          breed?: string
+          breeder?: string | null
+          color?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          ems_code?: string | null
+          gender?: string
+          id?: string
+          images?: string[] | null
+          microchip?: string | null
+          name?: string
+          notes?: string | null
+          owner?: string | null
+          pedigree_url?: string | null
+          registration_number?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      kittens: {
+        Row: {
+          color: string | null
+          created_at: string
+          ems_code: string | null
+          gender: string | null
+          id: string
+          images: string[] | null
+          litter_id: string
+          name: string | null
+          notes: string | null
+          reserved_by: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          ems_code?: string | null
+          gender?: string | null
+          id?: string
+          images?: string[] | null
+          litter_id: string
+          name?: string | null
+          notes?: string | null
+          reserved_by?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          ems_code?: string | null
+          gender?: string | null
+          id?: string
+          images?: string[] | null
+          litter_id?: string
+          name?: string | null
+          notes?: string | null
+          reserved_by?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kittens_litter_id_fkey"
+            columns: ["litter_id"]
+            isOneToOne: false
+            referencedRelation: "litters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      litters: {
+        Row: {
+          birth_date: string | null
+          created_at: string
+          expected_date: string | null
+          external_father_name: string | null
+          external_father_pedigree_url: string | null
+          father_id: string | null
+          id: string
+          kitten_count: number | null
+          mother_id: string | null
+          name: string
+          notes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          birth_date?: string | null
+          created_at?: string
+          expected_date?: string | null
+          external_father_name?: string | null
+          external_father_pedigree_url?: string | null
+          father_id?: string | null
+          id?: string
+          kitten_count?: number | null
+          mother_id?: string | null
+          name: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          birth_date?: string | null
+          created_at?: string
+          expected_date?: string | null
+          external_father_name?: string | null
+          external_father_pedigree_url?: string | null
+          father_id?: string | null
+          id?: string
+          kitten_count?: number | null
+          mother_id?: string | null
+          name?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "litters_father_id_fkey"
+            columns: ["father_id"]
+            isOneToOne: false
+            referencedRelation: "cats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "litters_mother_id_fkey"
+            columns: ["mother_id"]
+            isOneToOne: false
+            referencedRelation: "cats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: string | null
+          related_cat_id: string | null
+          related_litter_id: string | null
+          status: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          related_cat_id?: string | null
+          related_litter_id?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          related_cat_id?: string | null
+          related_litter_id?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_related_cat_id_fkey"
+            columns: ["related_cat_id"]
+            isOneToOne: false
+            referencedRelation: "cats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_related_litter_id_fkey"
+            columns: ["related_litter_id"]
+            isOneToOne: false
+            referencedRelation: "litters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      waitlist: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          preferred_color: string | null
+          preferred_gender: string | null
+          priority: number | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          preferred_color?: string | null
+          preferred_gender?: string | null
+          priority?: number | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          preferred_color?: string | null
+          preferred_gender?: string | null
+          priority?: number | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

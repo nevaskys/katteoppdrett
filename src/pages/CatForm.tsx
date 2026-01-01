@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ArrowLeft, Upload, Clipboard, Loader2, Sparkles, Plus, X, ChevronDown, ChevronUp, Heart } from 'lucide-react';
-import { useData } from '@/context/DataContext';
+import { useCats, useCat, useAddCat, useUpdateCat } from '@/hooks/useCats';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -29,7 +29,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { useRef, useCallback, useState } from 'react';
+import { useRef, useCallback, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { HealthTest, PreviousLitter } from '@/types';
 
@@ -58,7 +58,10 @@ type CatFormData = z.infer<typeof catSchema>;
 export default function CatForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { cats, addCat, updateCat } = useData();
+  const { data: cats = [] } = useCats();
+  const { data: existingCat, isLoading: catLoading } = useCat(id);
+  const addCatMutation = useAddCat();
+  const updateCatMutation = useUpdateCat();
   const pedigreeInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [isParsingPedigree, setIsParsingPedigree] = useState(false);
@@ -69,7 +72,6 @@ export default function CatForm() {
   const [isDraggingImage, setIsDraggingImage] = useState(false);
   const [isDraggingPedigree, setIsDraggingPedigree] = useState(false);
   
-  const existingCat = id ? cats.find(c => c.id === id) : null;
   const isEditing = !!existingCat;
 
   // Initialize health tests from existing cat or defaults
@@ -297,7 +299,6 @@ export default function CatForm() {
 
   const onSubmit = (data: CatFormData) => {
     const catData = {
-      id: existingCat?.id || crypto.randomUUID(),
       name: data.name,
       breed: data.breed,
       gender: data.gender,
@@ -310,19 +311,33 @@ export default function CatForm() {
       healthNotes: data.healthNotes || undefined,
       images: data.imageUrl ? [data.imageUrl] : [],
       pedigreeImage: data.pedigreeImageUrl || undefined,
-      previousLitters: previousLitters.filter(l => l.birthDate), // Only save litters with dates
-      createdAt: existingCat?.createdAt || new Date().toISOString(),
+      previousLitters: previousLitters.filter(l => l.birthDate),
     };
 
-    if (isEditing) {
-      updateCat(catData);
-      toast.success('Katt oppdatert');
+    if (isEditing && existingCat) {
+      updateCatMutation.mutate({ ...catData, id: existingCat.id, createdAt: existingCat.createdAt }, {
+        onSuccess: () => {
+          toast.success('Katt oppdatert');
+          navigate('/cats');
+        },
+      });
     } else {
-      addCat(catData);
-      toast.success('Katt lagt til');
+      addCatMutation.mutate(catData as any, {
+        onSuccess: () => {
+          toast.success('Katt lagt til');
+          navigate('/cats');
+        },
+      });
     }
-    navigate('/cats');
   };
+
+  if (catLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-2xl">

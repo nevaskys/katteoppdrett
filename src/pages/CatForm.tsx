@@ -2,7 +2,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Upload, Clipboard } from 'lucide-react';
 import { useData } from '@/context/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,15 +16,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { useRef, useCallback } from 'react';
 
 const catSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  breed: z.string().min(1, 'Breed is required'),
+  name: z.string().min(1, 'Navn er påkrevd'),
+  breed: z.string().min(1, 'Rase er påkrevd'),
   gender: z.enum(['male', 'female']),
-  birthDate: z.string().min(1, 'Birth date is required'),
+  birthDate: z.string().min(1, 'Fødselsdato er påkrevd'),
   chipNumber: z.string().optional(),
   registration: z.string().optional(),
-  color: z.string().min(1, 'Color is required'),
+  color: z.string().min(1, 'Farge er påkrevd'),
   healthNotes: z.string().optional(),
   imageUrl: z.string().optional(),
   pedigreeImageUrl: z.string().optional(),
@@ -36,6 +37,8 @@ export default function CatForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { cats, addCat, updateCat } = useData();
+  const pedigreeInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   
   const existingCat = id ? cats.find(c => c.id === id) : null;
   const isEditing = !!existingCat;
@@ -58,6 +61,47 @@ export default function CatForm() {
     },
   });
 
+  const pedigreeImageUrl = watch('pedigreeImageUrl');
+  const imageUrl = watch('imageUrl');
+
+  const handleFileUpload = useCallback((file: File, field: 'imageUrl' | 'pedigreeImageUrl') => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Vennligst velg en bildefil');
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      setValue(field, dataUrl);
+      toast.success('Bilde lastet opp');
+    };
+    reader.readAsDataURL(file);
+  }, [setValue]);
+
+  const handlePaste = useCallback(async (field: 'imageUrl' | 'pedigreeImageUrl') => {
+    try {
+      const items = await navigator.clipboard.read();
+      for (const item of items) {
+        const imageType = item.types.find(type => type.startsWith('image/'));
+        if (imageType) {
+          const blob = await item.getType(imageType);
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const dataUrl = e.target?.result as string;
+            setValue(field, dataUrl);
+            toast.success('Bilde limt inn fra utklippstavlen');
+          };
+          reader.readAsDataURL(blob);
+          return;
+        }
+      }
+      toast.error('Ingen bilde funnet i utklippstavlen');
+    } catch {
+      toast.error('Kunne ikke lese utklippstavlen');
+    }
+  }, [setValue]);
+
   const onSubmit = (data: CatFormData) => {
     const catData = {
       id: existingCat?.id || crypto.randomUUID(),
@@ -76,10 +120,10 @@ export default function CatForm() {
 
     if (isEditing) {
       updateCat(catData);
-      toast.success('Cat updated successfully');
+      toast.success('Katt oppdatert');
     } else {
       addCat(catData);
-      toast.success('Cat added successfully');
+      toast.success('Katt lagt til');
     }
     navigate('/cats');
   };
@@ -90,25 +134,25 @@ export default function CatForm() {
         <Button variant="ghost" size="icon" asChild>
           <Link to="/cats"><ArrowLeft className="h-5 w-5" /></Link>
         </Button>
-        <h1 className="page-title">{isEditing ? `Edit ${existingCat.name}` : 'Add Cat'}</h1>
+        <h1 className="page-title">{isEditing ? `Rediger ${existingCat.name}` : 'Legg til katt'}</h1>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="stat-card space-y-6">
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
+            <Label htmlFor="name">Navn *</Label>
             <Input id="name" {...register('name')} />
             {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="breed">Breed *</Label>
-            <Input id="breed" {...register('breed')} placeholder="e.g. Maine Coon" />
+            <Label htmlFor="breed">Rase *</Label>
+            <Input id="breed" {...register('breed')} placeholder="f.eks. Maine Coon" />
             {errors.breed && <p className="text-sm text-destructive">{errors.breed.message}</p>}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="gender">Gender *</Label>
+            <Label htmlFor="gender">Kjønn *</Label>
             <Select
               value={watch('gender')}
               onValueChange={(value) => setValue('gender', value as 'male' | 'female')}
@@ -117,55 +161,131 @@ export default function CatForm() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="female">♀ Female</SelectItem>
-                <SelectItem value="male">♂ Male</SelectItem>
+                <SelectItem value="female">♀ Hunn</SelectItem>
+                <SelectItem value="male">♂ Hann</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="birthDate">Birth Date *</Label>
+            <Label htmlFor="birthDate">Fødselsdato *</Label>
             <Input id="birthDate" type="date" {...register('birthDate')} />
             {errors.birthDate && <p className="text-sm text-destructive">{errors.birthDate.message}</p>}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="color">Color *</Label>
-            <Input id="color" {...register('color')} placeholder="e.g. Brown tabby" />
+            <Label htmlFor="color">Farge *</Label>
+            <Input id="color" {...register('color')} placeholder="f.eks. Brown tabby" />
             {errors.color && <p className="text-sm text-destructive">{errors.color.message}</p>}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="chipNumber">Chip Number</Label>
+            <Label htmlFor="chipNumber">Chip-nummer</Label>
             <Input id="chipNumber" {...register('chipNumber')} />
           </div>
 
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="registration">Registration</Label>
-            <Input id="registration" {...register('registration')} placeholder="Registry & number" />
+            <Label htmlFor="registration">Registrering</Label>
+            <Input id="registration" {...register('registration')} placeholder="Register & nummer" />
+          </div>
+
+          {/* Kattebilde */}
+          <div className="space-y-2 sm:col-span-2">
+            <Label>Kattebilde</Label>
+            <div className="flex gap-2">
+              <Input 
+                {...register('imageUrl')} 
+                placeholder="Bilde-URL eller last opp" 
+                className="flex-1"
+              />
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                ref={imageInputRef}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFileUpload(file, 'imageUrl');
+                }}
+              />
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="icon"
+                onClick={() => imageInputRef.current?.click()}
+                title="Last opp bilde"
+              >
+                <Upload className="h-4 w-4" />
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="icon"
+                onClick={() => handlePaste('imageUrl')}
+                title="Lim inn fra utklippstavle"
+              >
+                <Clipboard className="h-4 w-4" />
+              </Button>
+            </div>
+            {imageUrl && imageUrl.startsWith('data:') && (
+              <img src={imageUrl} alt="Forhåndsvisning" className="mt-2 h-24 w-24 object-cover rounded-lg" />
+            )}
+          </div>
+
+          {/* Stamtavle */}
+          <div className="space-y-2 sm:col-span-2">
+            <Label>Stamtavle (bilde)</Label>
+            <div className="flex gap-2">
+              <Input 
+                {...register('pedigreeImageUrl')} 
+                placeholder="Stamtavle-URL eller last opp" 
+                className="flex-1"
+              />
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                ref={pedigreeInputRef}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFileUpload(file, 'pedigreeImageUrl');
+                }}
+              />
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="icon"
+                onClick={() => pedigreeInputRef.current?.click()}
+                title="Last opp stamtavle"
+              >
+                <Upload className="h-4 w-4" />
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="icon"
+                onClick={() => handlePaste('pedigreeImageUrl')}
+                title="Lim inn fra utklippstavle"
+              >
+                <Clipboard className="h-4 w-4" />
+              </Button>
+            </div>
+            {pedigreeImageUrl && pedigreeImageUrl.startsWith('data:') && (
+              <img src={pedigreeImageUrl} alt="Stamtavle forhåndsvisning" className="mt-2 max-h-48 object-contain rounded-lg border" />
+            )}
           </div>
 
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="imageUrl">Image URL</Label>
-            <Input id="imageUrl" {...register('imageUrl')} placeholder="https://..." />
-          </div>
-
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="pedigreeImageUrl">Pedigree Image URL (Stamtavle)</Label>
-            <Input id="pedigreeImageUrl" {...register('pedigreeImageUrl')} placeholder="https://..." />
-          </div>
-
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="healthNotes">Health Notes</Label>
+            <Label htmlFor="healthNotes">Helsenotater</Label>
             <Textarea id="healthNotes" {...register('healthNotes')} rows={4} />
           </div>
         </div>
 
         <div className="flex gap-3 justify-end">
           <Button type="button" variant="outline" asChild>
-            <Link to="/cats">Cancel</Link>
+            <Link to="/cats">Avbryt</Link>
           </Button>
-          <Button type="submit">{isEditing ? 'Save Changes' : 'Add Cat'}</Button>
+          <Button type="submit">{isEditing ? 'Lagre endringer' : 'Legg til katt'}</Button>
         </div>
       </form>
     </div>

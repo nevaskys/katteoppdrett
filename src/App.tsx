@@ -14,6 +14,7 @@ import LitterDetail from "./pages/LitterDetail";
 import LitterForm from "./pages/LitterForm";
 import WaitlistPage from "./pages/WaitlistPage";
 import TasksPage from "./pages/TasksPage";
+import TestMating from "./pages/TestMating";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
               <Route path="/waitlist/new" element={<WaitlistPage />} />
               <Route path="/tasks" element={<TasksPage />} />
               <Route path="/tasks/new" element={<TasksPage />} />
+              <Route path="/test-mating" element={<TestMating />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>

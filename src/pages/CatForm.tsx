@@ -66,6 +66,8 @@ export default function CatForm() {
   const [pedigreeOpen, setPedigreeOpen] = useState(true);
   const [testMatingOpen, setTestMatingOpen] = useState(false);
   const [selectedMateId, setSelectedMateId] = useState<string>('');
+  const [isDraggingImage, setIsDraggingImage] = useState(false);
+  const [isDraggingPedigree, setIsDraggingPedigree] = useState(false);
   
   const existingCat = id ? cats.find(c => c.id === id) : null;
   const isEditing = !!existingCat;
@@ -463,47 +465,66 @@ export default function CatForm() {
             <Input id="registration" {...register('registration')} placeholder="Register & nummer" />
           </div>
 
-          {/* Kattebilde */}
+          {/* Kattebilde med drag-and-drop */}
           <div className="space-y-2 sm:col-span-2">
             <Label>Kattebilde</Label>
-            <div className="flex gap-2">
-              <Input 
-                {...register('imageUrl')} 
-                placeholder="Bilde-URL eller last opp" 
-                className="flex-1"
-              />
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                ref={imageInputRef}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleFileUpload(file, 'imageUrl');
-                }}
-              />
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="icon"
-                onClick={() => imageInputRef.current?.click()}
-                title="Last opp bilde"
-              >
-                <Upload className="h-4 w-4" />
-              </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="icon"
-                onClick={() => handlePaste('imageUrl')}
-                title="Lim inn fra utklippstavle"
-              >
-                <Clipboard className="h-4 w-4" />
-              </Button>
+            <div 
+              className={`border-2 border-dashed rounded-lg p-4 transition-colors ${
+                isDraggingImage 
+                  ? 'border-primary bg-primary/10' 
+                  : 'border-border hover:border-primary/50'
+              }`}
+              onDragOver={(e) => { e.preventDefault(); setIsDraggingImage(true); }}
+              onDragLeave={() => setIsDraggingImage(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDraggingImage(false);
+                const file = e.dataTransfer.files[0];
+                if (file) handleFileUpload(file, 'imageUrl');
+              }}
+            >
+              <div className="flex gap-2">
+                <Input 
+                  {...register('imageUrl')} 
+                  placeholder="Bilde-URL, dra inn, eller lim inn" 
+                  className="flex-1"
+                />
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  ref={imageInputRef}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload(file, 'imageUrl');
+                  }}
+                />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => imageInputRef.current?.click()}
+                  title="Last opp bilde"
+                >
+                  <Upload className="h-4 w-4" />
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => handlePaste('imageUrl')}
+                  title="Lim inn fra utklippstavle (Ctrl+V)"
+                >
+                  <Clipboard className="h-4 w-4" />
+                </Button>
+              </div>
+              {isDraggingImage && (
+                <p className="text-sm text-primary text-center mt-2">Slipp bildet her</p>
+              )}
+              {imageUrl && imageUrl.startsWith('data:') && (
+                <img src={imageUrl} alt="Forhåndsvisning" className="mt-3 h-24 w-24 object-cover rounded-lg" />
+              )}
             </div>
-            {imageUrl && imageUrl.startsWith('data:') && (
-              <img src={imageUrl} alt="Forhåndsvisning" className="mt-2 h-24 w-24 object-cover rounded-lg" />
-            )}
           </div>
 
           {/* Tidligere kull - kun for hunner */}

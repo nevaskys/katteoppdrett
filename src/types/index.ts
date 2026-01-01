@@ -7,6 +7,15 @@ export interface HealthTest {
   date?: string;
 }
 
+export interface PreviousLitter {
+  id: string;
+  birthDate: string;
+  fatherId?: string;
+  fatherName?: string;
+  kittenCount: number;
+  notes?: string;
+}
+
 export interface Cat {
   id: string;
   name: string;
@@ -16,10 +25,12 @@ export interface Cat {
   chipNumber?: string;
   registration?: string;
   color: string;
+  emsCode?: string;
   healthTests?: HealthTest[];
   healthNotes?: string;
   images: string[];
   pedigreeImage?: string;
+  previousLitters?: PreviousLitter[];
   createdAt: string;
 }
 

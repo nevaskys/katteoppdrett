@@ -10,6 +10,7 @@ interface PedigreeData {
   name?: string;
   breed?: string;
   color?: string;
+  emsCode?: string;
   birthDate?: string;
   registration?: string;
   chipNumber?: string;
@@ -56,7 +57,8 @@ serve(async (req) => {
           
 - Navn på katten
 - Rase (breed)
-- Farge/mønster
+- EMS-kode (f.eks. NFO n 09 24, SBI a 21 33, MCO ns 22 osv.)
+- Farge/mønster beskrivelse
 - Fødselsdato (i format YYYY-MM-DD)
 - Registreringsnummer
 - Chip-nummer (hvis synlig)
@@ -66,14 +68,17 @@ Returner BARE en JSON-objekt med disse feltene (bruk null for felt som ikke finn
 {
   "name": "kattens navn",
   "breed": "rase",
-  "color": "farge",
+  "emsCode": "EMS-kode (f.eks. NFO n 09 24)",
+  "color": "farge beskrivelse",
   "birthDate": "YYYY-MM-DD",
   "registration": "registreringsnummer",
   "chipNumber": "chip-nummer eller null",
   "gender": "male eller female"
 }
 
-VIKTIG: Returner KUN JSON, ingen annen tekst.`
+VIKTIG: 
+- EMS-kode er standard FIFe-fargekode og skal ekstraheres separat fra fargebeskrivelsen
+- Returner KUN JSON, ingen annen tekst.`
         }
       ];
     } else {
@@ -101,7 +106,8 @@ VIKTIG: Returner KUN JSON, ingen annen tekst.`
             
 - Navn på katten
 - Rase (breed)
-- Farge/mønster
+- EMS-kode (f.eks. NFO n 09 24, SBI a 21 33, MCO ns 22 osv.)
+- Farge/mønster beskrivelse
 - Fødselsdato (i format YYYY-MM-DD)
 - Registreringsnummer
 - Chip-nummer (hvis synlig)
@@ -111,14 +117,17 @@ Returner BARE en JSON-objekt med disse feltene (bruk null for felt som ikke finn
 {
   "name": "kattens navn",
   "breed": "rase",
-  "color": "farge",
+  "emsCode": "EMS-kode (f.eks. NFO n 09 24)",
+  "color": "farge beskrivelse",
   "birthDate": "YYYY-MM-DD",
   "registration": "registreringsnummer",
   "chipNumber": "chip-nummer eller null",
   "gender": "male eller female"
 }
 
-VIKTIG: Returner KUN JSON, ingen annen tekst.`
+VIKTIG: 
+- EMS-kode er standard FIFe-fargekode og skal ekstraheres separat fra fargebeskrivelsen
+- Returner KUN JSON, ingen annen tekst.`
           }
         ];
       } catch (urlError) {

@@ -36,12 +36,12 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 const statusLabels: Record<WaitlistStatus, string> = {
-  new: 'New',
-  contacted: 'Contacted',
-  waitlist: 'Waiting List',
-  deposit: 'Deposit',
-  sold: 'Sold',
-  declined: 'Declined',
+  new: 'Ny',
+  contacted: 'Kontaktet',
+  waitlist: 'På venteliste',
+  deposit: 'Depositum',
+  sold: 'Solgt',
+  declined: 'Avslått',
 };
 
 const statusColors: Record<WaitlistStatus, string> = {
@@ -89,7 +89,7 @@ export default function WaitlistPage() {
 
   const handleSubmit = () => {
     if (!formData.name || !formData.email) {
-      toast.error('Name and email are required');
+      toast.error('Navn og e-post er påkrevd');
       return;
     }
 
@@ -105,10 +105,10 @@ export default function WaitlistPage() {
 
     if (editingEntry) {
       updateWaitlistEntry(entryData);
-      toast.success('Contact updated');
+      toast.success('Kontakt oppdatert');
     } else {
       addWaitlistEntry(entryData);
-      toast.success('Contact added');
+      toast.success('Kontakt lagt til');
     }
     
     setDialogOpen(false);
@@ -117,36 +117,36 @@ export default function WaitlistPage() {
 
   const handleStatusChange = (entry: WaitlistEntry, status: WaitlistStatus) => {
     updateWaitlistEntry({ ...entry, status });
-    toast.success('Status updated');
+    toast.success('Status oppdatert');
   };
 
   return (
     <div className="space-y-6">
       <div className="page-header">
-        <h1 className="page-title">Waitlist</h1>
+        <h1 className="page-title">Venteliste</h1>
         <Dialog open={dialogOpen} onOpenChange={(open) => {
           setDialogOpen(open);
           if (!open) resetForm();
         }}>
           <DialogTrigger asChild>
             <Button onClick={() => handleOpenDialog()}>
-              <Plus className="h-4 w-4 mr-2" /> Add Contact
+              <Plus className="h-4 w-4 mr-2" /> Legg til kontakt
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingEntry ? 'Edit Contact' : 'Add Contact'}</DialogTitle>
+              <DialogTitle>{editingEntry ? 'Rediger kontakt' : 'Legg til kontakt'}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Name *</Label>
+                <Label>Navn *</Label>
                 <Input
                   value={formData.name}
                   onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Email *</Label>
+                <Label>E-post *</Label>
                 <Input
                   type="email"
                   value={formData.email}
@@ -154,7 +154,7 @@ export default function WaitlistPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Phone</Label>
+                <Label>Telefon</Label>
                 <Input
                   type="tel"
                   value={formData.phone}
@@ -178,7 +178,7 @@ export default function WaitlistPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Notes</Label>
+                <Label>Notater</Label>
                 <Textarea
                   value={formData.notes}
                   onChange={e => setFormData(prev => ({ ...prev, notes: e.target.value }))}
@@ -186,7 +186,7 @@ export default function WaitlistPage() {
                 />
               </div>
               <Button onClick={handleSubmit} className="w-full">
-                {editingEntry ? 'Save Changes' : 'Add Contact'}
+                {editingEntry ? 'Lagre endringer' : 'Legg til kontakt'}
               </Button>
             </div>
           </DialogContent>
@@ -196,10 +196,10 @@ export default function WaitlistPage() {
       {waitlist.length === 0 ? (
         <div className="empty-state">
           <ClipboardList className="h-12 w-12 mb-4 text-muted-foreground/50" />
-          <p className="text-lg font-medium">No contacts yet</p>
-          <p className="text-sm mb-4">Add people interested in your kittens</p>
+          <p className="text-lg font-medium">Ingen kontakter ennå</p>
+          <p className="text-sm mb-4">Legg til personer som er interessert i kattungene dine</p>
           <Button onClick={() => handleOpenDialog()}>
-            <Plus className="h-4 w-4 mr-2" /> Add Contact
+            <Plus className="h-4 w-4 mr-2" /> Legg til kontakt
           </Button>
         </div>
       ) : (
@@ -207,10 +207,10 @@ export default function WaitlistPage() {
           <table className="w-full min-w-[600px]">
             <thead>
               <tr className="border-b text-left">
-                <th className="pb-3 text-sm font-medium text-muted-foreground">Name</th>
-                <th className="pb-3 text-sm font-medium text-muted-foreground">Contact</th>
+                <th className="pb-3 text-sm font-medium text-muted-foreground">Navn</th>
+                <th className="pb-3 text-sm font-medium text-muted-foreground">Kontakt</th>
                 <th className="pb-3 text-sm font-medium text-muted-foreground">Status</th>
-                <th className="pb-3 text-sm font-medium text-muted-foreground">Notes</th>
+                <th className="pb-3 text-sm font-medium text-muted-foreground">Notater</th>
                 <th className="pb-3 text-sm font-medium text-muted-foreground w-20"></th>
               </tr>
             </thead>
@@ -257,12 +257,12 @@ export default function WaitlistPage() {
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Delete {entry.name}?</AlertDialogTitle>
-                            <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
+                            <AlertDialogTitle>Slett {entry.name}?</AlertDialogTitle>
+                            <AlertDialogDescription>Dette kan ikke angres.</AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => deleteWaitlistEntry(entry.id)}>Delete</AlertDialogAction>
+                            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => deleteWaitlistEntry(entry.id)}>Slett</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>

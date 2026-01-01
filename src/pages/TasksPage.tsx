@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, CheckSquare, Trash2, Edit2, Check } from 'lucide-react';
+import { Plus, CheckSquare, Trash2, Edit2 } from 'lucide-react';
 import { useData } from '@/context/DataContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -74,7 +74,7 @@ export default function TasksPage() {
 
   const handleSubmit = () => {
     if (!formData.title || !formData.dueDate) {
-      toast.error('Title and due date are required');
+      toast.error('Tittel og forfallsdato er påkrevd');
       return;
     }
 
@@ -91,10 +91,10 @@ export default function TasksPage() {
 
     if (editingTask) {
       updateTask(taskData);
-      toast.success('Task updated');
+      toast.success('Oppgave oppdatert');
     } else {
       addTask(taskData);
-      toast.success('Task added');
+      toast.success('Oppgave lagt til');
     }
     
     setDialogOpen(false);
@@ -116,7 +116,7 @@ export default function TasksPage() {
     const litter = litters.find(l => l.id === id);
     if (!litter) return null;
     const mother = cats.find(c => c.id === litter.motherId);
-    return mother ? `${mother.name}'s litter` : 'Unknown litter';
+    return mother ? `${mother.name}s kull` : 'Ukjent kull';
   };
 
   const isOverdue = (date: string) => new Date(date) < new Date() && new Date(date).toDateString() !== new Date().toDateString();
@@ -125,30 +125,30 @@ export default function TasksPage() {
   return (
     <div className="space-y-6">
       <div className="page-header">
-        <h1 className="page-title">Tasks</h1>
+        <h1 className="page-title">Oppgaver</h1>
         <Dialog open={dialogOpen} onOpenChange={(open) => {
           setDialogOpen(open);
           if (!open) resetForm();
         }}>
           <DialogTrigger asChild>
             <Button onClick={() => handleOpenDialog()}>
-              <Plus className="h-4 w-4 mr-2" /> Add Task
+              <Plus className="h-4 w-4 mr-2" /> Legg til oppgave
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingTask ? 'Edit Task' : 'Add Task'}</DialogTitle>
+              <DialogTitle>{editingTask ? 'Rediger oppgave' : 'Legg til oppgave'}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Title *</Label>
+                <Label>Tittel *</Label>
                 <Input
                   value={formData.title}
                   onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Due Date *</Label>
+                <Label>Forfallsdato *</Label>
                 <Input
                   type="date"
                   value={formData.dueDate}
@@ -157,16 +157,16 @@ export default function TasksPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Link to Cat</Label>
+                  <Label>Koble til katt</Label>
                   <Select
                     value={formData.catId}
                     onValueChange={value => setFormData(prev => ({ ...prev, catId: value }))}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="None" />
+                      <SelectValue placeholder="Ingen" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="">Ingen</SelectItem>
                       {cats.map(cat => (
                         <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                       ))}
@@ -174,21 +174,21 @@ export default function TasksPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Link to Litter</Label>
+                  <Label>Koble til kull</Label>
                   <Select
                     value={formData.litterId}
                     onValueChange={value => setFormData(prev => ({ ...prev, litterId: value }))}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="None" />
+                      <SelectValue placeholder="Ingen" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="">Ingen</SelectItem>
                       {litters.map(litter => {
                         const mother = cats.find(c => c.id === litter.motherId);
                         return (
                           <SelectItem key={litter.id} value={litter.id}>
-                            {mother?.name || 'Unknown'} - {new Date(litter.birthDate).toLocaleDateString()}
+                            {mother?.name || 'Ukjent'} - {new Date(litter.birthDate).toLocaleDateString('nb-NO')}
                           </SelectItem>
                         );
                       })}
@@ -197,7 +197,7 @@ export default function TasksPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Notes</Label>
+                <Label>Notater</Label>
                 <Textarea
                   value={formData.notes}
                   onChange={e => setFormData(prev => ({ ...prev, notes: e.target.value }))}
@@ -205,7 +205,7 @@ export default function TasksPage() {
                 />
               </div>
               <Button onClick={handleSubmit} className="w-full">
-                {editingTask ? 'Save Changes' : 'Add Task'}
+                {editingTask ? 'Lagre endringer' : 'Legg til oppgave'}
               </Button>
             </div>
           </DialogContent>
@@ -215,19 +215,19 @@ export default function TasksPage() {
       {tasks.length === 0 ? (
         <div className="empty-state">
           <CheckSquare className="h-12 w-12 mb-4 text-muted-foreground/50" />
-          <p className="text-lg font-medium">No tasks yet</p>
-          <p className="text-sm mb-4">Create tasks to stay organized</p>
+          <p className="text-lg font-medium">Ingen oppgaver ennå</p>
+          <p className="text-sm mb-4">Lag oppgaver for å holde oversikt</p>
           <Button onClick={() => handleOpenDialog()}>
-            <Plus className="h-4 w-4 mr-2" /> Add Task
+            <Plus className="h-4 w-4 mr-2" /> Legg til oppgave
           </Button>
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Pending Tasks */}
+          {/* Ventende oppgaver */}
           <div className="stat-card">
-            <h2 className="text-lg font-semibold mb-4">Pending ({pendingTasks.length})</h2>
+            <h2 className="text-lg font-semibold mb-4">Ventende ({pendingTasks.length})</h2>
             {pendingTasks.length === 0 ? (
-              <p className="text-sm text-muted-foreground">All tasks completed!</p>
+              <p className="text-sm text-muted-foreground">Alle oppgaver fullført!</p>
             ) : (
               <div className="space-y-2">
                 {pendingTasks.map(task => (
@@ -246,7 +246,7 @@ export default function TasksPage() {
                           isToday(task.dueDate) && "text-primary font-medium",
                           !isOverdue(task.dueDate) && !isToday(task.dueDate) && "text-muted-foreground"
                         )}>
-                          {isToday(task.dueDate) ? 'Today' : new Date(task.dueDate).toLocaleDateString()}
+                          {isToday(task.dueDate) ? 'I dag' : new Date(task.dueDate).toLocaleDateString('nb-NO')}
                         </span>
                         {getCatName(task.catId) && (
                           <Badge variant="outline" className="text-xs">{getCatName(task.catId)}</Badge>
@@ -271,12 +271,12 @@ export default function TasksPage() {
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Delete task?</AlertDialogTitle>
-                            <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
+                            <AlertDialogTitle>Slett oppgave?</AlertDialogTitle>
+                            <AlertDialogDescription>Dette kan ikke angres.</AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => deleteTask(task.id)}>Delete</AlertDialogAction>
+                            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => deleteTask(task.id)}>Slett</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
@@ -287,10 +287,10 @@ export default function TasksPage() {
             )}
           </div>
 
-          {/* Completed Tasks */}
+          {/* Fullførte oppgaver */}
           {completedTasks.length > 0 && (
             <div className="stat-card">
-              <h2 className="text-lg font-semibold mb-4 text-muted-foreground">Completed ({completedTasks.length})</h2>
+              <h2 className="text-lg font-semibold mb-4 text-muted-foreground">Fullført ({completedTasks.length})</h2>
               <div className="space-y-2">
                 {completedTasks.map(task => (
                   <div key={task.id} className="flex items-center gap-3 p-3 rounded-lg opacity-60">
@@ -307,12 +307,12 @@ export default function TasksPage() {
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Delete task?</AlertDialogTitle>
-                          <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
+                          <AlertDialogTitle>Slett oppgave?</AlertDialogTitle>
+                          <AlertDialogDescription>Dette kan ikke angres.</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => deleteTask(task.id)}>Delete</AlertDialogAction>
+                          <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => deleteTask(task.id)}>Slett</AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>

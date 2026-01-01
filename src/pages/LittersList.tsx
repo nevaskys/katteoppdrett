@@ -7,24 +7,24 @@ import { Badge } from '@/components/ui/badge';
 export default function LittersList() {
   const { litters, cats } = useData();
 
-  const getCatName = (id: string) => cats.find(c => c.id === id)?.name || 'Unknown';
+  const getCatName = (id: string) => cats.find(c => c.id === id)?.name || 'Ukjent';
 
   return (
     <div className="space-y-6">
       <div className="page-header">
-        <h1 className="page-title">Litters</h1>
+        <h1 className="page-title">Kull</h1>
         <Button asChild>
-          <Link to="/litters/new"><Plus className="h-4 w-4 mr-2" /> Add Litter</Link>
+          <Link to="/litters/new"><Plus className="h-4 w-4 mr-2" /> Legg til kull</Link>
         </Button>
       </div>
 
       {litters.length === 0 ? (
         <div className="empty-state">
           <Users className="h-12 w-12 mb-4 text-muted-foreground/50" />
-          <p className="text-lg font-medium">No litters yet</p>
-          <p className="text-sm mb-4">Record your first litter</p>
+          <p className="text-lg font-medium">Ingen kull ennå</p>
+          <p className="text-sm mb-4">Registrer ditt første kull</p>
           <Button asChild>
-            <Link to="/litters/new"><Plus className="h-4 w-4 mr-2" /> Add Litter</Link>
+            <Link to="/litters/new"><Plus className="h-4 w-4 mr-2" /> Legg til kull</Link>
           </Button>
         </div>
       ) : (
@@ -37,19 +37,19 @@ export default function LittersList() {
             >
               <div className="flex items-center justify-between mb-3">
                 <Badge variant="outline">
-                  {new Date(litter.birthDate).toLocaleDateString()}
+                  {new Date(litter.birthDate).toLocaleDateString('nb-NO')}
                 </Badge>
                 <span className="text-sm text-muted-foreground">
-                  {litter.kittens.length} / {litter.count} kittens
+                  {litter.kittens.length} / {litter.count} kattunger
                 </span>
               </div>
               <div className="space-y-1">
                 <p className="text-sm">
-                  <span className="text-muted-foreground">Dam:</span>{' '}
+                  <span className="text-muted-foreground">Mor:</span>{' '}
                   <span className="font-medium">{getCatName(litter.motherId)}</span>
                 </p>
                 <p className="text-sm">
-                  <span className="text-muted-foreground">Sire:</span>{' '}
+                  <span className="text-muted-foreground">Far:</span>{' '}
                   <span className="font-medium">{getCatName(litter.fatherId)}</span>
                 </p>
               </div>

@@ -10,11 +10,11 @@ export default function Dashboard() {
   const totalKittens = litters.reduce((sum, l) => sum + l.kittens.length, 0);
 
   const stats = [
-    { label: 'Cats', value: cats.length, icon: Cat, href: '/cats', color: 'text-primary' },
-    { label: 'Litters', value: litters.length, icon: Users, href: '/litters', color: 'text-accent-foreground' },
-    { label: 'Kittens', value: totalKittens, icon: Cat, href: '/litters', color: 'text-primary' },
-    { label: 'Waitlist', value: waitlist.length, icon: ClipboardList, href: '/waitlist', color: 'text-muted-foreground' },
-    { label: 'Pending Tasks', value: pendingTasks.length, icon: CheckSquare, href: '/tasks', color: 'text-destructive' },
+    { label: 'Katter', value: cats.length, icon: Cat, href: '/cats', color: 'text-primary' },
+    { label: 'Kull', value: litters.length, icon: Users, href: '/litters', color: 'text-accent-foreground' },
+    { label: 'Kattunger', value: totalKittens, icon: Cat, href: '/litters', color: 'text-primary' },
+    { label: 'Venteliste', value: waitlist.length, icon: ClipboardList, href: '/waitlist', color: 'text-muted-foreground' },
+    { label: 'Ventende oppgaver', value: pendingTasks.length, icon: CheckSquare, href: '/tasks', color: 'text-destructive' },
   ];
 
   return (
@@ -39,35 +39,35 @@ export default function Dashboard() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Quick Actions */}
+        {/* Hurtighandlinger */}
         <div className="stat-card">
-          <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
+          <h2 className="text-lg font-semibold mb-4">Hurtighandlinger</h2>
           <div className="grid grid-cols-2 gap-3">
             <Button asChild variant="outline" className="justify-start">
-              <Link to="/cats/new"><Plus className="h-4 w-4 mr-2" /> Add Cat</Link>
+              <Link to="/cats/new"><Plus className="h-4 w-4 mr-2" /> Legg til katt</Link>
             </Button>
             <Button asChild variant="outline" className="justify-start">
-              <Link to="/litters/new"><Plus className="h-4 w-4 mr-2" /> Add Litter</Link>
+              <Link to="/litters/new"><Plus className="h-4 w-4 mr-2" /> Legg til kull</Link>
             </Button>
             <Button asChild variant="outline" className="justify-start">
-              <Link to="/waitlist/new"><Plus className="h-4 w-4 mr-2" /> Add Contact</Link>
+              <Link to="/waitlist"><Plus className="h-4 w-4 mr-2" /> Legg til kontakt</Link>
             </Button>
             <Button asChild variant="outline" className="justify-start">
-              <Link to="/tasks/new"><Plus className="h-4 w-4 mr-2" /> Add Task</Link>
+              <Link to="/tasks"><Plus className="h-4 w-4 mr-2" /> Legg til oppgave</Link>
             </Button>
           </div>
         </div>
 
-        {/* Pending Tasks */}
+        {/* Ventende oppgaver */}
         <div className="stat-card">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Pending Tasks</h2>
+            <h2 className="text-lg font-semibold">Ventende oppgaver</h2>
             <Button asChild variant="ghost" size="sm">
-              <Link to="/tasks">View all</Link>
+              <Link to="/tasks">Se alle</Link>
             </Button>
           </div>
           {pendingTasks.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No pending tasks</p>
+            <p className="text-muted-foreground text-sm">Ingen ventende oppgaver</p>
           ) : (
             <ul className="space-y-2">
               {pendingTasks.slice(0, 5).map(task => (
@@ -75,7 +75,7 @@ export default function Dashboard() {
                   <CheckSquare className="h-4 w-4 text-muted-foreground" />
                   <span className="flex-1 truncate">{task.title}</span>
                   <span className="text-xs text-muted-foreground">
-                    {new Date(task.dueDate).toLocaleDateString()}
+                    {new Date(task.dueDate).toLocaleDateString('nb-NO')}
                   </span>
                 </li>
               ))}

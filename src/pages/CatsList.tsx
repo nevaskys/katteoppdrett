@@ -10,19 +10,19 @@ export default function CatsList() {
   return (
     <div className="space-y-6">
       <div className="page-header">
-        <h1 className="page-title">Cats</h1>
+        <h1 className="page-title">Katter</h1>
         <Button asChild>
-          <Link to="/cats/new"><Plus className="h-4 w-4 mr-2" /> Add Cat</Link>
+          <Link to="/cats/new"><Plus className="h-4 w-4 mr-2" /> Legg til katt</Link>
         </Button>
       </div>
 
       {cats.length === 0 ? (
         <div className="empty-state">
           <CatIcon className="h-12 w-12 mb-4 text-muted-foreground/50" />
-          <p className="text-lg font-medium">No cats yet</p>
-          <p className="text-sm mb-4">Add your first cat to get started</p>
+          <p className="text-lg font-medium">Ingen katter ennå</p>
+          <p className="text-sm mb-4">Legg til din første katt for å komme i gang</p>
           <Button asChild>
-            <Link to="/cats/new"><Plus className="h-4 w-4 mr-2" /> Add Cat</Link>
+            <Link to="/cats/new"><Plus className="h-4 w-4 mr-2" /> Legg til katt</Link>
           </Button>
         </div>
       ) : (
@@ -48,9 +48,9 @@ export default function CatsList() {
                   <p className="text-sm text-muted-foreground">{cat.breed}</p>
                   <div className="flex items-center gap-2 mt-2">
                     <Badge variant={cat.gender === 'female' ? 'secondary' : 'outline'}>
-                      {cat.gender === 'female' ? '♀ Female' : '♂ Male'}
+                      {cat.gender === 'female' ? '♀ Hunn' : '♂ Hann'}
                     </Badge>
-                    <span className="text-xs text-muted-foreground">{cat.color}</span>
+                    <span className="text-xs text-muted-foreground">{cat.emsCode || cat.color}</span>
                   </div>
                 </div>
               </div>

@@ -2,37 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CatBreeder Design System - Warm, professional, clean */
+/* NO*NevaSky's Design System - Lavender/purple tones with soft cream */
 
 @layer base {
   :root {
-    --background: 40 20% 98%;
-    --foreground: 220 20% 15%;
+    --background: 240 20% 97%;
+    --foreground: 260 25% 20%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 15%;
+    --card-foreground: 260 25% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 15%;
+    --popover-foreground: 260 25% 20%;
 
-    --primary: 150 30% 40%;
+    --primary: 260 35% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 40 15% 94%;
-    --secondary-foreground: 220 20% 20%;
+    --secondary: 240 15% 94%;
+    --secondary-foreground: 260 20% 25%;
 
-    --muted: 40 10% 92%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 240 10% 92%;
+    --muted-foreground: 260 10% 45%;
 
-    --accent: 150 25% 92%;
-    --accent-foreground: 150 30% 30%;
+    --accent: 260 25% 92%;
+    --accent-foreground: 260 35% 40%;
 
     --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 15% 88%;
-    --input: 40 15% 88%;
-    --ring: 150 30% 40%;
+    --border: 260 15% 88%;
+    --input: 260 15% 88%;
+    --ring: 260 35% 55%;
 
     --radius: 0.5rem;
 
@@ -45,52 +45,52 @@
     --status-declined: 0 50% 50%;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 20% 30%;
-    --sidebar-primary: 150 30% 40%;
+    --sidebar-foreground: 260 20% 30%;
+    --sidebar-primary: 260 35% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 150 25% 94%;
-    --sidebar-accent-foreground: 150 30% 30%;
-    --sidebar-border: 40 15% 90%;
-    --sidebar-ring: 150 30% 40%;
+    --sidebar-accent: 260 25% 94%;
+    --sidebar-accent-foreground: 260 35% 40%;
+    --sidebar-border: 260 15% 90%;
+    --sidebar-ring: 260 35% 55%;
   }
 
   .dark {
-    --background: 220 20% 10%;
-    --foreground: 40 15% 95%;
+    --background: 260 20% 8%;
+    --foreground: 240 15% 95%;
 
-    --card: 220 20% 13%;
-    --card-foreground: 40 15% 95%;
+    --card: 260 20% 11%;
+    --card-foreground: 240 15% 95%;
 
-    --popover: 220 20% 13%;
-    --popover-foreground: 40 15% 95%;
+    --popover: 260 20% 11%;
+    --popover-foreground: 240 15% 95%;
 
-    --primary: 150 35% 50%;
-    --primary-foreground: 220 20% 10%;
+    --primary: 260 40% 60%;
+    --primary-foreground: 260 20% 10%;
 
-    --secondary: 220 15% 20%;
-    --secondary-foreground: 40 15% 90%;
+    --secondary: 260 15% 18%;
+    --secondary-foreground: 240 15% 90%;
 
-    --muted: 220 15% 18%;
-    --muted-foreground: 40 10% 60%;
+    --muted: 260 15% 16%;
+    --muted-foreground: 240 10% 60%;
 
-    --accent: 150 20% 20%;
-    --accent-foreground: 150 35% 70%;
+    --accent: 260 20% 18%;
+    --accent-foreground: 260 40% 75%;
 
     --destructive: 0 60% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 22%;
-    --input: 220 15% 22%;
-    --ring: 150 35% 50%;
+    --border: 260 15% 20%;
+    --input: 260 15% 20%;
+    --ring: 260 40% 60%;
 
-    --sidebar-background: 220 20% 12%;
-    --sidebar-foreground: 40 10% 80%;
-    --sidebar-primary: 150 35% 50%;
-    --sidebar-primary-foreground: 220 20% 10%;
-    --sidebar-accent: 220 15% 18%;
-    --sidebar-accent-foreground: 150 35% 70%;
-    --sidebar-border: 220 15% 20%;
-    --sidebar-ring: 150 35% 50%;
+    --sidebar-background: 260 20% 10%;
+    --sidebar-foreground: 240 10% 80%;
+    --sidebar-primary: 260 40% 60%;
+    --sidebar-primary-foreground: 260 20% 10%;
+    --sidebar-accent: 260 15% 16%;
+    --sidebar-accent-foreground: 260 40% 75%;
+    --sidebar-border: 260 15% 18%;
+    --sidebar-ring: 260 40% 60%;
   }
 }
 

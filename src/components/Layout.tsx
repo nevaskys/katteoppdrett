@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Cat, Users, ClipboardList, CheckSquare, Home, Menu, X } from 'lucide-react';
+import { Cat, Users, ClipboardList, CheckSquare, Home, Menu, X, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -10,10 +10,11 @@ interface LayoutProps {
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: Home },
-  { path: '/cats', label: 'Cats', icon: Cat },
-  { path: '/litters', label: 'Litters', icon: Users },
-  { path: '/waitlist', label: 'Waitlist', icon: ClipboardList },
-  { path: '/tasks', label: 'Tasks', icon: CheckSquare },
+  { path: '/cats', label: 'Katter', icon: Cat },
+  { path: '/litters', label: 'Kull', icon: Users },
+  { path: '/test-mating', label: 'Testparring', icon: Heart },
+  { path: '/waitlist', label: 'Venteliste', icon: ClipboardList },
+  { path: '/tasks', label: 'Oppgaver', icon: CheckSquare },
 ];
 
 export function Layout({ children }: LayoutProps) {

@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { Upload, Clipboard, Heart, Loader2, Sparkles } from 'lucide-react';
+import { Upload, Clipboard, Heart, Loader2, Sparkles, Info } from 'lucide-react';
 import { useData } from '@/context/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,8 +11,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { calculateCOI, getCOIRiskLevel, PedigreeData, CommonAncestor } from '@/lib/coiCalculator';
 
 export default function TestMating() {
   const { cats } = useData();
@@ -24,7 +31,13 @@ export default function TestMating() {
   const [externalDamName, setExternalDamName] = useState<string>('');
   const [showResult, setShowResult] = useState(false);
   const [isParsingDam, setIsParsingDam] = useState(false);
-  const [isParsinosire, setIsParsingSire] = useState(false);
+  const [isParsingSire, setIsParsingSire] = useState(false);
+  
+  // Full pedigree data for COI calculation
+  const [sirePedigreeData, setSirePedigreeData] = useState<PedigreeData | null>(null);
+  const [damPedigreeData, setDamPedigreeData] = useState<PedigreeData | null>(null);
+  const [coiResult, setCoiResult] = useState<{ coi: number; commonAncestors: CommonAncestor[] } | null>(null);
+  
   const damPedigreeInputRef = useRef<HTMLInputElement>(null);
   const sirePedigreeInputRef = useRef<HTMLInputElement>(null);
 
@@ -38,6 +51,7 @@ export default function TestMating() {
     imageData: string, 
     isUrl: boolean,
     setName: (name: string) => void,
+    setPedigreeData: (data: PedigreeData) => void,
     setLoading: (loading: boolean) => void
   ) => {
     setLoading(true);
@@ -59,12 +73,24 @@ export default function TestMating() {
         return;
       }
 
-      const pedigreeData = data.data;
+      const pedigreeData = data.data as PedigreeData;
       console.log('Pedigree data received:', pedigreeData);
+
+      // Store the full pedigree data
+      setPedigreeData(pedigreeData);
 
       if (pedigreeData.name) {
         setName(pedigreeData.name);
-        toast.success(`Fant katt: ${pedigreeData.name}`);
+        
+        // Count ancestors found
+        const ancestorCount = [
+          pedigreeData.sire, pedigreeData.dam,
+          pedigreeData.sire_sire, pedigreeData.sire_dam, pedigreeData.dam_sire, pedigreeData.dam_dam,
+          pedigreeData.sire_sire_sire, pedigreeData.sire_sire_dam, pedigreeData.sire_dam_sire, pedigreeData.sire_dam_dam,
+          pedigreeData.dam_sire_sire, pedigreeData.dam_sire_dam, pedigreeData.dam_dam_sire, pedigreeData.dam_dam_dam
+        ].filter(a => a?.name).length;
+        
+        toast.success(`Fant ${pedigreeData.name} med ${ancestorCount} forfedre`);
       } else {
         toast.info('Kunne ikke finne navn fra stamtavlen');
       }
@@ -80,6 +106,7 @@ export default function TestMating() {
     file: File, 
     setPedigree: (url: string) => void,
     setName: (name: string) => void,
+    setPedigreeData: (data: PedigreeData) => void,
     setLoading: (loading: boolean) => void,
     clearCatId: () => void
   ) => {
@@ -94,7 +121,7 @@ export default function TestMating() {
       clearCatId();
       setPedigree(dataUrl);
       toast.success('Stamtavle lastet opp');
-      await parsePedigreeImage(dataUrl, false, setName, setLoading);
+      await parsePedigreeImage(dataUrl, false, setName, setPedigreeData, setLoading);
     };
     reader.readAsDataURL(file);
   }, [parsePedigreeImage]);
@@ -102,6 +129,7 @@ export default function TestMating() {
   const handlePaste = useCallback(async (
     setPedigree: (url: string) => void,
     setName: (name: string) => void,
+    setPedigreeData: (data: PedigreeData) => void,
     setLoading: (loading: boolean) => void,
     clearCatId: () => void
   ) => {
@@ -117,7 +145,7 @@ export default function TestMating() {
             clearCatId();
             setPedigree(dataUrl);
             toast.success('Stamtavle limt inn');
-            await parsePedigreeImage(dataUrl, false, setName, setLoading);
+            await parsePedigreeImage(dataUrl, false, setName, setPedigreeData, setLoading);
           };
           reader.readAsDataURL(blob);
           return;
@@ -132,19 +160,13 @@ export default function TestMating() {
   const handleUrlBlur = useCallback(async (
     url: string,
     setName: (name: string) => void,
+    setPedigreeData: (data: PedigreeData) => void,
     setLoading: (loading: boolean) => void
   ) => {
     if (url && url.startsWith('http')) {
-      await parsePedigreeImage(url, true, setName, setLoading);
+      await parsePedigreeImage(url, true, setName, setPedigreeData, setLoading);
     }
   }, [parsePedigreeImage]);
-
-  const calculateInbreeding = () => {
-    if ((selectedDam || externalDamPedigree) && (selectedSire || externalSirePedigree)) {
-      return (Math.random() * 5 + 0.5).toFixed(2);
-    }
-    return null;
-  };
 
   const handleTestMating = () => {
     if (!damId && !externalDamPedigree) {
@@ -155,20 +177,34 @@ export default function TestMating() {
       toast.error('Velg en hann eller last opp stamtavle');
       return;
     }
+    
+    // Calculate COI if we have pedigree data
+    if (sirePedigreeData && damPedigreeData) {
+      const result = calculateCOI(sirePedigreeData, damPedigreeData);
+      setCoiResult(result);
+      console.log('COI calculation result:', result);
+    } else {
+      // No pedigree data available
+      setCoiResult(null);
+    }
+    
     setShowResult(true);
   };
-
-  const inbreedingCoefficient = showResult ? calculateInbreeding() : null;
 
   const getDamName = () => selectedDam?.name || externalDamName || 'Ekstern hunn';
   const getSireName = () => selectedSire?.name || externalSireName || 'Ekstern hann';
   const getDamPedigreeImage = () => selectedDam?.pedigreeImage || externalDamPedigree;
   const getSirePedigreeImage = () => selectedSire?.pedigreeImage || externalSirePedigree;
 
+  const riskLevel = coiResult ? getCOIRiskLevel(coiResult.coi) : null;
+
   return (
     <div className="space-y-6 max-w-4xl">
       <div className="page-header">
         <h1 className="page-title">Testparring</h1>
+        <p className="text-muted-foreground">
+          Beregn innavelskoeffisient (COI) basert på Wright's formel
+        </p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
@@ -180,7 +216,13 @@ export default function TestMating() {
           
           <div className="space-y-2">
             <Label>Velg fra dine katter</Label>
-            <Select value={damId} onValueChange={(v) => { setDamId(v); setExternalDamPedigree(''); setExternalDamName(''); }}>
+            <Select value={damId} onValueChange={(v) => { 
+              setDamId(v); 
+              setExternalDamPedigree(''); 
+              setExternalDamName(''); 
+              setDamPedigreeData(null);
+              setShowResult(false);
+            }}>
               <SelectTrigger>
                 <SelectValue placeholder="Velg hunn..." />
               </SelectTrigger>
@@ -217,8 +259,8 @@ export default function TestMating() {
             <div className="flex gap-2 mt-2">
               <Input 
                 value={externalDamPedigree.startsWith('data:') ? 'Bilde lastet opp' : externalDamPedigree}
-                onChange={(e) => { setDamId(''); setExternalDamPedigree(e.target.value); }}
-                onBlur={(e) => handleUrlBlur(e.target.value, setExternalDamName, setIsParsingDam)}
+                onChange={(e) => { setDamId(''); setExternalDamPedigree(e.target.value); setShowResult(false); }}
+                onBlur={(e) => handleUrlBlur(e.target.value, setExternalDamName, setDamPedigreeData, setIsParsingDam)}
                 placeholder="Stamtavle-URL..."
                 className="flex-1"
                 disabled={!!damId || isParsingDam}
@@ -230,7 +272,7 @@ export default function TestMating() {
                 ref={damPedigreeInputRef}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) handleFileUpload(file, setExternalDamPedigree, setExternalDamName, setIsParsingDam, () => setDamId(''));
+                  if (file) handleFileUpload(file, setExternalDamPedigree, setExternalDamName, setDamPedigreeData, setIsParsingDam, () => { setDamId(''); setShowResult(false); });
                 }}
               />
               <Button 
@@ -247,7 +289,7 @@ export default function TestMating() {
                 type="button" 
                 variant="outline" 
                 size="icon"
-                onClick={() => handlePaste(setExternalDamPedigree, setExternalDamName, setIsParsingDam, () => setDamId(''))}
+                onClick={() => handlePaste(setExternalDamPedigree, setExternalDamName, setDamPedigreeData, setIsParsingDam, () => { setDamId(''); setShowResult(false); })}
                 title="Lim inn fra utklippstavle"
                 disabled={isParsingDam}
               >
@@ -264,6 +306,12 @@ export default function TestMating() {
                   alt="Ekstern stamtavle" 
                   className="max-h-40 object-contain rounded border"
                 />
+                {damPedigreeData && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {[damPedigreeData.sire, damPedigreeData.dam, damPedigreeData.sire_sire, damPedigreeData.sire_dam, 
+                      damPedigreeData.dam_sire, damPedigreeData.dam_dam].filter(a => a?.name).length} forfedre funnet
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -277,7 +325,13 @@ export default function TestMating() {
           
           <div className="space-y-2">
             <Label>Velg fra dine katter</Label>
-            <Select value={sireId} onValueChange={(v) => { setSireId(v); setExternalSirePedigree(''); setExternalSireName(''); }}>
+            <Select value={sireId} onValueChange={(v) => { 
+              setSireId(v); 
+              setExternalSirePedigree(''); 
+              setExternalSireName(''); 
+              setSirePedigreeData(null);
+              setShowResult(false);
+            }}>
               <SelectTrigger>
                 <SelectValue placeholder="Velg hann..." />
               </SelectTrigger>
@@ -314,11 +368,11 @@ export default function TestMating() {
             <div className="flex gap-2 mt-2">
               <Input 
                 value={externalSirePedigree.startsWith('data:') ? 'Bilde lastet opp' : externalSirePedigree}
-                onChange={(e) => { setSireId(''); setExternalSirePedigree(e.target.value); }}
-                onBlur={(e) => handleUrlBlur(e.target.value, setExternalSireName, setIsParsingSire)}
+                onChange={(e) => { setSireId(''); setExternalSirePedigree(e.target.value); setShowResult(false); }}
+                onBlur={(e) => handleUrlBlur(e.target.value, setExternalSireName, setSirePedigreeData, setIsParsingSire)}
                 placeholder="Stamtavle-URL..."
                 className="flex-1"
-                disabled={!!sireId || isParsinosire}
+                disabled={!!sireId || isParsingSire}
               />
               <input
                 type="file"
@@ -327,7 +381,7 @@ export default function TestMating() {
                 ref={sirePedigreeInputRef}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) handleFileUpload(file, setExternalSirePedigree, setExternalSireName, setIsParsingSire, () => setSireId(''));
+                  if (file) handleFileUpload(file, setExternalSirePedigree, setExternalSireName, setSirePedigreeData, setIsParsingSire, () => { setSireId(''); setShowResult(false); });
                 }}
               />
               <Button 
@@ -336,17 +390,17 @@ export default function TestMating() {
                 size="icon"
                 onClick={() => sirePedigreeInputRef.current?.click()}
                 title="Last opp stamtavle"
-                disabled={isParsinosire}
+                disabled={isParsingSire}
               >
-                {isParsinosire ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                {isParsingSire ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
               </Button>
               <Button 
                 type="button" 
                 variant="outline" 
                 size="icon"
-                onClick={() => handlePaste(setExternalSirePedigree, setExternalSireName, setIsParsingSire, () => setSireId(''))}
+                onClick={() => handlePaste(setExternalSirePedigree, setExternalSireName, setSirePedigreeData, setIsParsingSire, () => { setSireId(''); setShowResult(false); })}
                 title="Lim inn fra utklippstavle"
-                disabled={isParsinosire}
+                disabled={isParsingSire}
               >
                 <Clipboard className="h-4 w-4" />
               </Button>
@@ -361,6 +415,12 @@ export default function TestMating() {
                   alt="Ekstern stamtavle" 
                   className="max-h-40 object-contain rounded border"
                 />
+                {sirePedigreeData && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {[sirePedigreeData.sire, sirePedigreeData.dam, sirePedigreeData.sire_sire, sirePedigreeData.sire_dam,
+                      sirePedigreeData.dam_sire, sirePedigreeData.dam_dam].filter(a => a?.name).length} forfedre funnet
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -372,7 +432,7 @@ export default function TestMating() {
           onClick={handleTestMating} 
           size="lg" 
           className="gap-2"
-          disabled={isParsingDam || isParsinosire}
+          disabled={isParsingDam || isParsingSire}
         >
           <Heart className="h-5 w-5" />
           Beregn parring
@@ -402,25 +462,48 @@ export default function TestMating() {
 
             {/* Innavelskoeffisient */}
             <div className="space-y-2">
-              <h3 className="font-medium">Innavelskoeffisient (COI)</h3>
+              <h3 className="font-medium flex items-center gap-2">
+                Innavelskoeffisient (COI)
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p>Beregnet med Wright's formel basert på felles forfedre i stamtavlene.</p>
+                      <p className="mt-1 text-xs">F = Σ (1/2)^(n1+n2+1)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </h3>
               <div className="p-4 bg-muted rounded-lg">
-                {inbreedingCoefficient ? (
+                {coiResult ? (
                   <div className="text-center">
-                    <p className={`text-3xl font-bold ${
-                      parseFloat(inbreedingCoefficient) < 3 ? 'text-green-500' : 
-                      parseFloat(inbreedingCoefficient) < 6 ? 'text-yellow-500' : 'text-red-500'
-                    }`}>
-                      {inbreedingCoefficient}%
+                    <p className={`text-3xl font-bold ${riskLevel?.color}`}>
+                      {coiResult.coi.toFixed(2)}%
                     </p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      {parseFloat(inbreedingCoefficient) < 3 ? 'Lav innavelsgrad ✓' : 
-                       parseFloat(inbreedingCoefficient) < 6 ? 'Moderat innavelsgrad' : 'Høy innavelsgrad ⚠'}
+                      {riskLevel?.description}
                     </p>
+                    {coiResult.commonAncestors.length > 0 && (
+                      <div className="mt-3 text-left">
+                        <p className="text-xs font-medium mb-1">Felles forfedre:</p>
+                        <ul className="text-xs text-muted-foreground">
+                          {coiResult.commonAncestors.map((ancestor, idx) => (
+                            <li key={idx}>
+                              • {ancestor.name} ({(ancestor.contribution * 100).toFixed(2)}%)
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center">
-                    Velg begge foreldre for å beregne COI
-                  </p>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">
+                      Last opp stamtavler for begge katter for å beregne COI
+                    </p>
+                  </div>
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
@@ -457,6 +540,29 @@ export default function TestMating() {
               </div>
             </div>
           )}
+
+          {/* COI Reference Table */}
+          <div className="pt-4 border-t">
+            <h3 className="font-medium mb-2">COI-referanse</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+              <div className="p-2 bg-muted rounded">
+                <p className="font-medium">Mor-sønn / Far-datter</p>
+                <p className="text-muted-foreground">25%</p>
+              </div>
+              <div className="p-2 bg-muted rounded">
+                <p className="font-medium">Helsøsken</p>
+                <p className="text-muted-foreground">25%</p>
+              </div>
+              <div className="p-2 bg-muted rounded">
+                <p className="font-medium">Halvsøsken</p>
+                <p className="text-muted-foreground">12.5%</p>
+              </div>
+              <div className="p-2 bg-muted rounded">
+                <p className="font-medium">Besteforeldre-barnebarn</p>
+                <p className="text-muted-foreground">12.5%</p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

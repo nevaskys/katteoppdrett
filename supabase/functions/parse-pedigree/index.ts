@@ -6,6 +6,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface Ancestor {
+  name: string;
+  registration?: string;
+}
+
 interface PedigreeData {
   name?: string;
   breed?: string;
@@ -15,6 +20,21 @@ interface PedigreeData {
   registration?: string;
   chipNumber?: string;
   gender?: 'male' | 'female';
+  // Full pedigree tree
+  sire?: Ancestor;
+  dam?: Ancestor;
+  sire_sire?: Ancestor;
+  sire_dam?: Ancestor;
+  dam_sire?: Ancestor;
+  dam_dam?: Ancestor;
+  sire_sire_sire?: Ancestor;
+  sire_sire_dam?: Ancestor;
+  sire_dam_sire?: Ancestor;
+  sire_dam_dam?: Ancestor;
+  dam_sire_sire?: Ancestor;
+  dam_sire_dam?: Ancestor;
+  dam_dam_sire?: Ancestor;
+  dam_dam_dam?: Ancestor;
 }
 
 serve(async (req) => {
@@ -42,6 +62,77 @@ serve(async (req) => {
       );
     }
 
+    const pedigreePrompt = `Analyser dette stamtavle-bildet for en katt. Ekstraher HELE stamtavlen med alle forfedre.
+
+VIKTIG: En stamtavle har et hierarkisk format der:
+- Hovedkatten er subjektet
+- Far (Sire) er på høyre side øverst
+- Mor (Dam) er på høyre side nederst
+- Besteforeldre og oldeforeldre er videre til høyre
+
+Ekstraher følgende informasjon:
+
+1. HOVEDKATTEN:
+- name: Kattens navn
+- breed: Rase
+- emsCode: EMS-kode (f.eks. NFO n 09 24)
+- color: Farge beskrivelse
+- birthDate: Fødselsdato (YYYY-MM-DD)
+- registration: Registreringsnummer
+- chipNumber: Chip-nummer
+- gender: male/female
+
+2. FORELDRE (generasjon 1):
+- sire: Far (name, registration)
+- dam: Mor (name, registration)
+
+3. BESTEFORELDRE (generasjon 2):
+- sire_sire: Farfar (name, registration)
+- sire_dam: Farmor (name, registration)
+- dam_sire: Morfar (name, registration)
+- dam_dam: Mormor (name, registration)
+
+4. OLDEFORELDRE (generasjon 3):
+- sire_sire_sire: Farfars far (name, registration)
+- sire_sire_dam: Farfars mor (name, registration)
+- sire_dam_sire: Farmors far (name, registration)
+- sire_dam_dam: Farmors mor (name, registration)
+- dam_sire_sire: Morfars far (name, registration)
+- dam_sire_dam: Morfars mor (name, registration)
+- dam_dam_sire: Mormors far (name, registration)
+- dam_dam_dam: Mormors mor (name, registration)
+
+Returner BARE et JSON-objekt med denne strukturen:
+{
+  "name": "kattens navn",
+  "breed": "rase",
+  "emsCode": "EMS-kode",
+  "color": "farge",
+  "birthDate": "YYYY-MM-DD",
+  "registration": "reg.nr",
+  "chipNumber": "chip eller null",
+  "gender": "male eller female",
+  "sire": {"name": "fars navn", "registration": "reg.nr"},
+  "dam": {"name": "mors navn", "registration": "reg.nr"},
+  "sire_sire": {"name": "farfars navn", "registration": "reg.nr"},
+  "sire_dam": {"name": "farmors navn", "registration": "reg.nr"},
+  "dam_sire": {"name": "morfars navn", "registration": "reg.nr"},
+  "dam_dam": {"name": "mormors navn", "registration": "reg.nr"},
+  "sire_sire_sire": {"name": "navn", "registration": "reg.nr"},
+  "sire_sire_dam": {"name": "navn", "registration": "reg.nr"},
+  "sire_dam_sire": {"name": "navn", "registration": "reg.nr"},
+  "sire_dam_dam": {"name": "navn", "registration": "reg.nr"},
+  "dam_sire_sire": {"name": "navn", "registration": "reg.nr"},
+  "dam_sire_dam": {"name": "navn", "registration": "reg.nr"},
+  "dam_dam_sire": {"name": "navn", "registration": "reg.nr"},
+  "dam_dam_dam": {"name": "navn", "registration": "reg.nr"}
+}
+
+VIKTIG: 
+- Bruk null for felt/forfedre som ikke finnes i bildet
+- Returner KUN JSON, ingen annen tekst
+- Prøv å lese alle navn så nøyaktig som mulig`;
+
     let imageContent: { type: string; image_url?: { url: string }; text?: string }[];
 
     if (imageData) {
@@ -53,32 +144,7 @@ serve(async (req) => {
         },
         {
           type: "text",
-          text: `Analyser dette stamtavle-bildet for en katt. Ekstraher følgende informasjon om katten (IKKE foreldrene):
-          
-- Navn på katten
-- Rase (breed)
-- EMS-kode (f.eks. NFO n 09 24, SBI a 21 33, MCO ns 22 osv.)
-- Farge/mønster beskrivelse
-- Fødselsdato (i format YYYY-MM-DD)
-- Registreringsnummer
-- Chip-nummer (hvis synlig)
-- Kjønn (male/female)
-
-Returner BARE en JSON-objekt med disse feltene (bruk null for felt som ikke finnes):
-{
-  "name": "kattens navn",
-  "breed": "rase",
-  "emsCode": "EMS-kode (f.eks. NFO n 09 24)",
-  "color": "farge beskrivelse",
-  "birthDate": "YYYY-MM-DD",
-  "registration": "registreringsnummer",
-  "chipNumber": "chip-nummer eller null",
-  "gender": "male eller female"
-}
-
-VIKTIG: 
-- EMS-kode er standard FIFe-fargekode og skal ekstraheres separat fra fargebeskrivelsen
-- Returner KUN JSON, ingen annen tekst.`
+          text: pedigreePrompt
         }
       ];
     } else {
@@ -102,32 +168,7 @@ VIKTIG:
           },
           {
             type: "text",
-            text: `Analyser dette stamtavle-bildet for en katt. Ekstraher følgende informasjon om katten (IKKE foreldrene):
-            
-- Navn på katten
-- Rase (breed)
-- EMS-kode (f.eks. NFO n 09 24, SBI a 21 33, MCO ns 22 osv.)
-- Farge/mønster beskrivelse
-- Fødselsdato (i format YYYY-MM-DD)
-- Registreringsnummer
-- Chip-nummer (hvis synlig)
-- Kjønn (male/female)
-
-Returner BARE en JSON-objekt med disse feltene (bruk null for felt som ikke finnes):
-{
-  "name": "kattens navn",
-  "breed": "rase",
-  "emsCode": "EMS-kode (f.eks. NFO n 09 24)",
-  "color": "farge beskrivelse",
-  "birthDate": "YYYY-MM-DD",
-  "registration": "registreringsnummer",
-  "chipNumber": "chip-nummer eller null",
-  "gender": "male eller female"
-}
-
-VIKTIG: 
-- EMS-kode er standard FIFe-fargekode og skal ekstraheres separat fra fargebeskrivelsen
-- Returner KUN JSON, ingen annen tekst.`
+            text: pedigreePrompt
           }
         ];
       } catch (urlError) {
@@ -155,7 +196,7 @@ VIKTIG:
             content: imageContent
           }
         ],
-        max_tokens: 1000,
+        max_tokens: 2000,
       }),
     });
 

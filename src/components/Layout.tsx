@@ -1,8 +1,10 @@
 import { ReactNode, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Cat, Users, ClipboardList, CheckSquare, Home, Menu, X, Heart } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Cat, Users, ClipboardList, CheckSquare, Home, Menu, X, Heart, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface LayoutProps {
   children: ReactNode;
@@ -19,7 +21,15 @@ const navItems = [
 
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut, user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success('Logget ut');
+    navigate('/auth');
+  };
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -81,6 +91,19 @@ export function Layout({ children }: LayoutProps) {
             );
           })}
         </nav>
+        
+        {user && (
+          <div className="p-4 border-t border-border">
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-muted-foreground hover:text-foreground"
+              onClick={handleSignOut}
+            >
+              <LogOut className="h-5 w-5 mr-3" />
+              Logg ut
+            </Button>
+          </div>
+        )}
       </aside>
 
       {/* Main content - with left margin for fixed sidebar */}

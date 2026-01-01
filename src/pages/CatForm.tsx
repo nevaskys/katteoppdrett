@@ -2,7 +2,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft, Upload, Clipboard, Loader2, Sparkles, Plus, X } from 'lucide-react';
+import { ArrowLeft, Upload, Clipboard, Loader2, Sparkles, Plus, X, ChevronDown, ChevronUp, Heart } from 'lucide-react';
 import { useData } from '@/context/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,10 +16,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { useRef, useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { HealthTest } from '@/types';
+import { HealthTest, PreviousLitter } from '@/types';
 
 const DEFAULT_HEALTH_TESTS = [
   { id: 'helseattest', name: 'Helseattest', completed: false },
@@ -35,6 +47,7 @@ const catSchema = z.object({
   chipNumber: z.string().optional(),
   registration: z.string().optional(),
   color: z.string().min(1, 'Farge er påkrevd'),
+  emsCode: z.string().optional(),
   healthNotes: z.string().optional(),
   imageUrl: z.string().optional(),
   pedigreeImageUrl: z.string().optional(),
@@ -50,6 +63,9 @@ export default function CatForm() {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [isParsingPedigree, setIsParsingPedigree] = useState(false);
   const [newTestName, setNewTestName] = useState('');
+  const [pedigreeOpen, setPedigreeOpen] = useState(true);
+  const [testMatingOpen, setTestMatingOpen] = useState(false);
+  const [selectedMateId, setSelectedMateId] = useState<string>('');
   
   const existingCat = id ? cats.find(c => c.id === id) : null;
   const isEditing = !!existingCat;
@@ -62,6 +78,11 @@ export default function CatForm() {
     return DEFAULT_HEALTH_TESTS.map(t => ({ ...t }));
   });
 
+  // Initialize previous litters
+  const [previousLitters, setPreviousLitters] = useState<PreviousLitter[]>(
+    existingCat?.previousLitters || []
+  );
+
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<CatFormData>({
     resolver: zodResolver(catSchema),
     defaultValues: existingCat ? {
@@ -72,6 +93,7 @@ export default function CatForm() {
       chipNumber: existingCat.chipNumber || '',
       registration: existingCat.registration || '',
       color: existingCat.color,
+      emsCode: existingCat.emsCode || '',
       healthNotes: existingCat.healthNotes || '',
       imageUrl: existingCat.images[0] || '',
       pedigreeImageUrl: existingCat.pedigreeImage || '',
@@ -104,13 +126,46 @@ export default function CatForm() {
   };
 
   const removeCustomTest = (testId: string) => {
-    // Only allow removing custom tests (not default ones)
     if (DEFAULT_HEALTH_TESTS.some(t => t.id === testId)) return;
     setHealthTests(prev => prev.filter(test => test.id !== testId));
   };
 
+  // Previous litter management
+  const addPreviousLitter = () => {
+    const newLitter: PreviousLitter = {
+      id: crypto.randomUUID(),
+      birthDate: '',
+      kittenCount: 0,
+    };
+    setPreviousLitters(prev => [...prev, newLitter]);
+  };
+
+  const updatePreviousLitter = (litterId: string, field: keyof PreviousLitter, value: string | number) => {
+    setPreviousLitters(prev => prev.map(litter =>
+      litter.id === litterId ? { ...litter, [field]: value } : litter
+    ));
+  };
+
+  const removePreviousLitter = (litterId: string) => {
+    setPreviousLitters(prev => prev.filter(litter => litter.id !== litterId));
+  };
+
   const pedigreeImageUrl = watch('pedigreeImageUrl');
   const imageUrl = watch('imageUrl');
+  const currentGender = watch('gender');
+
+  // Get potential mates (opposite gender)
+  const potentialMates = cats.filter(c => 
+    c.id !== id && c.gender !== currentGender
+  );
+
+  const selectedMate = potentialMates.find(c => c.id === selectedMateId);
+
+  // Simple COI calculation placeholder
+  const calculateCOI = () => {
+    // This would need actual pedigree data to calculate properly
+    return Math.random() * 5; // Placeholder
+  };
 
   const parsePedigreeImage = useCallback(async (imageData: string, isUrl: boolean = false) => {
     setIsParsingPedigree(true);
@@ -145,6 +200,10 @@ export default function CatForm() {
         setValue('breed', pedigreeData.breed);
         fieldsUpdated++;
       }
+      if (pedigreeData.emsCode) {
+        setValue('emsCode', pedigreeData.emsCode);
+        fieldsUpdated++;
+      }
       if (pedigreeData.color) {
         setValue('color', pedigreeData.color);
         fieldsUpdated++;
@@ -168,6 +227,8 @@ export default function CatForm() {
 
       if (fieldsUpdated > 0) {
         toast.success(`${fieldsUpdated} felt fylt ut fra stamtavle`);
+        // Collapse pedigree section after successful parse
+        setPedigreeOpen(false);
       } else {
         toast.info('Ingen felt kunne ekstraheres fra stamtavlen');
       }
@@ -191,7 +252,6 @@ export default function CatForm() {
       setValue(field, dataUrl);
       toast.success('Bilde lastet opp');
       
-      // Auto-parse pedigree image
       if (field === 'pedigreeImageUrl') {
         await parsePedigreeImage(dataUrl);
       }
@@ -212,7 +272,6 @@ export default function CatForm() {
             setValue(field, dataUrl);
             toast.success('Bilde limt inn fra utklippstavlen');
             
-            // Auto-parse pedigree image
             if (field === 'pedigreeImageUrl') {
               await parsePedigreeImage(dataUrl);
             }
@@ -244,10 +303,12 @@ export default function CatForm() {
       chipNumber: data.chipNumber || undefined,
       registration: data.registration || undefined,
       color: data.color,
+      emsCode: data.emsCode || undefined,
       healthTests: healthTests,
       healthNotes: data.healthNotes || undefined,
       images: data.imageUrl ? [data.imageUrl] : [],
       pedigreeImage: data.pedigreeImageUrl || undefined,
+      previousLitters: previousLitters.filter(l => l.birthDate), // Only save litters with dates
       createdAt: existingCat?.createdAt || new Date().toISOString(),
     };
 
@@ -271,61 +332,80 @@ export default function CatForm() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="stat-card space-y-6">
-        {/* Stamtavle først - fordi den fyller ut andre felt */}
-        <div className="space-y-2 p-4 border-2 border-dashed border-primary/30 rounded-lg bg-primary/5">
-          <Label className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            Stamtavle (bilde) - Fyller ut felt automatisk
-          </Label>
-          <div className="flex gap-2">
-            <Input 
-              {...register('pedigreeImageUrl')} 
-              placeholder="Stamtavle-URL eller last opp"
-              className="flex-1"
-              onBlur={handlePedigreeUrlBlur}
-              disabled={isParsingPedigree}
-            />
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              ref={pedigreeInputRef}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleFileUpload(file, 'pedigreeImageUrl');
-              }}
-            />
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="icon"
-              onClick={() => pedigreeInputRef.current?.click()}
-              title="Last opp stamtavle"
-              disabled={isParsingPedigree}
-            >
-              {isParsingPedigree ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            </Button>
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="icon"
-              onClick={() => handlePaste('pedigreeImageUrl')}
-              title="Lim inn fra utklippstavle"
-              disabled={isParsingPedigree}
-            >
-              <Clipboard className="h-4 w-4" />
-            </Button>
+        {/* Sammenleggbar stamtavle-seksjon */}
+        <Collapsible open={pedigreeOpen} onOpenChange={setPedigreeOpen}>
+          <div className="p-4 border-2 border-dashed border-primary/30 rounded-lg bg-primary/5">
+            <CollapsibleTrigger asChild>
+              <button type="button" className="w-full flex items-center justify-between">
+                <Label className="flex items-center gap-2 cursor-pointer">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  Stamtavle (bilde) - Fyller ut felt automatisk
+                  {pedigreeImageUrl && (
+                    <span className="text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded">
+                      ✓ Lastet
+                    </span>
+                  )}
+                </Label>
+                {pedigreeOpen ? (
+                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                )}
+              </button>
+            </CollapsibleTrigger>
+            
+            <CollapsibleContent className="mt-4 space-y-2">
+              <div className="flex gap-2">
+                <Input 
+                  {...register('pedigreeImageUrl')} 
+                  placeholder="Stamtavle-URL eller last opp"
+                  className="flex-1"
+                  onBlur={handlePedigreeUrlBlur}
+                  disabled={isParsingPedigree}
+                />
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  ref={pedigreeInputRef}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload(file, 'pedigreeImageUrl');
+                  }}
+                />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => pedigreeInputRef.current?.click()}
+                  title="Last opp stamtavle"
+                  disabled={isParsingPedigree}
+                >
+                  {isParsingPedigree ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => handlePaste('pedigreeImageUrl')}
+                  title="Lim inn fra utklippstavle"
+                  disabled={isParsingPedigree}
+                >
+                  <Clipboard className="h-4 w-4" />
+                </Button>
+              </div>
+              {pedigreeImageUrl && pedigreeImageUrl.startsWith('data:') && (
+                <img src={pedigreeImageUrl} alt="Stamtavle forhåndsvisning" className="mt-2 max-h-48 object-contain rounded-lg border" />
+              )}
+              {isParsingPedigree && (
+                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Analyserer stamtavle med AI...
+                </p>
+              )}
+            </CollapsibleContent>
           </div>
-          {pedigreeImageUrl && pedigreeImageUrl.startsWith('data:') && (
-            <img src={pedigreeImageUrl} alt="Stamtavle forhåndsvisning" className="mt-2 max-h-48 object-contain rounded-lg border" />
-          )}
-          {isParsingPedigree && (
-            <p className="text-sm text-muted-foreground flex items-center gap-2">
-              <Loader2 className="h-3 w-3 animate-spin" />
-              Analyserer stamtavle med AI...
-            </p>
-          )}
-        </div>
+        </Collapsible>
 
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-2">
@@ -363,6 +443,11 @@ export default function CatForm() {
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="emsCode">EMS-kode</Label>
+            <Input id="emsCode" {...register('emsCode')} placeholder="f.eks. NFO n 09 24" />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="color">Farge *</Label>
             <Input id="color" {...register('color')} placeholder="f.eks. Brown tabby" />
             {errors.color && <p className="text-sm text-destructive">{errors.color.message}</p>}
@@ -373,7 +458,7 @@ export default function CatForm() {
             <Input id="chipNumber" {...register('chipNumber')} />
           </div>
 
-          <div className="space-y-2 sm:col-span-2">
+          <div className="space-y-2">
             <Label htmlFor="registration">Registrering</Label>
             <Input id="registration" {...register('registration')} placeholder="Register & nummer" />
           </div>
@@ -420,6 +505,184 @@ export default function CatForm() {
               <img src={imageUrl} alt="Forhåndsvisning" className="mt-2 h-24 w-24 object-cover rounded-lg" />
             )}
           </div>
+
+          {/* Tidligere kull - kun for hunner */}
+          {currentGender === 'female' && (
+            <div className="space-y-4 sm:col-span-2">
+              <div className="flex items-center justify-between">
+                <Label>Tidligere kull</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addPreviousLitter}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Legg til kull
+                </Button>
+              </div>
+              
+              {previousLitters.length > 0 ? (
+                <div className="space-y-3">
+                  {previousLitters.map((litter, index) => (
+                    <div key={litter.id} className="p-3 rounded-lg border bg-background">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-sm font-medium">Kull {index + 1}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removePreviousLitter(litter.id)}
+                          className="h-6 w-6 ml-auto text-muted-foreground hover:text-destructive"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="grid sm:grid-cols-3 gap-3">
+                        <div>
+                          <Label className="text-xs">Fødselsdato</Label>
+                          <Input
+                            type="date"
+                            value={litter.birthDate}
+                            onChange={(e) => updatePreviousLitter(litter.id, 'birthDate', e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Antall kattunger</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={litter.kittenCount}
+                            onChange={(e) => updatePreviousLitter(litter.id, 'kittenCount', parseInt(e.target.value) || 0)}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Far (navn)</Label>
+                          <Input
+                            value={litter.fatherName || ''}
+                            onChange={(e) => updatePreviousLitter(litter.id, 'fatherName', e.target.value)}
+                            placeholder="Hannens navn"
+                          />
+                        </div>
+                      </div>
+                      <div className="mt-2">
+                        <Label className="text-xs">Notater</Label>
+                        <Input
+                          value={litter.notes || ''}
+                          onChange={(e) => updatePreviousLitter(litter.id, 'notes', e.target.value)}
+                          placeholder="Eventuelle notater..."
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Ingen tidligere kull registrert</p>
+              )}
+            </div>
+          )}
+
+          {/* Testparring */}
+          {isEditing && (
+            <div className="space-y-4 sm:col-span-2">
+              <Dialog open={testMatingOpen} onOpenChange={setTestMatingOpen}>
+                <DialogTrigger asChild>
+                  <Button type="button" variant="outline" className="w-full">
+                    <Heart className="h-4 w-4 mr-2" />
+                    Testparring - Se innavlsprosent
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Testparring for {existingCat?.name}</DialogTitle>
+                  </DialogHeader>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Velg {currentGender === 'female' ? 'hann' : 'hunn'}</Label>
+                      <Select value={selectedMateId} onValueChange={setSelectedMateId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Velg katt..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {potentialMates.map(cat => (
+                            <SelectItem key={cat.id} value={cat.id}>
+                              {cat.name} ({cat.emsCode || cat.color})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {selectedMate && (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="p-4 border rounded-lg">
+                            <h4 className="font-medium mb-2">
+                              {currentGender === 'female' ? '♀ Mor' : '♂ Far'}
+                            </h4>
+                            <p className="text-sm">{existingCat?.name}</p>
+                            <p className="text-xs text-muted-foreground">{existingCat?.emsCode || existingCat?.color}</p>
+                            {existingCat?.pedigreeImage && (
+                              <img 
+                                src={existingCat.pedigreeImage} 
+                                alt="Stamtavle" 
+                                className="mt-2 max-h-32 object-contain rounded"
+                              />
+                            )}
+                          </div>
+                          <div className="p-4 border rounded-lg">
+                            <h4 className="font-medium mb-2">
+                              {currentGender === 'female' ? '♂ Far' : '♀ Mor'}
+                            </h4>
+                            <p className="text-sm">{selectedMate.name}</p>
+                            <p className="text-xs text-muted-foreground">{selectedMate.emsCode || selectedMate.color}</p>
+                            {selectedMate.pedigreeImage && (
+                              <img 
+                                src={selectedMate.pedigreeImage} 
+                                alt="Stamtavle" 
+                                className="mt-2 max-h-32 object-contain rounded"
+                              />
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="p-4 border rounded-lg bg-muted/50">
+                          <h4 className="font-medium mb-2">Beregnet innavlskoeffisient (COI)</h4>
+                          <p className="text-2xl font-bold text-primary">
+                            {calculateCOI().toFixed(2)}%
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            * Dette er en foreløpig beregning. For nøyaktig COI trengs komplett stamtavle med 5+ generasjoner.
+                          </p>
+                        </div>
+
+                        <div className="p-4 border rounded-lg">
+                          <h4 className="font-medium mb-2">Mulige farger på kattunger</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Basert på foreldrenes EMS-koder kan kattungene få følgende farger:
+                          </p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {existingCat?.emsCode && selectedMate.emsCode ? (
+                              <span className="text-sm px-2 py-1 bg-primary/10 rounded">
+                                Krever genetisk analyse
+                              </span>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">
+                                Legg inn EMS-koder for å se mulige farger
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {potentialMates.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        Ingen {currentGender === 'female' ? 'hanner' : 'hunner'} registrert. 
+                        Legg til flere katter for å teste parringer.
+                      </p>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          )}
 
           {/* Helsetester */}
           <div className="space-y-4 sm:col-span-2">

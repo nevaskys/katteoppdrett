@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { Plus, CheckSquare, Trash2, Edit2 } from 'lucide-react';
-import { useData } from '@/context/DataContext';
+import { Plus, CheckSquare, Trash2, Edit2, Loader2 } from 'lucide-react';
+import { useTasks, useAddTask, useUpdateTask, useDeleteTask } from '@/hooks/useTasks';
+import { useCats } from '@/hooks/useCats';
+import { useLitters } from '@/hooks/useLitters';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -37,9 +39,16 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 export default function TasksPage() {
-  const { tasks, cats, litters, addTask, updateTask, deleteTask } = useData();
+  const { data: tasks = [], isLoading: tasksLoading } = useTasks();
+  const { data: cats = [], isLoading: catsLoading } = useCats();
+  const { data: litters = [], isLoading: littersLoading } = useLitters();
+  const addTaskMutation = useAddTask();
+  const updateTaskMutation = useUpdateTask();
+  const deleteTaskMutation = useDeleteTask();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  
+  const isLoading = tasksLoading || catsLoading || littersLoading;
   
   const [formData, setFormData] = useState({
     title: '',
@@ -78,31 +87,36 @@ export default function TasksPage() {
       return;
     }
 
-    const taskData: Task = {
-      id: editingTask?.id || crypto.randomUUID(),
+    const taskData = {
       title: formData.title,
       dueDate: formData.dueDate,
       status: formData.status,
       catId: formData.catId || undefined,
       litterId: formData.litterId || undefined,
       notes: formData.notes || undefined,
-      createdAt: editingTask?.createdAt || new Date().toISOString(),
     };
 
     if (editingTask) {
-      updateTask(taskData);
-      toast.success('Oppgave oppdatert');
+      updateTaskMutation.mutate({ ...taskData, id: editingTask.id, createdAt: editingTask.createdAt }, {
+        onSuccess: () => {
+          toast.success('Oppgave oppdatert');
+          setDialogOpen(false);
+          resetForm();
+        },
+      });
     } else {
-      addTask(taskData);
-      toast.success('Oppgave lagt til');
+      addTaskMutation.mutate(taskData as Omit<Task, 'id' | 'createdAt'>, {
+        onSuccess: () => {
+          toast.success('Oppgave lagt til');
+          setDialogOpen(false);
+          resetForm();
+        },
+      });
     }
-    
-    setDialogOpen(false);
-    resetForm();
   };
 
   const toggleTaskStatus = (task: Task) => {
-    updateTask({ ...task, status: task.status === 'pending' ? 'completed' : 'pending' });
+    updateTaskMutation.mutate({ ...task, status: task.status === 'pending' ? 'completed' : 'pending' });
   };
 
   const pendingTasks = tasks.filter(t => t.status === 'pending').sort((a, b) => 
@@ -121,6 +135,14 @@ export default function TasksPage() {
 
   const isOverdue = (date: string) => new Date(date) < new Date() && new Date(date).toDateString() !== new Date().toDateString();
   const isToday = (date: string) => new Date(date).toDateString() === new Date().toDateString();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -276,7 +298,7 @@ export default function TasksPage() {
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => deleteTask(task.id)}>Slett</AlertDialogAction>
+                            <AlertDialogAction onClick={() => deleteTaskMutation.mutate(task.id)}>Slett</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
@@ -312,7 +334,7 @@ export default function TasksPage() {
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => deleteTask(task.id)}>Slett</AlertDialogAction>
+                          <AlertDialogAction onClick={() => deleteTaskMutation.mutate(task.id)}>Slett</AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>

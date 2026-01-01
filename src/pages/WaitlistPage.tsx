@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Plus, ClipboardList, Trash2, Edit2 } from 'lucide-react';
-import { useData } from '@/context/DataContext';
+import { Plus, ClipboardList, Trash2, Edit2, Loader2 } from 'lucide-react';
+import { useWaitlist, useAddWaitlistEntry, useUpdateWaitlistEntry, useDeleteWaitlistEntry } from '@/hooks/useWaitlist';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -54,7 +54,10 @@ const statusColors: Record<WaitlistStatus, string> = {
 };
 
 export default function WaitlistPage() {
-  const { waitlist, addWaitlistEntry, updateWaitlistEntry, deleteWaitlistEntry } = useData();
+  const { data: waitlist = [], isLoading } = useWaitlist();
+  const addWaitlistMutation = useAddWaitlistEntry();
+  const updateWaitlistMutation = useUpdateWaitlistEntry();
+  const deleteWaitlistMutation = useDeleteWaitlistEntry();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<WaitlistEntry | null>(null);
   
@@ -93,32 +96,46 @@ export default function WaitlistPage() {
       return;
     }
 
-    const entryData: WaitlistEntry = {
-      id: editingEntry?.id || crypto.randomUUID(),
+    const entryData = {
       name: formData.name,
       email: formData.email,
       phone: formData.phone || undefined,
       status: formData.status,
       notes: formData.notes || undefined,
-      createdAt: editingEntry?.createdAt || new Date().toISOString(),
     };
 
     if (editingEntry) {
-      updateWaitlistEntry(entryData);
-      toast.success('Kontakt oppdatert');
+      updateWaitlistMutation.mutate({ ...entryData, id: editingEntry.id, createdAt: editingEntry.createdAt }, {
+        onSuccess: () => {
+          toast.success('Kontakt oppdatert');
+          setDialogOpen(false);
+          resetForm();
+        },
+      });
     } else {
-      addWaitlistEntry(entryData);
-      toast.success('Kontakt lagt til');
+      addWaitlistMutation.mutate(entryData as Omit<WaitlistEntry, 'id' | 'createdAt'>, {
+        onSuccess: () => {
+          toast.success('Kontakt lagt til');
+          setDialogOpen(false);
+          resetForm();
+        },
+      });
     }
-    
-    setDialogOpen(false);
-    resetForm();
   };
 
   const handleStatusChange = (entry: WaitlistEntry, status: WaitlistStatus) => {
-    updateWaitlistEntry({ ...entry, status });
-    toast.success('Status oppdatert');
+    updateWaitlistMutation.mutate({ ...entry, status }, {
+      onSuccess: () => toast.success('Status oppdatert'),
+    });
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -262,7 +279,7 @@ export default function WaitlistPage() {
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => deleteWaitlistEntry(entry.id)}>Slett</AlertDialogAction>
+                            <AlertDialogAction onClick={() => deleteWaitlistMutation.mutate(entry.id)}>Slett</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>

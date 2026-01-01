@@ -1,11 +1,19 @@
 import { Link } from 'react-router-dom';
-import { Plus, Cat as CatIcon } from 'lucide-react';
-import { useData } from '@/context/DataContext';
+import { Plus, Cat as CatIcon, Loader2 } from 'lucide-react';
+import { useCats } from '@/hooks/useCats';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 export default function CatsList() {
-  const { cats } = useData();
+  const { data: cats = [], isLoading } = useCats();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

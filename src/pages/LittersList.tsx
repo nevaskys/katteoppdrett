@@ -1,13 +1,24 @@
 import { Link } from 'react-router-dom';
-import { Plus, Users } from 'lucide-react';
-import { useData } from '@/context/DataContext';
+import { Plus, Users, Loader2 } from 'lucide-react';
+import { useLitters } from '@/hooks/useLitters';
+import { useCats } from '@/hooks/useCats';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 export default function LittersList() {
-  const { litters, cats } = useData();
+  const { data: litters = [], isLoading: littersLoading } = useLitters();
+  const { data: cats = [], isLoading: catsLoading } = useCats();
 
+  const isLoading = littersLoading || catsLoading;
   const getCatName = (id: string) => cats.find(c => c.id === id)?.name || 'Ukjent';
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

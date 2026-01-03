@@ -71,6 +71,103 @@ export type Database = {
         }
         Relationships: []
       }
+      judges: {
+        Row: {
+          country: string | null
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          organization: string | null
+          updated_at: string
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          organization?: string | null
+          updated_at?: string
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          organization?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      judging_results: {
+        Row: {
+          cat_id: string
+          created_at: string
+          date: string
+          id: string
+          images: string[] | null
+          judge_id: string | null
+          my_rating: number | null
+          notes: string | null
+          ocr_text: string | null
+          show_id: string | null
+          structured_result: Json | null
+          updated_at: string
+        }
+        Insert: {
+          cat_id: string
+          created_at?: string
+          date: string
+          id?: string
+          images?: string[] | null
+          judge_id?: string | null
+          my_rating?: number | null
+          notes?: string | null
+          ocr_text?: string | null
+          show_id?: string | null
+          structured_result?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          cat_id?: string
+          created_at?: string
+          date?: string
+          id?: string
+          images?: string[] | null
+          judge_id?: string | null
+          my_rating?: number | null
+          notes?: string | null
+          ocr_text?: string | null
+          show_id?: string | null
+          structured_result?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "judging_results_cat_id_fkey"
+            columns: ["cat_id"]
+            isOneToOne: false
+            referencedRelation: "cats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "judging_results_judge_id_fkey"
+            columns: ["judge_id"]
+            isOneToOne: false
+            referencedRelation: "judges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "judging_results_show_id_fkey"
+            columns: ["show_id"]
+            isOneToOne: false
+            referencedRelation: "shows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kittens: {
         Row: {
           color: string | null
@@ -186,6 +283,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      shows: {
+        Row: {
+          created_at: string
+          date: string | null
+          id: string
+          location: string | null
+          name: string
+          notes: string | null
+          organization: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string | null
+          id?: string
+          location?: string | null
+          name: string
+          notes?: string | null
+          organization?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string | null
+          id?: string
+          location?: string | null
+          name?: string
+          notes?: string | null
+          organization?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       tasks: {
         Row: {

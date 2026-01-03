@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
-import { ArrowLeft, Plus, Loader2, Star, X } from 'lucide-react';
+import { ArrowLeft, Plus, Loader2, Star, X, Camera, Upload, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -34,6 +34,7 @@ import {
   useJudgingResult,
 } from '@/hooks/useJudgingResults';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const formSchema = z.object({
   catId: z.string().min(1, 'Velg en katt'),
@@ -47,12 +48,31 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
+interface JudgingSheetData {
+  catName?: string;
+  judgeName?: string;
+  showName?: string;
+  date?: string;
+  ocrText?: string;
+  structuredResult?: {
+    points?: number;
+    title?: string;
+    placement?: string;
+    category?: string;
+    class?: string;
+    certificates?: string[];
+    comments?: string;
+  };
+}
+
 export default function JudgingResultForm() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const preselectedCatId = searchParams.get('catId');
   const navigate = useNavigate();
   const isEditing = !!id;
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: existingResult, isLoading: resultLoading } = useJudgingResult(id);
   const { data: cats = [], isLoading: catsLoading } = useCats();
@@ -72,6 +92,8 @@ export default function JudgingResultForm() {
   const [newShowDate, setNewShowDate] = useState('');
   const [judgeDialogOpen, setJudgeDialogOpen] = useState(false);
   const [showDialogOpen, setShowDialogOpen] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [structuredResult, setStructuredResult] = useState<JudgingSheetData['structuredResult'] | null>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -140,19 +162,139 @@ export default function JudgingResultForm() {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, analyzeImage: boolean = false) => {
     const files = e.target.files;
     if (!files) return;
     
-    Array.from(files).forEach(file => {
+    const newImages: string[] = [];
+    
+    for (const file of Array.from(files)) {
       const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setImages(prev => [...prev, event.target!.result as string]);
+      const imageData = await new Promise<string>((resolve) => {
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            resolve(event.target.result as string);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+      newImages.push(imageData);
+    }
+    
+    setImages(prev => [...prev, ...newImages]);
+    
+    // Analyze the first new image if requested
+    if (analyzeImage && newImages.length > 0) {
+      await analyzeJudgingSheet(newImages[0]);
+    }
+  };
+
+  const analyzeJudgingSheet = async (imageData: string) => {
+    setIsAnalyzing(true);
+    toast.info('Analyserer dommerseddel...');
+    
+    try {
+      const response = await supabase.functions.invoke('parse-judging-sheet', {
+        body: { imageData }
+      });
+      
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+      
+      const result = response.data;
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Kunne ikke analysere dommerseddel');
+      }
+      
+      const data: JudgingSheetData = result.data;
+      
+      // Auto-fill fields based on AI analysis
+      if (data.ocrText) {
+        form.setValue('ocrText', data.ocrText);
+      }
+      
+      if (data.date) {
+        form.setValue('date', data.date);
+      }
+      
+      // Try to match cat by name
+      if (data.catName && !form.getValues('catId')) {
+        const matchedCat = cats.find(cat => 
+          cat.name.toLowerCase().includes(data.catName!.toLowerCase()) ||
+          data.catName!.toLowerCase().includes(cat.name.toLowerCase())
+        );
+        if (matchedCat) {
+          form.setValue('catId', matchedCat.id);
+          toast.success(`Katt gjenkjent: ${matchedCat.name}`);
         }
-      };
-      reader.readAsDataURL(file);
-    });
+      }
+      
+      // Try to match judge by name
+      if (data.judgeName) {
+        const matchedJudge = judges.find(judge =>
+          judge.name.toLowerCase().includes(data.judgeName!.toLowerCase()) ||
+          data.judgeName!.toLowerCase().includes(judge.name.toLowerCase())
+        );
+        if (matchedJudge) {
+          form.setValue('judgeId', matchedJudge.id);
+          toast.success(`Dommer gjenkjent: ${matchedJudge.name}`);
+        } else {
+          // Offer to add the judge
+          setNewJudgeName(data.judgeName);
+        }
+      }
+      
+      // Try to match show by name
+      if (data.showName) {
+        const matchedShow = shows.find(show =>
+          show.name.toLowerCase().includes(data.showName!.toLowerCase()) ||
+          data.showName!.toLowerCase().includes(show.name.toLowerCase())
+        );
+        if (matchedShow) {
+          form.setValue('showId', matchedShow.id);
+          toast.success(`Utstilling gjenkjent: ${matchedShow.name}`);
+        } else {
+          // Offer to add the show
+          setNewShowName(data.showName);
+        }
+      }
+      
+      // Store structured result
+      if (data.structuredResult) {
+        setStructuredResult(data.structuredResult);
+        
+        // Add structured info to notes if available
+        const structuredNotes: string[] = [];
+        if (data.structuredResult.title) structuredNotes.push(`Tittel: ${data.structuredResult.title}`);
+        if (data.structuredResult.placement) structuredNotes.push(`Plassering: ${data.structuredResult.placement}`);
+        if (data.structuredResult.points) structuredNotes.push(`Poeng: ${data.structuredResult.points}`);
+        if (data.structuredResult.certificates?.length) structuredNotes.push(`Sertifikater: ${data.structuredResult.certificates.join(', ')}`);
+        if (data.structuredResult.comments) structuredNotes.push(`Kommentar: ${data.structuredResult.comments}`);
+        
+        if (structuredNotes.length > 0) {
+          const existingNotes = form.getValues('notes') || '';
+          const newNotes = structuredNotes.join('\n');
+          form.setValue('notes', existingNotes ? `${existingNotes}\n\n${newNotes}` : newNotes);
+        }
+      }
+      
+      toast.success('Dommerseddel analysert!');
+    } catch (error) {
+      console.error('Error analyzing judging sheet:', error);
+      toast.error(error instanceof Error ? error.message : 'Kunne ikke analysere dommerseddel');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleCameraCapture = () => {
+    cameraInputRef.current?.click();
+  };
+
+  const handleFileSelect = () => {
+    fileInputRef.current?.click();
   };
 
   const removeImage = (index: number) => {
@@ -363,15 +505,60 @@ export default function JudgingResultForm() {
           </div>
         </div>
 
-        {/* Image upload */}
-        <div className="space-y-2">
+        {/* Image upload with camera support */}
+        <div className="space-y-3">
           <Label>Bilder av dommerseddel</Label>
-          <Input
+          
+          {/* Hidden file inputs */}
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => handleImageUpload(e, true)}
+          />
+          <input
+            ref={fileInputRef}
             type="file"
             accept="image/*"
             multiple
-            onChange={handleImageUpload}
+            className="hidden"
+            onChange={(e) => handleImageUpload(e, true)}
           />
+          
+          {/* Upload buttons */}
+          <div className="flex gap-2 flex-wrap">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handleCameraCapture}
+              disabled={isAnalyzing}
+              className="flex-1 sm:flex-none"
+            >
+              <Camera className="h-4 w-4 mr-2" />
+              Ta bilde
+            </Button>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handleFileSelect}
+              disabled={isAnalyzing}
+              className="flex-1 sm:flex-none"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Velg fra galleri
+            </Button>
+          </div>
+          
+          {isAnalyzing && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted p-3 rounded-md">
+              <Sparkles className="h-4 w-4 animate-pulse" />
+              <span>Analyserer dommerseddel med AI...</span>
+              <Loader2 className="h-4 w-4 animate-spin ml-auto" />
+            </div>
+          )}
+          
           {images.length > 0 && (
             <div className="grid grid-cols-3 gap-2 mt-2">
               {images.map((img, index) => (
@@ -390,8 +577,36 @@ export default function JudgingResultForm() {
                   >
                     <X className="h-3 w-3" />
                   </Button>
+                  {index === 0 && !isAnalyzing && images.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="absolute bottom-1 left-1 right-1 h-7 text-xs"
+                      onClick={() => analyzeJudgingSheet(img)}
+                    >
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      Analyser på nytt
+                    </Button>
+                  )}
                 </div>
               ))}
+            </div>
+          )}
+          
+          {/* Show structured result if available */}
+          {structuredResult && (
+            <div className="bg-muted p-3 rounded-md space-y-1 text-sm">
+              <p className="font-medium flex items-center gap-1">
+                <Sparkles className="h-3 w-3" />
+                AI-analysert resultat:
+              </p>
+              {structuredResult.title && <p>Tittel: {structuredResult.title}</p>}
+              {structuredResult.placement && <p>Plassering: {structuredResult.placement}</p>}
+              {structuredResult.points && <p>Poeng: {structuredResult.points}</p>}
+              {structuredResult.certificates?.length && (
+                <p>Sertifikater: {structuredResult.certificates.join(', ')}</p>
+              )}
             </div>
           )}
         </div>

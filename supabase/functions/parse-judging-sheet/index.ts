@@ -21,6 +21,22 @@ interface JudgingSheetData {
     class?: string;
     certificates?: string[];
     comments?: string;
+    // Structured judging fields
+    head?: string;
+    ears?: string;
+    eyes?: string;
+    profile?: string;
+    chin?: string;
+    muzzle?: string;
+    body?: string;
+    legs?: string;
+    tail?: string;
+    coat?: string;
+    texture?: string;
+    color?: string;
+    pattern?: string;
+    condition?: string;
+    general?: string;
   };
 }
 
@@ -49,46 +65,77 @@ serve(async (req) => {
       );
     }
 
-    const judgingSheetPrompt = `Analyser dette bildet av en dommerseddel fra en katteutstilling.
+    const judgingSheetPrompt = `Analyser dette bildet av en dommerseddel fra en katteutstilling (FIFe eller tilsvarende).
 
 Ekstraher all tekst og informasjon du kan finne. Dette er typisk et håndskrevet skjema fra en dommer som vurderer en katt.
 
-Prøv å finne:
-1. Kattens navn (ofte øverst på skjemaet)
-2. Dommerens navn (signatur eller trykt navn)
-3. Utstillingens navn/sted
-4. Dato
-5. RESULTAT - Dette er VIKTIG! Se etter: EX 1, EX 2, EX, V (very good), G (good), NOM, BIS, BIV, CAC, CACIB, CAGCIB, CACS, CACM, HP, etc.
-6. Tittel/klasse (f.eks. "Champion", "Open", etc.)
-7. Sertifikater tildelt (CAC, CACIB, etc.)
-8. Plassering (1., 2., BIV, BIS, etc.)
-9. Dommerens kommentarer og vurdering
+VIKTIG - Finn følgende informasjon:
+
+1. KATTENS NAVN - Ofte øverst på skjemaet, kan være et langt navn med oppdretternavn
+2. DOMMERENS NAVN - Se etter signatur nederst eller trykt navn. Dommere har ofte utenlandske navn.
+3. UTSTILLINGENS NAVN/STED - Ofte trykt øverst
+4. DATO - Kan være trykt eller skrevet
+5. RESULTAT - SVÆRT VIKTIG! Se etter: EX 1, EX 2, EX, V (very good), G (good), NOM, BIS, BIV, CAC, CACIB, CAGCIB, CACS, CACM, HP, etc.
+
+6. STRUKTURERTE VURDERINGSFELTER - Dommerseddelen har typisk disse feltene med håndskrevne kommentarer:
+   - HODE / HEAD: Kommentar om kattens hode
+   - ØRER / EARS: Kommentar om ørene
+   - ØYNE / EYES: Kommentar om øynene
+   - PROFIL / PROFILE: Kommentar om profilen
+   - HAKE / CHIN: Kommentar om haken
+   - SNUTE / MUZZLE: Kommentar om snuten
+   - KROPP / BODY: Kommentar om kroppen
+   - BEN / LEGS: Kommentar om bena
+   - HALE / TAIL: Kommentar om halen
+   - PELS / COAT: Kommentar om pelsen
+   - TEKSTUR / TEXTURE: Kommentar om pelstekstur
+   - FARGE / COLOR: Kommentar om fargen
+   - MØNSTER / PATTERN: Kommentar om mønsteret
+   - KONDISJON / CONDITION: Kommentar om kondisjonen
+   - GENERELT / GENERAL: Generelle kommentarer
 
 Returner et JSON-objekt med denne strukturen:
 {
-  "catName": "kattens navn hvis funnet",
+  "catName": "kattens fulle navn hvis funnet",
   "judgeName": "dommerens navn hvis funnet", 
   "showName": "utstillingens navn/sted hvis funnet",
   "date": "dato i YYYY-MM-DD format hvis funnet",
-  "result": "hovedresultatet, f.eks. 'EX 1', 'EX 1 NOM', 'EX 1 CAC', 'BIS' etc. - kombiner kvalitet + plassering + eventuelle sertifikater",
-  "ocrText": "ALL tekst fra dommerseddelen, inkludert håndskrift, formatert leselig med linjeskift",
+  "result": "hovedresultatet, f.eks. 'EX 1', 'EX 1 NOM', 'EX 1 CAC', 'BIS' etc.",
+  "ocrText": "ALL tekst fra dommerseddelen, inkludert håndskrift, formatert leselig med linjeskift. Behold strukturen slik at hver seksjon er tydelig.",
   "structuredResult": {
     "points": tall eller null,
-    "title": "tittel/klasse hvis funnet",
+    "title": "tittel/klasse hvis funnet (Champion, Open, etc.)",
     "placement": "plassering hvis funnet (1, 2, BIS, BIV, NOM, etc.)",
     "category": "kategori hvis funnet",
     "class": "klasse hvis funnet",
     "certificates": ["liste", "av", "sertifikater som CAC, CACIB, etc."],
-    "comments": "dommerens kommentarer"
+    "comments": "generelle kommentarer fra dommeren",
+    "head": "kommentar om hode/head",
+    "ears": "kommentar om ører/ears",
+    "eyes": "kommentar om øyne/eyes",
+    "profile": "kommentar om profil/profile",
+    "chin": "kommentar om hake/chin",
+    "muzzle": "kommentar om snute/muzzle",
+    "body": "kommentar om kropp/body",
+    "legs": "kommentar om ben/legs",
+    "tail": "kommentar om hale/tail",
+    "coat": "kommentar om pels/coat",
+    "texture": "kommentar om tekstur/texture",
+    "color": "kommentar om farge/color",
+    "pattern": "kommentar om mønster/pattern",
+    "condition": "kommentar om kondisjon/condition",
+    "general": "generelle kommentarer"
   }
 }
 
 VIKTIG:
-- Gjør ditt beste for å lese håndskrift
-- Inkluder ALL lesbar tekst i ocrText-feltet
+- Gjør ditt beste for å lese håndskrift, selv om det er vanskelig
+- Inkluder ALL lesbar tekst i ocrText-feltet, formatert med klare seksjoner
 - result-feltet skal inneholde det samlede resultatet (f.eks. "EX 1 CAC NOM BIS")
+- For structuredResult, ekstraher innholdet som står ved siden av/under hver overskrift
 - Bruk null for felt som ikke kan identifiseres
-- Returner KUN JSON, ingen annen tekst`;
+- Returner KUN JSON, ingen annen tekst
+- Dommernavnet er ofte en signatur - prøv å tyde den`;
 
     const imageContent = [
       {
@@ -117,7 +164,7 @@ VIKTIG:
             content: imageContent
           }
         ],
-        max_tokens: 3000,
+        max_tokens: 4000,
       }),
     });
 
@@ -173,7 +220,7 @@ VIKTIG:
       };
     }
 
-    console.log('Parsed judging sheet data:', judgingData);
+    console.log('Parsed judging sheet data:', JSON.stringify(judgingData, null, 2));
 
     return new Response(
       JSON.stringify({ success: true, data: judgingData }),

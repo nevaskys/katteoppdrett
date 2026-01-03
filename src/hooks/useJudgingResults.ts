@@ -26,6 +26,7 @@ export interface JudgingResult {
   judgeId?: string;
   showId?: string;
   date: string;
+  result?: string;
   images: string[];
   ocrText?: string;
   structuredResult?: Record<string, unknown>;
@@ -64,6 +65,7 @@ interface DbJudgingResult {
   judge_id: string | null;
   show_id: string | null;
   date: string;
+  result: string | null;
   images: string[] | null;
   ocr_text: string | null;
   structured_result: Record<string, unknown> | null;
@@ -105,6 +107,7 @@ function dbToJudgingResult(db: DbJudgingResult): JudgingResult {
     judgeId: db.judge_id || undefined,
     showId: db.show_id || undefined,
     date: db.date,
+    result: db.result || undefined,
     images: db.images || [],
     ocrText: db.ocr_text || undefined,
     structuredResult: db.structured_result || undefined,
@@ -240,6 +243,7 @@ export function useAddJudgingResult() {
       judgeId?: string;
       showId?: string;
       date: string;
+      result?: string;
       images?: string[];
       ocrText?: string;
       structuredResult?: Json;
@@ -253,6 +257,7 @@ export function useAddJudgingResult() {
           judge_id: result.judgeId || null,
           show_id: result.showId || null,
           date: result.date,
+          result: result.result || null,
           images: result.images || [],
           ocr_text: result.ocrText || null,
           structured_result: result.structuredResult || null,
@@ -279,6 +284,7 @@ export function useUpdateJudgingResult() {
       judgeId?: string;
       showId?: string;
       date: string;
+      result?: string;
       images?: string[];
       ocrText?: string;
       structuredResult?: Json;
@@ -292,6 +298,7 @@ export function useUpdateJudgingResult() {
           judge_id: result.judgeId || null,
           show_id: result.showId || null,
           date: result.date,
+          result: result.result || null,
           images: result.images || [],
           ocr_text: result.ocrText || null,
           structured_result: result.structuredResult as Json || null,

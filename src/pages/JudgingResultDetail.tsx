@@ -129,6 +129,16 @@ export default function JudgingResultDetail() {
                   {new Date(result.date).toLocaleDateString('nb-NO')}
                 </dd>
               </div>
+              {result.result && (
+                <div className="flex justify-between items-center">
+                  <dt className="text-muted-foreground">Resultat</dt>
+                  <dd>
+                    <span className="bg-primary/10 text-primary px-3 py-1 rounded-full font-semibold">
+                      {result.result}
+                    </span>
+                  </dd>
+                </div>
+              )}
               <div className="flex justify-between items-center">
                 <dt className="text-muted-foreground">Katt</dt>
                 <dd>

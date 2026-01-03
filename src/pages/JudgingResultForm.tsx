@@ -23,7 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { useCats } from '@/hooks/useCats';
+import { useCats, useAddCat } from '@/hooks/useCats';
 import {
   useJudges,
   useShows,
@@ -64,6 +64,21 @@ interface JudgingSheetData {
     class?: string;
     certificates?: string[];
     comments?: string;
+    head?: string;
+    ears?: string;
+    eyes?: string;
+    profile?: string;
+    chin?: string;
+    muzzle?: string;
+    body?: string;
+    legs?: string;
+    tail?: string;
+    coat?: string;
+    texture?: string;
+    color?: string;
+    pattern?: string;
+    condition?: string;
+    general?: string;
   };
 }
 
@@ -85,6 +100,7 @@ export default function JudgingResultForm() {
   const updateJudgingResult = useUpdateJudgingResult();
   const addJudge = useAddJudge();
   const addShow = useAddShow();
+  const addCat = useAddCat();
 
   const [images, setImages] = useState<string[]>([]);
   const [newJudgeName, setNewJudgeName] = useState('');
@@ -223,7 +239,7 @@ export default function JudgingResultForm() {
         form.setValue('date', data.date);
       }
       
-      // Try to match cat by name
+      // Try to match cat by name, or create new cat if not found
       if (data.catName && !form.getValues('catId')) {
         const matchedCat = cats.find(cat => 
           cat.name.toLowerCase().includes(data.catName!.toLowerCase()) ||
@@ -232,10 +248,27 @@ export default function JudgingResultForm() {
         if (matchedCat) {
           form.setValue('catId', matchedCat.id);
           toast.success(`Katt gjenkjent: ${matchedCat.name}`);
+        } else {
+          // Create new cat automatically
+          try {
+            const newCat = await addCat.mutateAsync({
+              name: data.catName,
+              breed: 'Ukjent', // Default breed - user can update later
+              gender: 'female' as const, // Default - user can update later
+              birthDate: '',
+              color: '',
+              images: [],
+            });
+            form.setValue('catId', newCat.id);
+            toast.success(`Ny katt opprettet: ${data.catName}`);
+          } catch (catError) {
+            console.error('Error creating cat:', catError);
+            toast.warning(`Kunne ikke opprette katt "${data.catName}" automatisk`);
+          }
         }
       }
       
-      // Try to match judge by name
+      // Try to match judge by name, or create new judge if not found
       if (data.judgeName) {
         const matchedJudge = judges.find(judge =>
           judge.name.toLowerCase().includes(data.judgeName!.toLowerCase()) ||
@@ -245,8 +278,19 @@ export default function JudgingResultForm() {
           form.setValue('judgeId', matchedJudge.id);
           toast.success(`Dommer gjenkjent: ${matchedJudge.name}`);
         } else {
-          // Offer to add the judge
-          setNewJudgeName(data.judgeName);
+          // Create new judge automatically
+          try {
+            const newJudge = await addJudge.mutateAsync({
+              name: data.judgeName,
+            });
+            form.setValue('judgeId', newJudge.id);
+            toast.success(`Ny dommer opprettet: ${data.judgeName}`);
+          } catch (judgeError) {
+            console.error('Error creating judge:', judgeError);
+            // Fallback: offer to add the judge manually
+            setNewJudgeName(data.judgeName);
+            toast.warning(`Kunne ikke opprette dommer automatisk, fyll inn manuelt`);
+          }
         }
       }
       
@@ -260,7 +304,7 @@ export default function JudgingResultForm() {
           form.setValue('showId', matchedShow.id);
           toast.success(`Utstilling gjenkjent: ${matchedShow.name}`);
         } else {
-          // Offer to add the show
+          // Offer to add the show manually (don't auto-create shows)
           setNewShowName(data.showName);
         }
       }
@@ -279,10 +323,39 @@ export default function JudgingResultForm() {
           form.setValue('result', resultParts.join(' - '));
         }
         
-        // Add structured info to notes if available
+        // Build structured notes with all judging field comments
         const structuredNotes: string[] = [];
         if (data.structuredResult.points) structuredNotes.push(`Poeng: ${data.structuredResult.points}`);
-        if (data.structuredResult.comments) structuredNotes.push(`Kommentar: ${data.structuredResult.comments}`);
+        
+        // Add individual judging field comments
+        const fieldLabels: Record<string, string> = {
+          head: 'Hode',
+          ears: 'Ører',
+          eyes: 'Øyne',
+          profile: 'Profil',
+          chin: 'Hake',
+          muzzle: 'Snute',
+          body: 'Kropp',
+          legs: 'Ben',
+          tail: 'Hale',
+          coat: 'Pels',
+          texture: 'Tekstur',
+          color: 'Farge',
+          pattern: 'Mønster',
+          condition: 'Kondisjon',
+          general: 'Generelt',
+        };
+        
+        for (const [key, label] of Object.entries(fieldLabels)) {
+          const value = data.structuredResult[key as keyof typeof data.structuredResult];
+          if (value && typeof value === 'string') {
+            structuredNotes.push(`${label}: ${value}`);
+          }
+        }
+        
+        if (data.structuredResult.comments) {
+          structuredNotes.push(`\nKommentar: ${data.structuredResult.comments}`);
+        }
         
         if (structuredNotes.length > 0) {
           const existingNotes = form.getValues('notes') || '';

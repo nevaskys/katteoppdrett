@@ -112,6 +112,7 @@ export type Database = {
           my_rating: number | null
           notes: string | null
           ocr_text: string | null
+          result: string | null
           show_id: string | null
           structured_result: Json | null
           updated_at: string
@@ -126,6 +127,7 @@ export type Database = {
           my_rating?: number | null
           notes?: string | null
           ocr_text?: string | null
+          result?: string | null
           show_id?: string | null
           structured_result?: Json | null
           updated_at?: string
@@ -140,6 +142,7 @@ export type Database = {
           my_rating?: number | null
           notes?: string | null
           ocr_text?: string | null
+          result?: string | null
           show_id?: string | null
           structured_result?: Json | null
           updated_at?: string

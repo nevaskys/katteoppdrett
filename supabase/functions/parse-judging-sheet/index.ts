@@ -11,6 +11,7 @@ interface JudgingSheetData {
   judgeName?: string;
   showName?: string;
   date?: string;
+  result?: string;
   ocrText?: string;
   structuredResult?: {
     points?: number;
@@ -57,7 +58,7 @@ Prøv å finne:
 2. Dommerens navn (signatur eller trykt navn)
 3. Utstillingens navn/sted
 4. Dato
-5. Poeng eller vurdering
+5. RESULTAT - Dette er VIKTIG! Se etter: EX 1, EX 2, EX, V (very good), G (good), NOM, BIS, BIV, CAC, CACIB, CAGCIB, CACS, CACM, HP, etc.
 6. Tittel/klasse (f.eks. "Champion", "Open", etc.)
 7. Sertifikater tildelt (CAC, CACIB, etc.)
 8. Plassering (1., 2., BIV, BIS, etc.)
@@ -69,14 +70,15 @@ Returner et JSON-objekt med denne strukturen:
   "judgeName": "dommerens navn hvis funnet", 
   "showName": "utstillingens navn/sted hvis funnet",
   "date": "dato i YYYY-MM-DD format hvis funnet",
+  "result": "hovedresultatet, f.eks. 'EX 1', 'EX 1 NOM', 'EX 1 CAC', 'BIS' etc. - kombiner kvalitet + plassering + eventuelle sertifikater",
   "ocrText": "ALL tekst fra dommerseddelen, inkludert håndskrift, formatert leselig med linjeskift",
   "structuredResult": {
     "points": tall eller null,
     "title": "tittel/klasse hvis funnet",
-    "placement": "plassering hvis funnet",
+    "placement": "plassering hvis funnet (1, 2, BIS, BIV, NOM, etc.)",
     "category": "kategori hvis funnet",
     "class": "klasse hvis funnet",
-    "certificates": ["liste", "av", "sertifikater"],
+    "certificates": ["liste", "av", "sertifikater som CAC, CACIB, etc."],
     "comments": "dommerens kommentarer"
   }
 }
@@ -84,6 +86,7 @@ Returner et JSON-objekt med denne strukturen:
 VIKTIG:
 - Gjør ditt beste for å lese håndskrift
 - Inkluder ALL lesbar tekst i ocrText-feltet
+- result-feltet skal inneholde det samlede resultatet (f.eks. "EX 1 CAC NOM BIS")
 - Bruk null for felt som ikke kan identifiseres
 - Returner KUN JSON, ingen annen tekst`;
 

@@ -41,6 +41,7 @@ const formSchema = z.object({
   judgeId: z.string().optional(),
   showId: z.string().optional(),
   date: z.string().min(1, 'Dato er påkrevd'),
+  result: z.string().optional(),
   ocrText: z.string().optional(),
   myRating: z.number().min(0).max(5).optional(),
   notes: z.string().optional(),
@@ -53,6 +54,7 @@ interface JudgingSheetData {
   judgeName?: string;
   showName?: string;
   date?: string;
+  result?: string;
   ocrText?: string;
   structuredResult?: {
     points?: number;
@@ -102,6 +104,7 @@ export default function JudgingResultForm() {
       judgeId: '',
       showId: '',
       date: new Date().toISOString().split('T')[0],
+      result: '',
       ocrText: '',
       myRating: undefined,
       notes: '',
@@ -116,6 +119,7 @@ export default function JudgingResultForm() {
         judgeId: existingResult.judgeId || '',
         showId: existingResult.showId || '',
         date: existingResult.date,
+        result: existingResult.result || '',
         ocrText: existingResult.ocrText || '',
         myRating: existingResult.myRating,
         notes: existingResult.notes || '',
@@ -261,16 +265,23 @@ export default function JudgingResultForm() {
         }
       }
       
-      // Store structured result
+      // Store structured result and auto-fill result field
       if (data.structuredResult) {
         setStructuredResult(data.structuredResult);
         
+        // Build result string from structured data
+        const resultParts: string[] = [];
+        if (data.structuredResult.title) resultParts.push(data.structuredResult.title);
+        if (data.structuredResult.placement) resultParts.push(data.structuredResult.placement);
+        if (data.structuredResult.certificates?.length) resultParts.push(data.structuredResult.certificates.join(', '));
+        
+        if (resultParts.length > 0 && !form.getValues('result')) {
+          form.setValue('result', resultParts.join(' - '));
+        }
+        
         // Add structured info to notes if available
         const structuredNotes: string[] = [];
-        if (data.structuredResult.title) structuredNotes.push(`Tittel: ${data.structuredResult.title}`);
-        if (data.structuredResult.placement) structuredNotes.push(`Plassering: ${data.structuredResult.placement}`);
         if (data.structuredResult.points) structuredNotes.push(`Poeng: ${data.structuredResult.points}`);
-        if (data.structuredResult.certificates?.length) structuredNotes.push(`Sertifikater: ${data.structuredResult.certificates.join(', ')}`);
         if (data.structuredResult.comments) structuredNotes.push(`Kommentar: ${data.structuredResult.comments}`);
         
         if (structuredNotes.length > 0) {
@@ -278,6 +289,11 @@ export default function JudgingResultForm() {
           const newNotes = structuredNotes.join('\n');
           form.setValue('notes', existingNotes ? `${existingNotes}\n\n${newNotes}` : newNotes);
         }
+      }
+      
+      // Also check for result field directly from AI
+      if (data.result && !form.getValues('result')) {
+        form.setValue('result', data.result);
       }
       
       toast.success('Dommerseddel analysert!');
@@ -308,6 +324,7 @@ export default function JudgingResultForm() {
         judgeId: data.judgeId || undefined,
         showId: data.showId || undefined,
         date: data.date,
+        result: data.result || undefined,
         images,
         ocrText: data.ocrText || undefined,
         myRating: data.myRating,
@@ -383,6 +400,18 @@ export default function JudgingResultForm() {
           {form.formState.errors.date && (
             <p className="text-sm text-destructive">{form.formState.errors.date.message}</p>
           )}
+        </div>
+
+        {/* Result */}
+        <div className="space-y-2">
+          <Label>Resultat</Label>
+          <Input
+            {...form.register('result')}
+            placeholder="F.eks. EX 1, NOM, BIS, BIV, CAC..."
+          />
+          <p className="text-xs text-muted-foreground">
+            Resultat fra bedømmelsen (EX 1, EX 2, NOM, BIS, BIV, CAC, CACIB, etc.)
+          </p>
         </div>
 
         {/* Judge selection with add new */}

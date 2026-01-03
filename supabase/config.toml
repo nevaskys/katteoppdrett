@@ -1,1 +1,4 @@
 project_id = "devxrczutxbsswteyouw"
+
+[functions.parse-pedigree]
+verify_jwt = false

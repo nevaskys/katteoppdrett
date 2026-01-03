@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
-import { Cat, Users, ClipboardList, CheckSquare, Plus, Loader2 } from 'lucide-react';
+import { Cat, Users, ClipboardList, CheckSquare, Plus, Loader2, Award } from 'lucide-react';
 import { useCats } from '@/hooks/useCats';
 import { useLitters } from '@/hooks/useLitters';
 import { useWaitlist } from '@/hooks/useWaitlist';
 import { useTasks } from '@/hooks/useTasks';
+import { useJudgingResults } from '@/hooks/useJudgingResults';
 import { Button } from '@/components/ui/button';
 
 export default function Dashboard() {
@@ -11,8 +12,9 @@ export default function Dashboard() {
   const { data: litters = [], isLoading: littersLoading } = useLitters();
   const { data: waitlist = [], isLoading: waitlistLoading } = useWaitlist();
   const { data: tasks = [], isLoading: tasksLoading } = useTasks();
+  const { data: judgingResults = [], isLoading: judgingResultsLoading } = useJudgingResults();
   
-  const isLoading = catsLoading || littersLoading || waitlistLoading || tasksLoading;
+  const isLoading = catsLoading || littersLoading || waitlistLoading || tasksLoading || judgingResultsLoading;
   const pendingTasks = tasks.filter(t => t.status === 'pending');
   const totalKittens = litters.reduce((sum, l) => sum + l.kittens.length, 0);
 
@@ -28,6 +30,7 @@ export default function Dashboard() {
     { label: 'Katter', value: cats.length, icon: Cat, href: '/cats', color: 'text-primary' },
     { label: 'Kull', value: litters.length, icon: Users, href: '/litters', color: 'text-accent-foreground' },
     { label: 'Kattunger', value: totalKittens, icon: Cat, href: '/litters', color: 'text-primary' },
+    { label: 'Utstillingsresultater', value: judgingResults.length, icon: Award, href: '/judging-results', color: 'text-amber-500' },
     { label: 'Venteliste', value: waitlist.length, icon: ClipboardList, href: '/waitlist', color: 'text-muted-foreground' },
     { label: 'Ventende oppgaver', value: pendingTasks.length, icon: CheckSquare, href: '/tasks', color: 'text-destructive' },
   ];
@@ -38,7 +41,7 @@ export default function Dashboard() {
         <h1 className="page-title">Dashboard</h1>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {stats.map(stat => {
           const Icon = stat.icon;
           return (
@@ -63,6 +66,9 @@ export default function Dashboard() {
             </Button>
             <Button asChild variant="outline" className="justify-start">
               <Link to="/litters/new"><Plus className="h-4 w-4 mr-2" /> Legg til kull</Link>
+            </Button>
+            <Button asChild variant="outline" className="justify-start">
+              <Link to="/judging-results/new"><Plus className="h-4 w-4 mr-2" /> Legg til utstillingsresultat</Link>
             </Button>
             <Button asChild variant="outline" className="justify-start">
               <Link to="/waitlist"><Plus className="h-4 w-4 mr-2" /> Legg til kontakt</Link>

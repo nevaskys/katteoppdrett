@@ -3,6 +3,7 @@ import { ArrowLeft, Edit, Trash2, Cat as CatIcon, Loader2 } from 'lucide-react';
 import { useCat, useDeleteCat } from '@/hooks/useCats';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { CatJudgingResults } from '@/components/CatJudgingResults';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -146,6 +147,9 @@ export default function CatDetail() {
               <p className="text-sm text-muted-foreground whitespace-pre-wrap">{cat.healthNotes}</p>
             </div>
           )}
+
+          {/* Judging Results Section */}
+          <CatJudgingResults catId={cat.id} />
         </div>
       </div>
     </div>

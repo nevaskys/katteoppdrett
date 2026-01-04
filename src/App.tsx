@@ -19,6 +19,7 @@ import TestMating from "./pages/TestMating";
 import JudgingResultsList from "./pages/JudgingResultsList";
 import JudgingResultDetail from "./pages/JudgingResultDetail";
 import JudgingResultForm from "./pages/JudgingResultForm";
+import IdeasPage from "./pages/IdeasPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -55,6 +56,7 @@ const App = () => (
                     <Route path="/judging-results/new" element={<JudgingResultForm />} />
                     <Route path="/judging-results/:id" element={<JudgingResultDetail />} />
                     <Route path="/judging-results/:id/edit" element={<JudgingResultForm />} />
+                    <Route path="/ideas" element={<IdeasPage />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Layout>

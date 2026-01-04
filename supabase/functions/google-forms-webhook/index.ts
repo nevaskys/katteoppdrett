@@ -20,8 +20,8 @@ Deno.serve(async (req) => {
     const body = await req.json()
     console.log('Received webhook data:', body)
 
-    // Extract name and phone from the request
-    const { name, phone, email } = body
+    // Extract fields from the request
+    const { name, phone, email, notes } = body
 
     if (!name) {
       console.error('Missing required field: name')
@@ -38,6 +38,7 @@ Deno.serve(async (req) => {
         name: name,
         phone: phone || null,
         email: email || null,
+        notes: notes || null,
         status: 'waiting',
       })
       .select()

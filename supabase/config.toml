@@ -6,5 +6,8 @@ verify_jwt = false
 [functions.parse-judging-sheet]
 verify_jwt = false
 
+[functions.parse-diploma]
+verify_jwt = false
+
 [functions.google-forms-webhook]
 verify_jwt = false

@@ -1,16 +1,16 @@
 import { Badge } from '@/components/ui/badge';
 
 interface StructuredResult {
+  type?: string;
   head?: string;
-  ears?: string;
   eyes?: string;
-  body?: string;
-  legs_feet?: string;
-  tail?: string;
+  ears?: string;
   coat?: string;
-  color?: string;
+  tail?: string;
   condition?: string;
   general?: string;
+  result?: string;
+  judgeName?: string;
   [key: string]: string | undefined;
 }
 
@@ -18,20 +18,22 @@ interface StructuredJudgingDisplayProps {
   structuredResult: Record<string, unknown>;
 }
 
+// Norske labels for visning
 const labelMap: Record<string, string> = {
-  head: 'Hode',
-  ears: 'Ører',
-  eyes: 'Øyne',
-  body: 'Kropp',
-  legs_feet: 'Ben/Føtter',
-  tail: 'Hale',
-  coat: 'Pels',
-  color: 'Farge',
+  type: 'Type',
+  head: 'Hode/Head',
+  eyes: 'Øyne/Eyes',
+  ears: 'Ører/Ears',
+  coat: 'Pels/Coat',
+  tail: 'Hale/Tail',
   condition: 'Kondisjon',
-  general: 'Generelt',
+  general: 'Totalinntrykk',
+  result: 'Resultat',
+  judgeName: 'Dommer',
 };
 
-const orderedKeys = ['head', 'ears', 'eyes', 'body', 'legs_feet', 'tail', 'coat', 'color', 'condition', 'general'];
+// Rekkefølge for visning - matcher dommerseddelen
+const orderedKeys = ['type', 'head', 'eyes', 'ears', 'coat', 'tail', 'condition', 'general', 'result', 'judgeName'];
 
 export function StructuredJudgingDisplay({ structuredResult }: StructuredJudgingDisplayProps) {
   const result = structuredResult as StructuredResult;
@@ -51,7 +53,7 @@ export function StructuredJudgingDisplay({ structuredResult }: StructuredJudging
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {allKeys.map(key => {
         const value = result[key];
         if (!value || typeof value !== 'string') return null;
@@ -59,11 +61,9 @@ export function StructuredJudgingDisplay({ structuredResult }: StructuredJudging
         const label = labelMap[key] || key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
         
         return (
-          <div key={key} className="border-l-2 border-primary/30 pl-3">
-            <Badge variant="secondary" className="mb-1 text-xs font-medium">
-              {label}
-            </Badge>
-            <p className="text-sm leading-relaxed">{value}</p>
+          <div key={key} className="flex flex-col">
+            <span className="font-semibold text-foreground">{label}:</span>
+            <span className="text-muted-foreground">"{value}"</span>
           </div>
         );
       })}

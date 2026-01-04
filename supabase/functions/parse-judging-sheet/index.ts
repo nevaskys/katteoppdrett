@@ -6,37 +6,20 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Kun håndskrevne kommentarer fra dommerseddelen
 interface JudgingSheetData {
-  catName?: string;
-  judgeName?: string;
-  showName?: string;
-  date?: string;
-  result?: string;
   ocrText?: string;
   structuredResult?: {
-    points?: number;
-    title?: string;
-    placement?: string;
-    category?: string;
-    class?: string;
-    certificates?: string[];
-    comments?: string;
-    // Structured judging fields
-    head?: string;
-    ears?: string;
-    eyes?: string;
-    profile?: string;
-    chin?: string;
-    muzzle?: string;
-    body?: string;
-    legs?: string;
-    tail?: string;
-    coat?: string;
-    texture?: string;
-    color?: string;
-    pattern?: string;
-    condition?: string;
-    general?: string;
+    type?: string;        // Type/Typ
+    head?: string;        // Hode/Head
+    eyes?: string;        // Øyne/Eyes
+    ears?: string;        // Ører/Ears
+    coat?: string;        // Pels/Coat
+    tail?: string;        // Hale/Tail
+    condition?: string;   // Kondisjon/Condition
+    general?: string;     // Totalinntrykk/General Impression
+    result?: string;      // Resultat/Judgement
+    judgeName?: string;   // Dommer/Judge
   };
 }
 
@@ -65,77 +48,55 @@ serve(async (req) => {
       );
     }
 
-    const judgingSheetPrompt = `Analyser dette bildet av en dommerseddel fra en katteutstilling (FIFe eller tilsvarende).
+    const judgingSheetPrompt = `Du er en ekspert på å lese dommersedler fra katteutstillinger. 
 
-Ekstraher all tekst og informasjon du kan finne. Dette er typisk et håndskrevet skjema fra en dommer som vurderer en katt.
+Dette bildet viser en DOMMERSEDDEL med håndskrevne kommentarer fra en dommer.
 
-VIKTIG - Finn følgende informasjon:
+VIKTIG: Du skal KUN ekstrahere de HÅNDSKREVNE kommentarene fra dommeren. IGNORER all trykt header-informasjon (utstillingsnavn, EMS-kode, klasse, kjønn, fødselsdato osv.) - dette hentes fra diplomet.
 
-1. KATTENS NAVN - Ofte øverst på skjemaet, kan være et langt navn med oppdretternavn
-2. DOMMERENS NAVN - Se etter signatur nederst eller trykt navn. Dommere har ofte utenlandske navn.
-3. UTSTILLINGENS NAVN/STED - Ofte trykt øverst
-4. DATO - Kan være trykt eller skrevet
-5. RESULTAT - SVÆRT VIKTIG! Se etter: EX 1, EX 2, EX, V (very good), G (good), NOM, BIS, BIV, CAC, CACIB, CAGCIB, CACS, CACM, HP, etc.
+Dommerseddelen har disse feltene med HÅNDSKREVNE kommentarer til høyre for hver overskrift:
 
-6. STRUKTURERTE VURDERINGSFELTER - Dommerseddelen har typisk disse feltene med håndskrevne kommentarer:
-   - HODE / HEAD: Kommentar om kattens hode
-   - ØRER / EARS: Kommentar om ørene
-   - ØYNE / EYES: Kommentar om øynene
-   - PROFIL / PROFILE: Kommentar om profilen
-   - HAKE / CHIN: Kommentar om haken
-   - SNUTE / MUZZLE: Kommentar om snuten
-   - KROPP / BODY: Kommentar om kroppen
-   - BEN / LEGS: Kommentar om bena
-   - HALE / TAIL: Kommentar om halen
-   - PELS / COAT: Kommentar om pelsen
-   - TEKSTUR / TEXTURE: Kommentar om pelstekstur
-   - FARGE / COLOR: Kommentar om fargen
-   - MØNSTER / PATTERN: Kommentar om mønsteret
-   - KONDISJON / CONDITION: Kommentar om kondisjonen
-   - GENERELT / GENERAL: Generelle kommentarer
+1. "Type/Typ" - Kommentar om kattens type
+2. "Hode/Head/Kopf/Tête" - Kommentar om hodet
+3. "Øyne/Eyes/Augen/Yeux" - Kommentar om øynene  
+4. "Ører/Ears/Ohren/Oreilles" - Kommentar om ørene
+5. "Pels/Coat/Fell/Fourrure" - Kommentar om pelsen
+6. "Hale/Tail/Schwanz/Queue" - Kommentar om halen
+7. "Kondisjon/Condition" - Kommentar om kondisjonen
+8. "Totalinntrykk/General Impression/Gesamteindruck" - Generell kommentar
+9. "Resultat/Judgement/Bewertung" - Resultat (f.eks. "Ex 3", "EX1 CACS")
+10. "Dommer/Judge/Richter/Juge" - Dommerens trykte navn (IKKE signaturen, men det trykte navnet under)
 
-Returner et JSON-objekt med denne strukturen:
+EKSEMPEL fra et bilde:
+- Ved "Type/Typ" står det håndskrevet: "Well developed nice lady. Ex body + prop."
+- Ved "Hode/Head" står det: "Nice - Well developed. Good chin. Still develop. pattern"
+- Ved "Øyne/Eyes" står det: "Ex colors. Some deep set."
+- Ved "Dommer/Judge" står det trykt: "Edvardsen Geir Johan"
+
+Returner KUN dette JSON-objektet (ingen annen tekst):
 {
-  "catName": "kattens fulle navn hvis funnet",
-  "judgeName": "dommerens navn hvis funnet", 
-  "showName": "utstillingens navn/sted hvis funnet",
-  "date": "dato i YYYY-MM-DD format hvis funnet",
-  "result": "hovedresultatet, f.eks. 'EX 1', 'EX 1 NOM', 'EX 1 CAC', 'BIS' etc.",
-  "ocrText": "ALL tekst fra dommerseddelen, inkludert håndskrift, formatert leselig med linjeskift. Behold strukturen slik at hver seksjon er tydelig.",
   "structuredResult": {
-    "points": tall eller null,
-    "title": "tittel/klasse hvis funnet (Champion, Open, etc.)",
-    "placement": "plassering hvis funnet (1, 2, BIS, BIV, NOM, etc.)",
-    "category": "kategori hvis funnet",
-    "class": "klasse hvis funnet",
-    "certificates": ["liste", "av", "sertifikater som CAC, CACIB, etc."],
-    "comments": "generelle kommentarer fra dommeren",
-    "head": "kommentar om hode/head",
-    "ears": "kommentar om ører/ears",
-    "eyes": "kommentar om øyne/eyes",
-    "profile": "kommentar om profil/profile",
-    "chin": "kommentar om hake/chin",
-    "muzzle": "kommentar om snute/muzzle",
-    "body": "kommentar om kropp/body",
-    "legs": "kommentar om ben/legs",
-    "tail": "kommentar om hale/tail",
-    "coat": "kommentar om pels/coat",
-    "texture": "kommentar om tekstur/texture",
-    "color": "kommentar om farge/color",
-    "pattern": "kommentar om mønster/pattern",
-    "condition": "kommentar om kondisjon/condition",
-    "general": "generelle kommentarer"
-  }
+    "type": "håndskrevet kommentar ved Type/Typ",
+    "head": "håndskrevet kommentar ved Hode/Head",
+    "eyes": "håndskrevet kommentar ved Øyne/Eyes",
+    "ears": "håndskrevet kommentar ved Ører/Ears",
+    "coat": "håndskrevet kommentar ved Pels/Coat",
+    "tail": "håndskrevet kommentar ved Hale/Tail",
+    "condition": "håndskrevet kommentar ved Kondisjon",
+    "general": "håndskrevet kommentar ved Totalinntrykk",
+    "result": "håndskrevet resultat",
+    "judgeName": "dommerens TRYKTE navn (ikke signatur)"
+  },
+  "ocrText": "all håndskrevet tekst samlet"
 }
 
 VIKTIG:
-- Gjør ditt beste for å lese håndskrift, selv om det er vanskelig
-- Inkluder ALL lesbar tekst i ocrText-feltet, formatert med klare seksjoner
-- result-feltet skal inneholde det samlede resultatet (f.eks. "EX 1 CAC NOM BIS")
-- For structuredResult, ekstraher innholdet som står ved siden av/under hver overskrift
-- Bruk null for felt som ikke kan identifiseres
-- Returner KUN JSON, ingen annen tekst
-- Dommernavnet er ofte en signatur - prøv å tyde den`;
+- Les håndskriften så nøyaktig som mulig
+- Ignorer ALL trykt tekst i header-området (utstilling, nr, EMS-kode, klasse, kjønn, fødselsdato)
+- Fokuser KUN på de håndskrevne kommentarene i høyre kolonne
+- For "judgeName" - les det TRYKTE navnet under signaturen, ikke signaturen selv
+- Bruk null for felt som ikke kan leses
+- Returner KUN JSON, ingen annen tekst`;
 
     const imageContent = [
       {

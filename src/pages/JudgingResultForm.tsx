@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
-import { ArrowLeft, Plus, Loader2, Star, X, Camera, Upload, Sparkles } from 'lucide-react';
+import { ArrowLeft, Plus, Loader2, Star, X, Camera, Upload, Sparkles, FileText, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -35,6 +35,7 @@ import {
 } from '@/hooks/useJudgingResults';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const formSchema = z.object({
   catId: z.string().min(1, 'Velg en katt'),
@@ -48,6 +49,25 @@ const formSchema = z.object({
 });
 
 type FormData = z.infer<typeof formSchema>;
+
+interface DiplomaData {
+  showName?: string;
+  showLocation?: string;
+  showDate?: string;
+  catalogueNumber?: string;
+  catName?: string;
+  breed?: string;
+  color?: string;
+  emsCode?: string;
+  sex?: string;
+  birthDate?: string;
+  owner?: string;
+  class?: string;
+  judgeName?: string;
+  result?: string;
+  certificates?: string[];
+  ocrText?: string;
+}
 
 interface JudgingSheetData {
   catName?: string;
@@ -88,8 +108,12 @@ export default function JudgingResultForm() {
   const preselectedCatId = searchParams.get('catId');
   const navigate = useNavigate();
   const isEditing = !!id;
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Separate refs for diploma and judging sheet
+  const diplomaCameraRef = useRef<HTMLInputElement>(null);
+  const diplomaFileRef = useRef<HTMLInputElement>(null);
+  const judgingCameraRef = useRef<HTMLInputElement>(null);
+  const judgingFileRef = useRef<HTMLInputElement>(null);
 
   const { data: existingResult, isLoading: resultLoading } = useJudgingResult(id);
   const { data: cats = [], isLoading: catsLoading } = useCats();
@@ -102,7 +126,11 @@ export default function JudgingResultForm() {
   const addShow = useAddShow();
   const addCat = useAddCat();
 
+  // Separate image states
+  const [diplomaImage, setDiplomaImage] = useState<string | null>(null);
+  const [judgingSheetImage, setJudgingSheetImage] = useState<string | null>(null);
   const [images, setImages] = useState<string[]>([]);
+  
   const [newJudgeName, setNewJudgeName] = useState('');
   const [newJudgeCountry, setNewJudgeCountry] = useState('');
   const [newShowName, setNewShowName] = useState('');
@@ -110,7 +138,10 @@ export default function JudgingResultForm() {
   const [newShowDate, setNewShowDate] = useState('');
   const [judgeDialogOpen, setJudgeDialogOpen] = useState(false);
   const [showDialogOpen, setShowDialogOpen] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  
+  const [isAnalyzingDiploma, setIsAnalyzingDiploma] = useState(false);
+  const [isAnalyzingSheet, setIsAnalyzingSheet] = useState(false);
+  const [diplomaData, setDiplomaData] = useState<DiplomaData | null>(null);
   const [structuredResult, setStructuredResult] = useState<JudgingSheetData['structuredResult'] | null>(null);
 
   const form = useForm<FormData>({
@@ -182,35 +213,174 @@ export default function JudgingResultForm() {
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, analyzeImage: boolean = false) => {
-    const files = e.target.files;
-    if (!files) return;
+  // Handle diploma image upload
+  const handleDiplomaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
     
-    const newImages: string[] = [];
+    const reader = new FileReader();
+    const imageData = await new Promise<string>((resolve) => {
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          resolve(event.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
     
-    for (const file of Array.from(files)) {
-      const reader = new FileReader();
-      const imageData = await new Promise<string>((resolve) => {
-        reader.onload = (event) => {
-          if (event.target?.result) {
-            resolve(event.target.result as string);
-          }
-        };
-        reader.readAsDataURL(file);
+    setDiplomaImage(imageData);
+    setImages(prev => [...prev.filter(img => img !== diplomaImage), imageData]);
+    
+    // Analyze the diploma
+    await analyzeDiploma(imageData);
+  };
+
+  // Handle judging sheet image upload
+  const handleJudgingSheetUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    const imageData = await new Promise<string>((resolve) => {
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          resolve(event.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    
+    setJudgingSheetImage(imageData);
+    setImages(prev => [...prev.filter(img => img !== judgingSheetImage), imageData]);
+    
+    // Analyze the judging sheet
+    await analyzeJudgingSheet(imageData);
+  };
+
+  // Analyze diploma (front side)
+  const analyzeDiploma = async (imageData: string) => {
+    setIsAnalyzingDiploma(true);
+    toast.info('Analyserer diplom...');
+    
+    try {
+      const response = await supabase.functions.invoke('parse-diploma', {
+        body: { imageData }
       });
-      newImages.push(imageData);
-    }
-    
-    setImages(prev => [...prev, ...newImages]);
-    
-    // Analyze the first new image if requested
-    if (analyzeImage && newImages.length > 0) {
-      await analyzeJudgingSheet(newImages[0]);
+      
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+      
+      const result = response.data;
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Kunne ikke analysere diplom');
+      }
+      
+      const data: DiplomaData = result.data;
+      setDiplomaData(data);
+      
+      // Auto-fill form fields
+      if (data.showDate) {
+        form.setValue('date', data.showDate);
+      }
+      
+      if (data.result) {
+        form.setValue('result', data.result);
+      }
+      
+      // Try to match or create cat
+      if (data.catName && !form.getValues('catId')) {
+        const matchedCat = cats.find(cat => 
+          cat.name.toLowerCase().includes(data.catName!.toLowerCase()) ||
+          data.catName!.toLowerCase().includes(cat.name.toLowerCase())
+        );
+        if (matchedCat) {
+          form.setValue('catId', matchedCat.id);
+          toast.success(`Katt gjenkjent: ${matchedCat.name}`);
+        } else {
+          try {
+            const newCat = await addCat.mutateAsync({
+              name: data.catName,
+              breed: data.breed || 'Ukjent',
+              gender: data.sex === 'male' ? 'male' : 'female',
+              birthDate: data.birthDate || '',
+              color: data.emsCode || data.color || '',
+              images: [],
+            });
+            form.setValue('catId', newCat.id);
+            toast.success(`Ny katt opprettet: ${data.catName}`);
+          } catch (catError) {
+            console.error('Error creating cat:', catError);
+            toast.warning(`Kunne ikke opprette katt "${data.catName}" automatisk`);
+          }
+        }
+      }
+      
+      // Try to match or create judge
+      if (data.judgeName) {
+        const matchedJudge = judges.find(judge =>
+          judge.name.toLowerCase().includes(data.judgeName!.toLowerCase()) ||
+          data.judgeName!.toLowerCase().includes(judge.name.toLowerCase())
+        );
+        if (matchedJudge) {
+          form.setValue('judgeId', matchedJudge.id);
+          toast.success(`Dommer gjenkjent: ${matchedJudge.name}`);
+        } else {
+          try {
+            const newJudge = await addJudge.mutateAsync({
+              name: data.judgeName,
+            });
+            form.setValue('judgeId', newJudge.id);
+            toast.success(`Ny dommer opprettet: ${data.judgeName}`);
+          } catch (judgeError) {
+            console.error('Error creating judge:', judgeError);
+            setNewJudgeName(data.judgeName);
+            toast.warning(`Kunne ikke opprette dommer automatisk`);
+          }
+        }
+      }
+      
+      // Try to match or create show
+      if (data.showName) {
+        const matchedShow = shows.find(show =>
+          show.name.toLowerCase().includes(data.showName!.toLowerCase()) ||
+          data.showName!.toLowerCase().includes(show.name.toLowerCase())
+        );
+        if (matchedShow) {
+          form.setValue('showId', matchedShow.id);
+          toast.success(`Utstilling gjenkjent: ${matchedShow.name}`);
+        } else {
+          try {
+            const newShow = await addShow.mutateAsync({
+              name: data.showName,
+              location: data.showLocation || undefined,
+              date: data.showDate || undefined,
+            });
+            form.setValue('showId', newShow.id);
+            toast.success(`Ny utstilling opprettet: ${data.showName}`);
+          } catch (showError) {
+            console.error('Error creating show:', showError);
+            setNewShowName(data.showName);
+            setNewShowLocation(data.showLocation || '');
+            setNewShowDate(data.showDate || '');
+            toast.warning(`Kunne ikke opprette utstilling automatisk`);
+          }
+        }
+      }
+      
+      toast.success('Diplom analysert!');
+    } catch (error) {
+      console.error('Error analyzing diploma:', error);
+      toast.error(error instanceof Error ? error.message : 'Kunne ikke analysere diplom');
+    } finally {
+      setIsAnalyzingDiploma(false);
     }
   };
 
+  // Analyze judging sheet (back side with details)
   const analyzeJudgingSheet = async (imageData: string) => {
-    setIsAnalyzing(true);
+    setIsAnalyzingSheet(true);
     toast.info('Analyserer dommerseddel...');
     
     try {
@@ -230,104 +400,19 @@ export default function JudgingResultForm() {
       
       const data: JudgingSheetData = result.data;
       
-      // Auto-fill fields based on AI analysis
+      // Auto-fill OCR text
       if (data.ocrText) {
         form.setValue('ocrText', data.ocrText);
       }
       
-      if (data.date) {
-        form.setValue('date', data.date);
-      }
-      
-      // Try to match cat by name, or create new cat if not found
-      if (data.catName && !form.getValues('catId')) {
-        const matchedCat = cats.find(cat => 
-          cat.name.toLowerCase().includes(data.catName!.toLowerCase()) ||
-          data.catName!.toLowerCase().includes(cat.name.toLowerCase())
-        );
-        if (matchedCat) {
-          form.setValue('catId', matchedCat.id);
-          toast.success(`Katt gjenkjent: ${matchedCat.name}`);
-        } else {
-          // Create new cat automatically
-          try {
-            const newCat = await addCat.mutateAsync({
-              name: data.catName,
-              breed: 'Ukjent', // Default breed - user can update later
-              gender: 'female' as const, // Default - user can update later
-              birthDate: '',
-              color: '',
-              images: [],
-            });
-            form.setValue('catId', newCat.id);
-            toast.success(`Ny katt opprettet: ${data.catName}`);
-          } catch (catError) {
-            console.error('Error creating cat:', catError);
-            toast.warning(`Kunne ikke opprette katt "${data.catName}" automatisk`);
-          }
-        }
-      }
-      
-      // Try to match judge by name, or create new judge if not found
-      if (data.judgeName) {
-        const matchedJudge = judges.find(judge =>
-          judge.name.toLowerCase().includes(data.judgeName!.toLowerCase()) ||
-          data.judgeName!.toLowerCase().includes(judge.name.toLowerCase())
-        );
-        if (matchedJudge) {
-          form.setValue('judgeId', matchedJudge.id);
-          toast.success(`Dommer gjenkjent: ${matchedJudge.name}`);
-        } else {
-          // Create new judge automatically
-          try {
-            const newJudge = await addJudge.mutateAsync({
-              name: data.judgeName,
-            });
-            form.setValue('judgeId', newJudge.id);
-            toast.success(`Ny dommer opprettet: ${data.judgeName}`);
-          } catch (judgeError) {
-            console.error('Error creating judge:', judgeError);
-            // Fallback: offer to add the judge manually
-            setNewJudgeName(data.judgeName);
-            toast.warning(`Kunne ikke opprette dommer automatisk, fyll inn manuelt`);
-          }
-        }
-      }
-      
-      // Try to match show by name
-      if (data.showName) {
-        const matchedShow = shows.find(show =>
-          show.name.toLowerCase().includes(data.showName!.toLowerCase()) ||
-          data.showName!.toLowerCase().includes(show.name.toLowerCase())
-        );
-        if (matchedShow) {
-          form.setValue('showId', matchedShow.id);
-          toast.success(`Utstilling gjenkjent: ${matchedShow.name}`);
-        } else {
-          // Offer to add the show manually (don't auto-create shows)
-          setNewShowName(data.showName);
-        }
-      }
-      
-      // Store structured result and auto-fill result field
+      // Store structured result
       if (data.structuredResult) {
         setStructuredResult(data.structuredResult);
         
-        // Build result string from structured data
-        const resultParts: string[] = [];
-        if (data.structuredResult.title) resultParts.push(data.structuredResult.title);
-        if (data.structuredResult.placement) resultParts.push(data.structuredResult.placement);
-        if (data.structuredResult.certificates?.length) resultParts.push(data.structuredResult.certificates.join(', '));
-        
-        if (resultParts.length > 0 && !form.getValues('result')) {
-          form.setValue('result', resultParts.join(' - '));
-        }
-        
-        // Build structured notes with all judging field comments
+        // Build structured notes
         const structuredNotes: string[] = [];
         if (data.structuredResult.points) structuredNotes.push(`Poeng: ${data.structuredResult.points}`);
         
-        // Add individual judging field comments
         const fieldLabels: Record<string, string> = {
           head: 'Hode',
           ears: 'Ører',
@@ -364,30 +449,25 @@ export default function JudgingResultForm() {
         }
       }
       
-      // Also check for result field directly from AI
-      if (data.result && !form.getValues('result')) {
-        form.setValue('result', data.result);
-      }
-      
       toast.success('Dommerseddel analysert!');
     } catch (error) {
       console.error('Error analyzing judging sheet:', error);
       toast.error(error instanceof Error ? error.message : 'Kunne ikke analysere dommerseddel');
     } finally {
-      setIsAnalyzing(false);
+      setIsAnalyzingSheet(false);
     }
   };
 
-  const handleCameraCapture = () => {
-    cameraInputRef.current?.click();
+  const removeDiplomaImage = () => {
+    setImages(prev => prev.filter(img => img !== diplomaImage));
+    setDiplomaImage(null);
+    setDiplomaData(null);
   };
 
-  const handleFileSelect = () => {
-    fileInputRef.current?.click();
-  };
-
-  const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
+  const removeJudgingSheetImage = () => {
+    setImages(prev => prev.filter(img => img !== judgingSheetImage));
+    setJudgingSheetImage(null);
+    setStructuredResult(null);
   };
 
   const onSubmit = async (data: FormData) => {
@@ -402,6 +482,7 @@ export default function JudgingResultForm() {
         ocrText: data.ocrText || undefined,
         myRating: data.myRating,
         notes: data.notes || undefined,
+        structuredResult: structuredResult || undefined,
       };
 
       if (isEditing && id) {
@@ -431,6 +512,7 @@ export default function JudgingResultForm() {
   }
 
   const rating = form.watch('myRating');
+  const isAnalyzing = isAnalyzingDiploma || isAnalyzingSheet;
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
@@ -444,6 +526,231 @@ export default function JudgingResultForm() {
       </div>
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        
+        {/* Image Upload Section */}
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Diploma Upload */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Award className="h-4 w-4" />
+                1. Diplom (fremside)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Viser utstilling, katt, dommer, resultat
+              </p>
+              
+              <input
+                ref={diplomaCameraRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleDiplomaUpload}
+              />
+              <input
+                ref={diplomaFileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleDiplomaUpload}
+              />
+              
+              {!diplomaImage ? (
+                <div className="flex gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => diplomaCameraRef.current?.click()}
+                    disabled={isAnalyzing}
+                    className="flex-1"
+                  >
+                    <Camera className="h-4 w-4 mr-1" />
+                    Kamera
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => diplomaFileRef.current?.click()}
+                    disabled={isAnalyzing}
+                    className="flex-1"
+                  >
+                    <Upload className="h-4 w-4 mr-1" />
+                    Galleri
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="relative aspect-[3/4] w-full">
+                    <img
+                      src={diplomaImage}
+                      alt="Diplom"
+                      className="w-full h-full object-cover rounded-md"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-1 right-1 h-6 w-6"
+                      onClick={removeDiplomaImage}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  
+                  {isAnalyzingDiploma && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted p-2 rounded-md">
+                      <Sparkles className="h-3 w-3 animate-pulse" />
+                      <span>Analyserer...</span>
+                      <Loader2 className="h-3 w-3 animate-spin ml-auto" />
+                    </div>
+                  )}
+                  
+                  {diplomaData && !isAnalyzingDiploma && (
+                    <div className="bg-muted p-2 rounded-md space-y-1 text-xs">
+                      <p className="font-medium flex items-center gap-1">
+                        <Sparkles className="h-3 w-3" />
+                        Funnet:
+                      </p>
+                      {diplomaData.catName && <p>Katt: {diplomaData.catName}</p>}
+                      {diplomaData.showName && <p>Utstilling: {diplomaData.showName}</p>}
+                      {diplomaData.judgeName && <p>Dommer: {diplomaData.judgeName}</p>}
+                      {diplomaData.result && <p>Resultat: {diplomaData.result}</p>}
+                    </div>
+                  )}
+                  
+                  {!isAnalyzingDiploma && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="w-full text-xs"
+                      onClick={() => analyzeDiploma(diplomaImage)}
+                    >
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      Analyser på nytt
+                    </Button>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Judging Sheet Upload */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                2. Dommerseddel (detaljer)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Viser hode, pels, kropp osv.
+              </p>
+              
+              <input
+                ref={judgingCameraRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleJudgingSheetUpload}
+              />
+              <input
+                ref={judgingFileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleJudgingSheetUpload}
+              />
+              
+              {!judgingSheetImage ? (
+                <div className="flex gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => judgingCameraRef.current?.click()}
+                    disabled={isAnalyzing}
+                    className="flex-1"
+                  >
+                    <Camera className="h-4 w-4 mr-1" />
+                    Kamera
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => judgingFileRef.current?.click()}
+                    disabled={isAnalyzing}
+                    className="flex-1"
+                  >
+                    <Upload className="h-4 w-4 mr-1" />
+                    Galleri
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="relative aspect-[3/4] w-full">
+                    <img
+                      src={judgingSheetImage}
+                      alt="Dommerseddel"
+                      className="w-full h-full object-cover rounded-md"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-1 right-1 h-6 w-6"
+                      onClick={removeJudgingSheetImage}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  
+                  {isAnalyzingSheet && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted p-2 rounded-md">
+                      <Sparkles className="h-3 w-3 animate-pulse" />
+                      <span>Analyserer...</span>
+                      <Loader2 className="h-3 w-3 animate-spin ml-auto" />
+                    </div>
+                  )}
+                  
+                  {structuredResult && !isAnalyzingSheet && (
+                    <div className="bg-muted p-2 rounded-md space-y-1 text-xs">
+                      <p className="font-medium flex items-center gap-1">
+                        <Sparkles className="h-3 w-3" />
+                        Funnet:
+                      </p>
+                      {structuredResult.head && <p>Hode: {structuredResult.head.slice(0, 30)}...</p>}
+                      {structuredResult.body && <p>Kropp: {structuredResult.body.slice(0, 30)}...</p>}
+                      {structuredResult.coat && <p>Pels: {structuredResult.coat.slice(0, 30)}...</p>}
+                    </div>
+                  )}
+                  
+                  {!isAnalyzingSheet && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="w-full text-xs"
+                      onClick={() => analyzeJudgingSheet(judgingSheetImage)}
+                    >
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      Analyser på nytt
+                    </Button>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Cat selection */}
         <div className="space-y-2">
           <Label>Katt *</Label>
@@ -605,112 +912,6 @@ export default function JudgingResultForm() {
               </DialogContent>
             </Dialog>
           </div>
-        </div>
-
-        {/* Image upload with camera support */}
-        <div className="space-y-3">
-          <Label>Bilder av dommerseddel</Label>
-          
-          {/* Hidden file inputs */}
-          <input
-            ref={cameraInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="hidden"
-            onChange={(e) => handleImageUpload(e, true)}
-          />
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={(e) => handleImageUpload(e, true)}
-          />
-          
-          {/* Upload buttons */}
-          <div className="flex gap-2 flex-wrap">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={handleCameraCapture}
-              disabled={isAnalyzing}
-              className="flex-1 sm:flex-none"
-            >
-              <Camera className="h-4 w-4 mr-2" />
-              Ta bilde
-            </Button>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={handleFileSelect}
-              disabled={isAnalyzing}
-              className="flex-1 sm:flex-none"
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              Velg fra galleri
-            </Button>
-          </div>
-          
-          {isAnalyzing && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted p-3 rounded-md">
-              <Sparkles className="h-4 w-4 animate-pulse" />
-              <span>Analyserer dommerseddel med AI...</span>
-              <Loader2 className="h-4 w-4 animate-spin ml-auto" />
-            </div>
-          )}
-          
-          {images.length > 0 && (
-            <div className="grid grid-cols-3 gap-2 mt-2">
-              {images.map((img, index) => (
-                <div key={index} className="relative aspect-square">
-                  <img
-                    src={img}
-                    alt={`Dommerseddel ${index + 1}`}
-                    className="w-full h-full object-cover rounded-md"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-1 right-1 h-6 w-6"
-                    onClick={() => removeImage(index)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                  {index === 0 && !isAnalyzing && images.length > 0 && (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      className="absolute bottom-1 left-1 right-1 h-7 text-xs"
-                      onClick={() => analyzeJudgingSheet(img)}
-                    >
-                      <Sparkles className="h-3 w-3 mr-1" />
-                      Analyser på nytt
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-          
-          {/* Show structured result if available */}
-          {structuredResult && (
-            <div className="bg-muted p-3 rounded-md space-y-1 text-sm">
-              <p className="font-medium flex items-center gap-1">
-                <Sparkles className="h-3 w-3" />
-                AI-analysert resultat:
-              </p>
-              {structuredResult.title && <p>Tittel: {structuredResult.title}</p>}
-              {structuredResult.placement && <p>Plassering: {structuredResult.placement}</p>}
-              {structuredResult.points && <p>Poeng: {structuredResult.points}</p>}
-              {structuredResult.certificates?.length && (
-                <p>Sertifikater: {structuredResult.certificates.join(', ')}</p>
-              )}
-            </div>
-          )}
         </div>
 
         {/* OCR Text */}

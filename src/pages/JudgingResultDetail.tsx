@@ -19,6 +19,7 @@ import {
   DialogContent,
 } from '@/components/ui/dialog';
 import { useJudgingResult, useDeleteJudgingResult } from '@/hooks/useJudgingResults';
+import { StructuredJudgingDisplay } from '@/components/StructuredJudgingDisplay';
 import { toast } from 'sonner';
 
 export default function JudgingResultDetail() {
@@ -192,10 +193,8 @@ export default function JudgingResultDetail() {
 
           {result.structuredResult && (
             <div className="stat-card">
-              <h2 className="text-lg font-semibold mb-2">Strukturert resultat</h2>
-              <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto">
-                {JSON.stringify(result.structuredResult, null, 2)}
-              </pre>
+              <h2 className="text-lg font-semibold mb-4">Dommerbeskrivelse</h2>
+              <StructuredJudgingDisplay structuredResult={result.structuredResult} />
             </div>
           )}
 

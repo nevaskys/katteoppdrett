@@ -1,10 +1,24 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Loader2, Star, FileText } from 'lucide-react';
+import { Plus, Loader2, Star, FileText, Filter, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useJudgingResults } from '@/hooks/useJudgingResults';
+import { useJudgingResults, useJudges } from '@/hooks/useJudgingResults';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export default function JudgingResultsList() {
   const { data: results = [], isLoading } = useJudgingResults();
+  const { data: judges = [] } = useJudges();
+  const [selectedJudgeId, setSelectedJudgeId] = useState<string | null>(null);
+
+  const filteredResults = selectedJudgeId
+    ? results.filter(r => r.judgeId === selectedJudgeId)
+    : results;
 
   if (isLoading) {
     return (
@@ -25,17 +39,54 @@ export default function JudgingResultsList() {
         </Button>
       </div>
 
-      {results.length === 0 ? (
+      {/* Filter */}
+      {judges.length > 0 && (
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Select
+            value={selectedJudgeId || 'all'}
+            onValueChange={(value) => setSelectedJudgeId(value === 'all' ? null : value)}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filtrer på dommer" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle dommere</SelectItem>
+              {judges.map(judge => (
+                <SelectItem key={judge.id} value={judge.id}>
+                  {judge.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {selectedJudgeId && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSelectedJudgeId(null)}
+              className="h-8 w-8"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      )}
+
+      {filteredResults.length === 0 ? (
         <div className="empty-state">
           <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />
-          <p className="text-muted-foreground">Ingen utstillingsresultater registrert</p>
-          <Button asChild className="mt-4">
-            <Link to="/judging-results/new">Legg til første resultat</Link>
-          </Button>
+          <p className="text-muted-foreground">
+            {selectedJudgeId ? 'Ingen resultater for denne dommeren' : 'Ingen utstillingsresultater registrert'}
+          </p>
+          {!selectedJudgeId && (
+            <Button asChild className="mt-4">
+              <Link to="/judging-results/new">Legg til første resultat</Link>
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {results.map(result => (
+          {filteredResults.map(result => (
             <Link
               key={result.id}
               to={`/judging-results/${result.id}`}

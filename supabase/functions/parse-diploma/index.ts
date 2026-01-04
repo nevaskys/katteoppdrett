@@ -50,41 +50,49 @@ serve(async (req) => {
       );
     }
 
-    const diplomaPrompt = `Analyser dette bildet av et DIPLOM/forsiden av en dommerseddel fra en katteutstilling (FIFe/NRR/NORAK).
+    const diplomaPrompt = `Du er en OCR-ekspert som leser katteutstillingsdiplomer. Analyser dette bildet NØYE.
 
-Dette er forsiden av diplomet som viser kattens og utstillingens detaljer. Se etter følgende felt som typisk er organisert i en liste:
+SE ETTER DISSE FELTENE PÅ DIPLOMET (de står vanligvis på norsk OG engelsk):
 
-TYPISK LAYOUT:
-- Utstilling/Show: Navn på utstillingen og sted, ofte med dato
-- List No./Catalogue No.: Katalognummer
-- Katt/Cat: Kattens fulle navn (ofte med prefiks som GIC, IC, CH, etc.)
-- Rase/Breed: Rase (f.eks. NEM, NFO, MCO, RAG, BRI, etc.)
-- Farge/Colour: EMS-kode (f.eks. "NEM a 21", "NFO n 09 22")
-- Kjønn/Sex: Female/Male/Hunn/Hann
-- Fødselsdato/Born: Fødselsdato
-- Eier/Owner: Eierens navn
-- Klasse/Class: Klasse (f.eks. "3 Grand International Champion", "4 Champion", "11 Kitten")
-- Dommer/Judge: Dommerens navn
-- Resultat/Result: Resultat (f.eks. "EX1 CACS", "EX2", "EX1 CAC NOM", "BIS")
+1. "Utstilling/Show" - navn og DATO på utstillingen (VIKTIG: datoen er IKKE dagens dato, men når utstillingen var)
+2. "List No./Catalogue No." - katalognummer  
+3. "Katt/Cat" - kattens navn (kan ha titler foran som GIC, IC, CH)
+4. "Rase/Breed" - rase (NEM, NFO, MCO, etc.)
+5. "Farge/Colour" - EMS-kode
+6. "Kjønn/Sex" - Female/Male
+7. "Fødselsdato/Born" - fødselsdato
+8. "Eier/Owner" - eierens navn
+9. "Klasse/Class" - f.eks. "3 Grand International Champion"
+10. "Dommer/Judge" - dommerens FULLE navn (VIKTIG!)
+11. "Resultat/Result" - f.eks. "EX1 CACS", "EX3" (VIKTIG!)
 
-Returner et JSON-objekt med denne strukturen:
+EKSEMPEL fra bilde: Hvis du ser "Dommer/Judge: Stark Mats" så er judgeName = "Stark Mats"
+EKSEMPEL: Hvis du ser "Resultat/Result: EX1 CACS" så er result = "EX1 CACS"
+EKSEMPEL: Hvis du ser "Show: BUR, BURAK, Solberghallen, Solbergelva 24.09.2023" så er showDate = "2023-09-24"
+
+VIKTIG OM DATOER:
+- showDate er datoen som står ved "Utstilling/Show" linjen - IKKE dagens dato!
+- Konverter norsk datoformat (DD.MM.YYYY) til ISO-format (YYYY-MM-DD)
+- Eksempel: "24.09.2023" blir "2023-09-24"
+
+Returner BARE dette JSON-objektet (ingen annen tekst):
 {
-  "showName": "utstillingens navn (uten dato)",
-  "showLocation": "sted/lokasjon",
-  "showDate": "dato i YYYY-MM-DD format",
-  "catalogueNumber": "katalognummer",
-  "catName": "kattens fulle navn inkludert titler og oppdretternavn",
-  "breed": "rasekode (f.eks. NEM, NFO)",
-  "color": "full fargebeskrivelse",
-  "emsCode": "EMS-kode (f.eks. NEM a 21)",
+  "showName": "utstillingens navn uten dato",
+  "showLocation": "sted",
+  "showDate": "YYYY-MM-DD format fra Utstilling/Show linjen",
+  "catalogueNumber": "nummer",
+  "catName": "kattens fulle navn med eventuelle titler",
+  "breed": "rasekode",
+  "color": "farge",
+  "emsCode": "EMS-kode",
   "sex": "female eller male",
-  "birthDate": "fødselsdato i YYYY-MM-DD format",
+  "birthDate": "YYYY-MM-DD",
   "owner": "eierens navn",
-  "class": "klasse (f.eks. Grand International Champion, Champion, Open)",
-  "judgeName": "dommerens navn",
-  "result": "resultat (f.eks. EX1 CACS, EX1 CAC NOM BIS)",
-  "certificates": ["liste", "av", "sertifikater", "som CAC, CACIB, CACS, CAGCIB"],
-  "ocrText": "all synlig tekst fra diplomet"
+  "class": "klasse",
+  "judgeName": "dommerens fulle navn",
+  "result": "komplett resultat inkl sertifikater",
+  "certificates": ["array", "av", "sertifikater"],
+  "ocrText": "all tekst fra diplomet"
 }
 
 VIKTIG:

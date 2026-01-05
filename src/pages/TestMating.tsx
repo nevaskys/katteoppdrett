@@ -19,7 +19,78 @@ import {
 } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { calculateCOI, getCOIRiskLevel, PedigreeData, CommonAncestor } from '@/lib/coiCalculator';
+import { calculateCOI, getCOIRiskLevel, PedigreeData, CommonAncestor, normalizeName, Ancestor } from '@/lib/coiCalculator';
+
+// Color assignment for common ancestors - alternating between pink (female) and blue (male) tones
+const ancestorColorMap = new Map<string, string>();
+let colorIndex = 0;
+const femaleColors = ['#fce7f3', '#fbcfe8', '#f9a8d4', '#f472b6']; // pink shades
+const maleColors = ['#dbeafe', '#bfdbfe', '#93c5fd', '#60a5fa']; // blue shades
+
+function getAncestorColor(name: string): string {
+  const normalized = normalizeName(name);
+  if (!ancestorColorMap.has(normalized)) {
+    // Alternate between female and male colors based on index
+    const isFemale = colorIndex % 2 === 0;
+    const colors = isFemale ? femaleColors : maleColors;
+    ancestorColorMap.set(normalized, colors[Math.floor(colorIndex / 2) % colors.length]);
+    colorIndex++;
+  }
+  return ancestorColorMap.get(normalized) || '#e5e7eb';
+}
+
+function isCommonAncestor(name: string | undefined, commonAncestors: CommonAncestor[]): CommonAncestor | undefined {
+  if (!name) return undefined;
+  const normalized = normalizeName(name);
+  return commonAncestors.find(ca => {
+    const caNormalized = normalizeName(ca.name);
+    return caNormalized === normalized || 
+           caNormalized.includes(normalized) || 
+           normalized.includes(caNormalized);
+  });
+}
+
+// Component to display an ancestor with optional highlighting
+function AncestorRow({ 
+  label, 
+  ancestor, 
+  commonAncestors,
+  indent
+}: { 
+  label: string; 
+  ancestor: Ancestor | undefined; 
+  commonAncestors: CommonAncestor[];
+  indent: number;
+}) {
+  if (!ancestor?.name) {
+    return (
+      <div className="flex items-center gap-2 text-muted-foreground/50">
+        <span className="font-medium w-12">{label}:</span>
+        <span className="italic">Ukjent</span>
+      </div>
+    );
+  }
+
+  const match = isCommonAncestor(ancestor.name, commonAncestors);
+  const bgColor = match ? getAncestorColor(ancestor.name) : undefined;
+  
+  return (
+    <div 
+      className={`flex items-center gap-2 rounded px-1.5 py-0.5 ${match ? 'font-medium' : ''}`}
+      style={{ backgroundColor: bgColor }}
+    >
+      <span className="font-medium w-12 text-muted-foreground">{label}:</span>
+      <span className="truncate flex-1" title={ancestor.name}>
+        {ancestor.name}
+      </span>
+      {match && (
+        <span className="text-[10px] text-muted-foreground shrink-0">
+          ({(match.totalContribution * 100).toFixed(1)}%)
+        </span>
+      )}
+    </div>
+  );
+}
 
 export default function TestMating() {
   const { data: cats = [] } = useCats();
@@ -523,10 +594,15 @@ export default function TestMating() {
                     {coiResult.commonAncestors.length > 0 && (
                       <div className="mt-3 text-left">
                         <p className="text-xs font-medium mb-1">Felles forfedre:</p>
-                        <ul className="text-xs text-muted-foreground">
+                        <ul className="text-xs text-muted-foreground space-y-0.5">
                           {coiResult.commonAncestors.map((ancestor, idx) => (
-                            <li key={idx}>
-                              • {ancestor.name} ({(ancestor.totalContribution * 100).toFixed(2)}%)
+                            <li key={idx} className="flex items-center gap-1">
+                              <span 
+                                className="inline-block w-2 h-2 rounded-full"
+                                style={{ backgroundColor: getAncestorColor(ancestor.name) }}
+                              />
+                              <span>{ancestor.name}</span>
+                              <span className="text-muted-foreground">({(ancestor.totalContribution * 100).toFixed(2)}%)</span>
                             </li>
                           ))}
                         </ul>
@@ -547,10 +623,104 @@ export default function TestMating() {
             </div>
           </div>
 
+          {/* Visuell stamtavle med fargekoding */}
+          {(damPedigreeData || sirePedigreeData) && coiResult && (
+            <div className="space-y-4 pt-4 border-t">
+              <h3 className="font-medium">Forfedre med fargekoding</h3>
+              <p className="text-xs text-muted-foreground">
+                Gjentakende forfedre er markert med farge - rosa for hunnkatter, blå for hannkatter
+              </p>
+              
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Mors stamtavle */}
+                {damPedigreeData && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-pink-500">Mors linje ({getDamName()})</h4>
+                    <div className="text-xs space-y-1 bg-muted/50 p-3 rounded-lg">
+                      <AncestorRow 
+                        label="Far" 
+                        ancestor={damPedigreeData.sire} 
+                        commonAncestors={coiResult.commonAncestors} 
+                        indent={0}
+                      />
+                      <AncestorRow 
+                        label="Mor" 
+                        ancestor={damPedigreeData.dam} 
+                        commonAncestors={coiResult.commonAncestors}
+                        indent={0}
+                      />
+                      
+                      {/* Generation 2 */}
+                      <div className="ml-4 border-l-2 border-muted pl-2 space-y-1">
+                        <AncestorRow label="Farfar" ancestor={damPedigreeData.sire_sire} commonAncestors={coiResult.commonAncestors} indent={1} />
+                        <AncestorRow label="Farmor" ancestor={damPedigreeData.sire_dam} commonAncestors={coiResult.commonAncestors} indent={1} />
+                        <AncestorRow label="Morfar" ancestor={damPedigreeData.dam_sire} commonAncestors={coiResult.commonAncestors} indent={1} />
+                        <AncestorRow label="Mormor" ancestor={damPedigreeData.dam_dam} commonAncestors={coiResult.commonAncestors} indent={1} />
+                      </div>
+                      
+                      {/* Generation 3 */}
+                      <div className="ml-8 border-l-2 border-muted pl-2 space-y-1">
+                        <AncestorRow label="FFF" ancestor={damPedigreeData.sire_sire_sire} commonAncestors={coiResult.commonAncestors} indent={2} />
+                        <AncestorRow label="FFM" ancestor={damPedigreeData.sire_sire_dam} commonAncestors={coiResult.commonAncestors} indent={2} />
+                        <AncestorRow label="FMF" ancestor={damPedigreeData.sire_dam_sire} commonAncestors={coiResult.commonAncestors} indent={2} />
+                        <AncestorRow label="FMM" ancestor={damPedigreeData.sire_dam_dam} commonAncestors={coiResult.commonAncestors} indent={2} />
+                        <AncestorRow label="MFF" ancestor={damPedigreeData.dam_sire_sire} commonAncestors={coiResult.commonAncestors} indent={2} />
+                        <AncestorRow label="MFM" ancestor={damPedigreeData.dam_sire_dam} commonAncestors={coiResult.commonAncestors} indent={2} />
+                        <AncestorRow label="MMF" ancestor={damPedigreeData.dam_dam_sire} commonAncestors={coiResult.commonAncestors} indent={2} />
+                        <AncestorRow label="MMM" ancestor={damPedigreeData.dam_dam_dam} commonAncestors={coiResult.commonAncestors} indent={2} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Fars stamtavle */}
+                {sirePedigreeData && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-blue-500">Fars linje ({getSireName()})</h4>
+                    <div className="text-xs space-y-1 bg-muted/50 p-3 rounded-lg">
+                      <AncestorRow 
+                        label="Far" 
+                        ancestor={sirePedigreeData.sire} 
+                        commonAncestors={coiResult.commonAncestors}
+                        indent={0}
+                      />
+                      <AncestorRow 
+                        label="Mor" 
+                        ancestor={sirePedigreeData.dam} 
+                        commonAncestors={coiResult.commonAncestors}
+                        indent={0}
+                      />
+                      
+                      {/* Generation 2 */}
+                      <div className="ml-4 border-l-2 border-muted pl-2 space-y-1">
+                        <AncestorRow label="Farfar" ancestor={sirePedigreeData.sire_sire} commonAncestors={coiResult.commonAncestors} indent={1} />
+                        <AncestorRow label="Farmor" ancestor={sirePedigreeData.sire_dam} commonAncestors={coiResult.commonAncestors} indent={1} />
+                        <AncestorRow label="Morfar" ancestor={sirePedigreeData.dam_sire} commonAncestors={coiResult.commonAncestors} indent={1} />
+                        <AncestorRow label="Mormor" ancestor={sirePedigreeData.dam_dam} commonAncestors={coiResult.commonAncestors} indent={1} />
+                      </div>
+                      
+                      {/* Generation 3 */}
+                      <div className="ml-8 border-l-2 border-muted pl-2 space-y-1">
+                        <AncestorRow label="FFF" ancestor={sirePedigreeData.sire_sire_sire} commonAncestors={coiResult.commonAncestors} indent={2} />
+                        <AncestorRow label="FFM" ancestor={sirePedigreeData.sire_sire_dam} commonAncestors={coiResult.commonAncestors} indent={2} />
+                        <AncestorRow label="FMF" ancestor={sirePedigreeData.sire_dam_sire} commonAncestors={coiResult.commonAncestors} indent={2} />
+                        <AncestorRow label="FMM" ancestor={sirePedigreeData.sire_dam_dam} commonAncestors={coiResult.commonAncestors} indent={2} />
+                        <AncestorRow label="MFF" ancestor={sirePedigreeData.dam_sire_sire} commonAncestors={coiResult.commonAncestors} indent={2} />
+                        <AncestorRow label="MFM" ancestor={sirePedigreeData.dam_sire_dam} commonAncestors={coiResult.commonAncestors} indent={2} />
+                        <AncestorRow label="MMF" ancestor={sirePedigreeData.dam_dam_sire} commonAncestors={coiResult.commonAncestors} indent={2} />
+                        <AncestorRow label="MMM" ancestor={sirePedigreeData.dam_dam_dam} commonAncestors={coiResult.commonAncestors} indent={2} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Stamtavlebilder side ved side */}
           {(getDamPedigreeImage() || getSirePedigreeImage()) && (
             <div className="space-y-2 pt-4 border-t">
-              <h3 className="font-medium">Stamtavler</h3>
+              <h3 className="font-medium">Stamtavler (originale bilder)</h3>
               <div className="grid md:grid-cols-2 gap-4">
                 {getDamPedigreeImage() && (
                   <div>

@@ -94,7 +94,7 @@ interface AncestorWithPath {
 /**
  * Normalize ancestor name for comparison
  */
-function normalizeName(name: string): string {
+export function normalizeName(name: string): string {
   return name
     .toLowerCase()
     .replace(/[`´']/g, "'")

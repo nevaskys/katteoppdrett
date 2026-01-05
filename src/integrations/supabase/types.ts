@@ -25,7 +25,6 @@ export type Database = {
           gender: string
           id: string
           images: string[] | null
-          microchip: string | null
           name: string
           notes: string | null
           owner: string | null
@@ -43,7 +42,6 @@ export type Database = {
           gender: string
           id?: string
           images?: string[] | null
-          microchip?: string | null
           name: string
           notes?: string | null
           owner?: string | null
@@ -61,7 +59,6 @@ export type Database = {
           gender?: string
           id?: string
           images?: string[] | null
-          microchip?: string | null
           name?: string
           notes?: string | null
           owner?: string | null

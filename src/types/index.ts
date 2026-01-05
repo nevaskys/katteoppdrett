@@ -22,7 +22,6 @@ export interface Cat {
   breed: string;
   gender: Gender;
   birthDate: string;
-  chipNumber?: string;
   registration?: string;
   color: string;
   emsCode?: string;

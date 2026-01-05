@@ -44,7 +44,6 @@ const catSchema = z.object({
   breed: z.string().min(1, 'Rase er påkrevd'),
   gender: z.enum(['male', 'female']),
   birthDate: z.string().min(1, 'Fødselsdato er påkrevd'),
-  chipNumber: z.string().optional(),
   registration: z.string().optional(),
   color: z.string().min(1, 'Farge er påkrevd'),
   emsCode: z.string().optional(),
@@ -94,7 +93,6 @@ export default function CatForm() {
       breed: existingCat.breed,
       gender: existingCat.gender,
       birthDate: existingCat.birthDate,
-      chipNumber: existingCat.chipNumber || '',
       registration: existingCat.registration || '',
       color: existingCat.color,
       emsCode: existingCat.emsCode || '',
@@ -220,10 +218,6 @@ export default function CatForm() {
         setValue('registration', pedigreeData.registration);
         fieldsUpdated++;
       }
-      if (pedigreeData.chipNumber) {
-        setValue('chipNumber', pedigreeData.chipNumber);
-        fieldsUpdated++;
-      }
       if (pedigreeData.gender) {
         setValue('gender', pedigreeData.gender);
         fieldsUpdated++;
@@ -303,7 +297,6 @@ export default function CatForm() {
       breed: data.breed,
       gender: data.gender,
       birthDate: data.birthDate,
-      chipNumber: data.chipNumber || undefined,
       registration: data.registration || undefined,
       color: data.color,
       emsCode: data.emsCode || undefined,
@@ -468,11 +461,6 @@ export default function CatForm() {
             <Label htmlFor="color">Farge *</Label>
             <Input id="color" {...register('color')} placeholder="f.eks. Brown tabby" />
             {errors.color && <p className="text-sm text-destructive">{errors.color.message}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="chipNumber">Chip-nummer</Label>
-            <Input id="chipNumber" {...register('chipNumber')} />
           </div>
 
           <div className="space-y-2">

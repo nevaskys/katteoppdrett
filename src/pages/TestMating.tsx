@@ -491,7 +491,7 @@ export default function TestMating() {
                         <ul className="text-xs text-muted-foreground">
                           {coiResult.commonAncestors.map((ancestor, idx) => (
                             <li key={idx}>
-                              • {ancestor.name} ({(ancestor.contribution * 100).toFixed(2)}%)
+                              • {ancestor.name} ({(ancestor.totalContribution * 100).toFixed(2)}%)
                             </li>
                           ))}
                         </ul>

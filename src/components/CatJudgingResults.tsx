@@ -2,23 +2,28 @@ import { Link } from 'react-router-dom';
 import { Plus, Star, FileText, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useJudgingResults } from '@/hooks/useJudgingResults';
+import { BulkResultsImport } from '@/components/BulkResultsImport';
 
 interface CatJudgingResultsProps {
   catId: string;
+  catName?: string;
 }
 
-export function CatJudgingResults({ catId }: CatJudgingResultsProps) {
+export function CatJudgingResults({ catId, catName = 'Katt' }: CatJudgingResultsProps) {
   const { data: results = [], isLoading } = useJudgingResults(catId);
 
   return (
     <div className="stat-card">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">Utstillingsresultater</h2>
-        <Button asChild variant="outline" size="sm">
-          <Link to={`/judging-results/new?catId=${catId}`}>
-            <Plus className="h-4 w-4 mr-2" /> Legg til
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <BulkResultsImport catId={catId} catName={catName} />
+          <Button asChild variant="outline" size="sm">
+            <Link to={`/judging-results/new?catId=${catId}`}>
+              <Plus className="h-4 w-4 mr-2" /> Legg til
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (

@@ -151,17 +151,13 @@ function buildAncestorList(pedigree: PedigreeData, side: 'sire' | 'dam'): Ancest
     }
   };
   
-  // Generation 0: The parent itself
-  if (pedigree.name) {
-    ancestors.push({
-      name: pedigree.name,
-      registration: pedigree.registration,
-      generation: 0,
-      path: side
-    });
-  }
+  // NOTE: We start from generation 1 (the parent's parents = grandparents of offspring)
+  // We do NOT include the parent itself at generation 0.
+  // This is because Wright's formula counts common ANCESTORS, not the parents.
+  // The sire and dam are already "accounted for" at n=1 for their offspring.
+  // Their contribution comes through their ancestors appearing on both sides.
   
-  // Generation 1: Grandparents (parent's parents)
+  // Generation 1: Parent's parents (grandparents of the potential offspring)
   addIfExists(pedigree.sire, 1, `${side}_sire`);
   addIfExists(pedigree.dam, 1, `${side}_dam`);
   
@@ -249,15 +245,18 @@ export interface CommonAncestor {
  * COI contribution = (1/2)^(n1 + n2 + 1) × (1 + FA)
  * 
  * Where:
- * - n1 = generations from sire to common ancestor (sire=0, sire's parent=1, etc.)
- * - n2 = generations from dam to common ancestor (dam=0, dam's parent=1, etc.)
+ * - n1 = generations from offspring to common ancestor through sire's line
+ * - n2 = generations from offspring to common ancestor through dam's line
  * - FA = inbreeding coefficient of common ancestor (assumed 0)
  * 
- * Example: Father-daughter mating where sire = dam's father
- * The sire appears at n1=0 (he is the sire) and n2=1 (dam's sire)
- * Contribution = (1/2)^(0+1+1) = (1/2)^2 = 25%
+ * Generation numbering:
+ * - Generation 1 = sire/dam's parents (offspring's grandparents)
+ * - Generation 2 = sire/dam's grandparents (offspring's great-grandparents)
+ * etc.
  * 
- * Plus sire's ancestors also appear on both sides.
+ * Example: If sire's father is also dam's father (half-siblings):
+ * The common grandfather appears at gen=1 on both sides
+ * n1=1, n2=1 → Contribution = (1/2)^(1+1+1) = (1/2)^3 = 12.5%
  */
 export function calculateCOI(
   sirePedigree: PedigreeData,

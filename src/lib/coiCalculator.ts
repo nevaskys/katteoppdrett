@@ -22,6 +22,7 @@ export interface PedigreeData {
   sire_dam?: Ancestor;
   dam_sire?: Ancestor;
   dam_dam?: Ancestor;
+  // Generation 3
   sire_sire_sire?: Ancestor;
   sire_sire_dam?: Ancestor;
   sire_dam_sire?: Ancestor;
@@ -30,6 +31,23 @@ export interface PedigreeData {
   dam_sire_dam?: Ancestor;
   dam_dam_sire?: Ancestor;
   dam_dam_dam?: Ancestor;
+  // Generation 4
+  sire_sire_sire_sire?: Ancestor;
+  sire_sire_sire_dam?: Ancestor;
+  sire_sire_dam_sire?: Ancestor;
+  sire_sire_dam_dam?: Ancestor;
+  sire_dam_sire_sire?: Ancestor;
+  sire_dam_sire_dam?: Ancestor;
+  sire_dam_dam_sire?: Ancestor;
+  sire_dam_dam_dam?: Ancestor;
+  dam_sire_sire_sire?: Ancestor;
+  dam_sire_sire_dam?: Ancestor;
+  dam_sire_dam_sire?: Ancestor;
+  dam_sire_dam_dam?: Ancestor;
+  dam_dam_sire_sire?: Ancestor;
+  dam_dam_sire_dam?: Ancestor;
+  dam_dam_dam_sire?: Ancestor;
+  dam_dam_dam_dam?: Ancestor;
 }
 
 interface AncestorNode {
@@ -84,56 +102,52 @@ function isSameAncestor(a: Ancestor | undefined, b: Ancestor | undefined): boole
 function buildAncestorList(pedigree: PedigreeData, side: 'sire' | 'dam'): AncestorNode[] {
   const ancestors: AncestorNode[] = [];
   
+  const addAncestor = (ancestor: Ancestor | undefined, generation: number, path: 'sire' | 'dam') => {
+    if (ancestor?.name) {
+      ancestors.push({ name: ancestor.name, registration: ancestor.registration, generation, path });
+    }
+  };
+  
   if (side === 'sire') {
     // Generation 1
-    if (pedigree.sire?.name) {
-      ancestors.push({ name: pedigree.sire.name, registration: pedigree.sire.registration, generation: 1, path: 'sire' });
-    }
+    addAncestor(pedigree.sire, 1, 'sire');
     // Generation 2
-    if (pedigree.sire_sire?.name) {
-      ancestors.push({ name: pedigree.sire_sire.name, registration: pedigree.sire_sire.registration, generation: 2, path: 'sire' });
-    }
-    if (pedigree.sire_dam?.name) {
-      ancestors.push({ name: pedigree.sire_dam.name, registration: pedigree.sire_dam.registration, generation: 2, path: 'sire' });
-    }
+    addAncestor(pedigree.sire_sire, 2, 'sire');
+    addAncestor(pedigree.sire_dam, 2, 'sire');
     // Generation 3
-    if (pedigree.sire_sire_sire?.name) {
-      ancestors.push({ name: pedigree.sire_sire_sire.name, registration: pedigree.sire_sire_sire.registration, generation: 3, path: 'sire' });
-    }
-    if (pedigree.sire_sire_dam?.name) {
-      ancestors.push({ name: pedigree.sire_sire_dam.name, registration: pedigree.sire_sire_dam.registration, generation: 3, path: 'sire' });
-    }
-    if (pedigree.sire_dam_sire?.name) {
-      ancestors.push({ name: pedigree.sire_dam_sire.name, registration: pedigree.sire_dam_sire.registration, generation: 3, path: 'sire' });
-    }
-    if (pedigree.sire_dam_dam?.name) {
-      ancestors.push({ name: pedigree.sire_dam_dam.name, registration: pedigree.sire_dam_dam.registration, generation: 3, path: 'sire' });
-    }
+    addAncestor(pedigree.sire_sire_sire, 3, 'sire');
+    addAncestor(pedigree.sire_sire_dam, 3, 'sire');
+    addAncestor(pedigree.sire_dam_sire, 3, 'sire');
+    addAncestor(pedigree.sire_dam_dam, 3, 'sire');
+    // Generation 4
+    addAncestor(pedigree.sire_sire_sire_sire, 4, 'sire');
+    addAncestor(pedigree.sire_sire_sire_dam, 4, 'sire');
+    addAncestor(pedigree.sire_sire_dam_sire, 4, 'sire');
+    addAncestor(pedigree.sire_sire_dam_dam, 4, 'sire');
+    addAncestor(pedigree.sire_dam_sire_sire, 4, 'sire');
+    addAncestor(pedigree.sire_dam_sire_dam, 4, 'sire');
+    addAncestor(pedigree.sire_dam_dam_sire, 4, 'sire');
+    addAncestor(pedigree.sire_dam_dam_dam, 4, 'sire');
   } else {
     // Generation 1
-    if (pedigree.dam?.name) {
-      ancestors.push({ name: pedigree.dam.name, registration: pedigree.dam.registration, generation: 1, path: 'dam' });
-    }
+    addAncestor(pedigree.dam, 1, 'dam');
     // Generation 2
-    if (pedigree.dam_sire?.name) {
-      ancestors.push({ name: pedigree.dam_sire.name, registration: pedigree.dam_sire.registration, generation: 2, path: 'dam' });
-    }
-    if (pedigree.dam_dam?.name) {
-      ancestors.push({ name: pedigree.dam_dam.name, registration: pedigree.dam_dam.registration, generation: 2, path: 'dam' });
-    }
+    addAncestor(pedigree.dam_sire, 2, 'dam');
+    addAncestor(pedigree.dam_dam, 2, 'dam');
     // Generation 3
-    if (pedigree.dam_sire_sire?.name) {
-      ancestors.push({ name: pedigree.dam_sire_sire.name, registration: pedigree.dam_sire_sire.registration, generation: 3, path: 'dam' });
-    }
-    if (pedigree.dam_sire_dam?.name) {
-      ancestors.push({ name: pedigree.dam_sire_dam.name, registration: pedigree.dam_sire_dam.registration, generation: 3, path: 'dam' });
-    }
-    if (pedigree.dam_dam_sire?.name) {
-      ancestors.push({ name: pedigree.dam_dam_sire.name, registration: pedigree.dam_dam_sire.registration, generation: 3, path: 'dam' });
-    }
-    if (pedigree.dam_dam_dam?.name) {
-      ancestors.push({ name: pedigree.dam_dam_dam.name, registration: pedigree.dam_dam_dam.registration, generation: 3, path: 'dam' });
-    }
+    addAncestor(pedigree.dam_sire_sire, 3, 'dam');
+    addAncestor(pedigree.dam_sire_dam, 3, 'dam');
+    addAncestor(pedigree.dam_dam_sire, 3, 'dam');
+    addAncestor(pedigree.dam_dam_dam, 3, 'dam');
+    // Generation 4
+    addAncestor(pedigree.dam_sire_sire_sire, 4, 'dam');
+    addAncestor(pedigree.dam_sire_sire_dam, 4, 'dam');
+    addAncestor(pedigree.dam_sire_dam_sire, 4, 'dam');
+    addAncestor(pedigree.dam_sire_dam_dam, 4, 'dam');
+    addAncestor(pedigree.dam_dam_sire_sire, 4, 'dam');
+    addAncestor(pedigree.dam_dam_sire_dam, 4, 'dam');
+    addAncestor(pedigree.dam_dam_dam_sire, 4, 'dam');
+    addAncestor(pedigree.dam_dam_dam_dam, 4, 'dam');
   }
   
   return ancestors;

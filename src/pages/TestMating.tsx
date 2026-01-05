@@ -41,8 +41,10 @@ export default function TestMating() {
   const damPedigreeInputRef = useRef<HTMLInputElement>(null);
   const sirePedigreeInputRef = useRef<HTMLInputElement>(null);
 
-  const females = cats.filter(c => c.gender === 'female');
-  const males = cats.filter(c => c.gender === 'male');
+  // Cast cats to include pedigree_url from database
+  const catsWithPedigree = cats as (typeof cats[number] & { pedigree_url?: string })[];
+  const females = catsWithPedigree.filter(c => c.gender === 'female');
+  const males = catsWithPedigree.filter(c => c.gender === 'male');
   
   const selectedDam = females.find(c => c.id === damId);
   const selectedSire = males.find(c => c.id === sireId);
@@ -193,8 +195,8 @@ export default function TestMating() {
 
   const getDamName = () => selectedDam?.name || externalDamName || 'Ekstern hunn';
   const getSireName = () => selectedSire?.name || externalSireName || 'Ekstern hann';
-  const getDamPedigreeImage = () => selectedDam?.pedigreeImage || externalDamPedigree;
-  const getSirePedigreeImage = () => selectedSire?.pedigreeImage || externalSirePedigree;
+  const getDamPedigreeImage = () => selectedDam?.pedigree_url || externalDamPedigree;
+  const getSirePedigreeImage = () => selectedSire?.pedigree_url || externalSirePedigree;
 
   const riskLevel = coiResult ? getCOIRiskLevel(coiResult.coi) : null;
 
@@ -216,12 +218,19 @@ export default function TestMating() {
           
           <div className="space-y-2">
             <Label>Velg fra dine katter</Label>
-            <Select value={damId} onValueChange={(v) => { 
+            <Select value={damId} onValueChange={async (v) => { 
               setDamId(v); 
               setExternalDamPedigree(''); 
               setExternalDamName(''); 
               setDamPedigreeData(null);
               setShowResult(false);
+              setCoiResult(null);
+              
+              // Parse pedigree from cat's pedigree_url if available
+              const cat = females.find(c => c.id === v);
+              if (cat?.pedigree_url) {
+                await parsePedigreeImage(cat.pedigree_url, true, () => {}, setDamPedigreeData, setIsParsingDam);
+              }
             }}>
               <SelectTrigger>
                 <SelectValue placeholder="Velg hunn..." />
@@ -241,9 +250,19 @@ export default function TestMating() {
               <p className="text-sm text-muted-foreground">
                 {selectedDam.breed} • {selectedDam.emsCode || selectedDam.color}
               </p>
-              {selectedDam.pedigreeImage && (
+              {isParsingDam && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Analyserer stamtavle...
+                </p>
+              )}
+              {damPedigreeData && (
+                <p className="text-xs text-green-600">
+                  ✓ Stamtavle klar ({[damPedigreeData.sire, damPedigreeData.dam, damPedigreeData.sire_sire, damPedigreeData.sire_dam].filter(a => a?.name).length}+ forfedre)
+                </p>
+              )}
+              {selectedDam.pedigree_url && (
                 <img 
-                  src={selectedDam.pedigreeImage} 
+                  src={selectedDam.pedigree_url} 
                   alt={`${selectedDam.name} stamtavle`}
                   className="max-h-40 object-contain rounded border"
                 />
@@ -325,12 +344,19 @@ export default function TestMating() {
           
           <div className="space-y-2">
             <Label>Velg fra dine katter</Label>
-            <Select value={sireId} onValueChange={(v) => { 
+            <Select value={sireId} onValueChange={async (v) => { 
               setSireId(v); 
               setExternalSirePedigree(''); 
               setExternalSireName(''); 
               setSirePedigreeData(null);
               setShowResult(false);
+              setCoiResult(null);
+              
+              // Parse pedigree from cat's pedigree_url if available
+              const cat = males.find(c => c.id === v);
+              if (cat?.pedigree_url) {
+                await parsePedigreeImage(cat.pedigree_url, true, () => {}, setSirePedigreeData, setIsParsingSire);
+              }
             }}>
               <SelectTrigger>
                 <SelectValue placeholder="Velg hann..." />
@@ -350,9 +376,19 @@ export default function TestMating() {
               <p className="text-sm text-muted-foreground">
                 {selectedSire.breed} • {selectedSire.emsCode || selectedSire.color}
               </p>
-              {selectedSire.pedigreeImage && (
+              {isParsingSire && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Analyserer stamtavle...
+                </p>
+              )}
+              {sirePedigreeData && (
+                <p className="text-xs text-green-600">
+                  ✓ Stamtavle klar ({[sirePedigreeData.sire, sirePedigreeData.dam, sirePedigreeData.sire_sire, sirePedigreeData.sire_dam].filter(a => a?.name).length}+ forfedre)
+                </p>
+              )}
+              {selectedSire.pedigree_url && (
                 <img 
-                  src={selectedSire.pedigreeImage} 
+                  src={selectedSire.pedigree_url} 
                   alt={`${selectedSire.name} stamtavle`}
                   className="max-h-40 object-contain rounded border"
                 />

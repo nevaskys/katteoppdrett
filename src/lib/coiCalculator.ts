@@ -53,8 +53,7 @@ export interface PedigreeData {
 interface AncestorNode {
   name: string;
   registration?: string;
-  generation: number;
-  path: string; // 'sire' or 'dam' side
+  generation: number; // Distance from the cat whose pedigree this is
 }
 
 /**
@@ -63,7 +62,8 @@ interface AncestorNode {
 function normalizeName(name: string): string {
   return name
     .toLowerCase()
-    .replace(/[^a-zA-Z0-9æøåäö]/g, ' ')
+    .replace(/[`´']/g, "'") // Normalize apostrophes
+    .replace(/[^a-zA-Z0-9æøåäö']/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -97,58 +97,55 @@ function isSameAncestor(a: Ancestor | undefined, b: Ancestor | undefined): boole
 }
 
 /**
- * Build ancestor list from pedigree data with generation info
+ * Build complete ancestor list from a cat's pedigree
+ * Returns all ancestors with their generation distance from the cat
  */
-function buildAncestorList(pedigree: PedigreeData, side: 'sire' | 'dam'): AncestorNode[] {
+function buildAllAncestors(pedigree: PedigreeData): AncestorNode[] {
   const ancestors: AncestorNode[] = [];
   
-  const addAncestor = (ancestor: Ancestor | undefined, generation: number, path: 'sire' | 'dam') => {
+  const addAncestor = (ancestor: Ancestor | undefined, generation: number) => {
     if (ancestor?.name) {
-      ancestors.push({ name: ancestor.name, registration: ancestor.registration, generation, path });
+      ancestors.push({ name: ancestor.name, registration: ancestor.registration, generation });
     }
   };
   
-  if (side === 'sire') {
-    // Generation 1
-    addAncestor(pedigree.sire, 1, 'sire');
-    // Generation 2
-    addAncestor(pedigree.sire_sire, 2, 'sire');
-    addAncestor(pedigree.sire_dam, 2, 'sire');
-    // Generation 3
-    addAncestor(pedigree.sire_sire_sire, 3, 'sire');
-    addAncestor(pedigree.sire_sire_dam, 3, 'sire');
-    addAncestor(pedigree.sire_dam_sire, 3, 'sire');
-    addAncestor(pedigree.sire_dam_dam, 3, 'sire');
-    // Generation 4
-    addAncestor(pedigree.sire_sire_sire_sire, 4, 'sire');
-    addAncestor(pedigree.sire_sire_sire_dam, 4, 'sire');
-    addAncestor(pedigree.sire_sire_dam_sire, 4, 'sire');
-    addAncestor(pedigree.sire_sire_dam_dam, 4, 'sire');
-    addAncestor(pedigree.sire_dam_sire_sire, 4, 'sire');
-    addAncestor(pedigree.sire_dam_sire_dam, 4, 'sire');
-    addAncestor(pedigree.sire_dam_dam_sire, 4, 'sire');
-    addAncestor(pedigree.sire_dam_dam_dam, 4, 'sire');
-  } else {
-    // Generation 1
-    addAncestor(pedigree.dam, 1, 'dam');
-    // Generation 2
-    addAncestor(pedigree.dam_sire, 2, 'dam');
-    addAncestor(pedigree.dam_dam, 2, 'dam');
-    // Generation 3
-    addAncestor(pedigree.dam_sire_sire, 3, 'dam');
-    addAncestor(pedigree.dam_sire_dam, 3, 'dam');
-    addAncestor(pedigree.dam_dam_sire, 3, 'dam');
-    addAncestor(pedigree.dam_dam_dam, 3, 'dam');
-    // Generation 4
-    addAncestor(pedigree.dam_sire_sire_sire, 4, 'dam');
-    addAncestor(pedigree.dam_sire_sire_dam, 4, 'dam');
-    addAncestor(pedigree.dam_sire_dam_sire, 4, 'dam');
-    addAncestor(pedigree.dam_sire_dam_dam, 4, 'dam');
-    addAncestor(pedigree.dam_dam_sire_sire, 4, 'dam');
-    addAncestor(pedigree.dam_dam_sire_dam, 4, 'dam');
-    addAncestor(pedigree.dam_dam_dam_sire, 4, 'dam');
-    addAncestor(pedigree.dam_dam_dam_dam, 4, 'dam');
-  }
+  // Generation 1 (parents)
+  addAncestor(pedigree.sire, 1);
+  addAncestor(pedigree.dam, 1);
+  
+  // Generation 2 (grandparents)
+  addAncestor(pedigree.sire_sire, 2);
+  addAncestor(pedigree.sire_dam, 2);
+  addAncestor(pedigree.dam_sire, 2);
+  addAncestor(pedigree.dam_dam, 2);
+  
+  // Generation 3 (great-grandparents)
+  addAncestor(pedigree.sire_sire_sire, 3);
+  addAncestor(pedigree.sire_sire_dam, 3);
+  addAncestor(pedigree.sire_dam_sire, 3);
+  addAncestor(pedigree.sire_dam_dam, 3);
+  addAncestor(pedigree.dam_sire_sire, 3);
+  addAncestor(pedigree.dam_sire_dam, 3);
+  addAncestor(pedigree.dam_dam_sire, 3);
+  addAncestor(pedigree.dam_dam_dam, 3);
+  
+  // Generation 4 (great-great-grandparents)
+  addAncestor(pedigree.sire_sire_sire_sire, 4);
+  addAncestor(pedigree.sire_sire_sire_dam, 4);
+  addAncestor(pedigree.sire_sire_dam_sire, 4);
+  addAncestor(pedigree.sire_sire_dam_dam, 4);
+  addAncestor(pedigree.sire_dam_sire_sire, 4);
+  addAncestor(pedigree.sire_dam_sire_dam, 4);
+  addAncestor(pedigree.sire_dam_dam_sire, 4);
+  addAncestor(pedigree.sire_dam_dam_dam, 4);
+  addAncestor(pedigree.dam_sire_sire_sire, 4);
+  addAncestor(pedigree.dam_sire_sire_dam, 4);
+  addAncestor(pedigree.dam_sire_dam_sire, 4);
+  addAncestor(pedigree.dam_sire_dam_dam, 4);
+  addAncestor(pedigree.dam_dam_sire_sire, 4);
+  addAncestor(pedigree.dam_dam_sire_dam, 4);
+  addAncestor(pedigree.dam_dam_dam_sire, 4);
+  addAncestor(pedigree.dam_dam_dam_dam, 4);
   
   return ancestors;
 }
@@ -163,99 +160,65 @@ export interface CommonAncestor {
 /**
  * Calculate COI for offspring of two cats
  * 
- * Special cases:
- * - Parent-child mating: 25% (one parent is the common ancestor at generation 0 on one side)
- * - Full sibling mating: 25% (share both parents)
- * - Half sibling mating: 12.5% (share one parent)
- * - Grandparent-grandchild: 12.5%
+ * sirePedigree = pedigree of the MALE (father of potential offspring)
+ * damPedigree = pedigree of the FEMALE (mother of potential offspring)
+ * 
+ * We look for common ancestors between the two pedigrees.
+ * 
+ * Wright's Formula: F = Σ (1/2)^(n1+n2+1)
+ * Where n1 = generations from SIRE to common ancestor
+ *       n2 = generations from DAM to common ancestor
  */
 export function calculateCOI(
   sirePedigree: PedigreeData,
   damPedigree: PedigreeData
 ): { coi: number; commonAncestors: CommonAncestor[] } {
-  const commonAncestors: CommonAncestor[] = [];
+  const commonAncestorsMap = new Map<string, CommonAncestor>();
   let totalCOI = 0;
   
-  // Special case: Check if dam IS the sire's mother (son-mother mating)
-  // In this case, dam appears at generation 0 on dam side and generation 1 on sire side
-  if (sirePedigree.dam?.name && damPedigree.name) {
-    if (isSameAncestor(sirePedigree.dam, { name: damPedigree.name, registration: damPedigree.registration })) {
-      // Mother-son mating: F = (1/2)^(1+0+1) = 0.25
-      const contribution = Math.pow(0.5, 1 + 0 + 1);
-      commonAncestors.push({
-        name: damPedigree.name,
-        sireGenerations: [1],
-        damGenerations: [0],
-        contribution
-      });
-      totalCOI += contribution;
-    }
-  }
+  // Build ancestor lists for both parents
+  const sireAncestors = buildAllAncestors(sirePedigree);
+  const damAncestors = buildAllAncestors(damPedigree);
   
-  // Special case: Check if sire IS the dam's father (father-daughter mating)
-  if (damPedigree.sire?.name && sirePedigree.name) {
-    if (isSameAncestor(damPedigree.sire, { name: sirePedigree.name, registration: sirePedigree.registration })) {
-      // Father-daughter mating: F = (1/2)^(0+1+1) = 0.25
-      const contribution = Math.pow(0.5, 0 + 1 + 1);
-      commonAncestors.push({
-        name: sirePedigree.name,
-        sireGenerations: [0],
-        damGenerations: [1],
-        contribution
-      });
-      totalCOI += contribution;
-    }
-  }
+  console.log('Sire ancestors:', sireAncestors.map(a => `${a.name} (gen ${a.generation})`));
+  console.log('Dam ancestors:', damAncestors.map(a => `${a.name} (gen ${a.generation})`));
   
-  // Build ancestor lists from both pedigrees
-  const sireAncestors = buildAncestorList(sirePedigree, 'sire');
-  const damAncestors = buildAncestorList(damPedigree, 'dam');
-  
-  // Also include dam's ancestors on dam side
-  const damFullAncestors: AncestorNode[] = [
-    ...damAncestors,
-    ...buildAncestorList(damPedigree, 'sire').map(a => ({ ...a, path: 'dam' as const }))
-  ];
-  
-  // Include sire's ancestors on sire side  
-  const sireFullAncestors: AncestorNode[] = [
-    ...sireAncestors,
-    ...buildAncestorList(sirePedigree, 'dam').map(a => ({ ...a, path: 'sire' as const }))
-  ];
-  
-  // Find common ancestors between sire's pedigree and dam's pedigree
+  // Track processed path pairs to avoid double counting
   const processedPairs = new Set<string>();
   
-  for (const sireAnc of sireFullAncestors) {
-    for (const damAnc of damFullAncestors) {
-      if (isSameAncestor({ name: sireAnc.name, registration: sireAnc.registration }, 
-                          { name: damAnc.name, registration: damAnc.registration })) {
-        const pairKey = normalizeName(sireAnc.name) + '|' + sireAnc.generation + '|' + damAnc.generation;
+  // Find common ancestors
+  for (const sireAnc of sireAncestors) {
+    for (const damAnc of damAncestors) {
+      if (isSameAncestor(
+        { name: sireAnc.name, registration: sireAnc.registration }, 
+        { name: damAnc.name, registration: damAnc.registration }
+      )) {
+        // Create unique key for this specific path combination
+        const pairKey = `${normalizeName(sireAnc.name)}|${sireAnc.generation}|${damAnc.generation}`;
         
         if (!processedPairs.has(pairKey)) {
           processedPairs.add(pairKey);
           
-          // Wright's formula: F = Σ (1/2)^(n1+n2+1)
-          // n1 = number of generations from sire to common ancestor
-          // n2 = number of generations from dam to common ancestor
-          // The generation stored is already the distance from sire/dam to the ancestor
-          // We add +1 to account for the path from offspring to sire/dam
-          const n1 = sireAnc.generation; // generations from sire to common ancestor
-          const n2 = damAnc.generation;  // generations from dam to common ancestor
+          // n1 = generations from sire to common ancestor
+          // n2 = generations from dam to common ancestor
+          const n1 = sireAnc.generation;
+          const n2 = damAnc.generation;
           
-          // Total path: offspring -> sire (1) -> ... -> common ancestor (n1)
-          //             offspring -> dam (1) -> ... -> common ancestor (n2)
-          // Formula: (1/2)^(n1 + n2 + 1) where n1 and n2 are from parent to ancestor
+          // Wright's formula: F = (1/2)^(n1+n2+1)
           const contribution = Math.pow(0.5, n1 + n2 + 1);
           
-          // Check if already added
-          const existing = commonAncestors.find(ca => normalizeName(ca.name) === normalizeName(sireAnc.name));
+          console.log(`Common ancestor: ${sireAnc.name}, n1=${n1}, n2=${n2}, contribution=${(contribution * 100).toFixed(4)}%`);
+          
+          // Aggregate by ancestor name
+          const normalizedName = normalizeName(sireAnc.name);
+          const existing = commonAncestorsMap.get(normalizedName);
+          
           if (existing) {
             existing.sireGenerations.push(n1);
             existing.damGenerations.push(n2);
             existing.contribution += contribution;
           } else {
-            commonAncestors.push({
+            commonAncestorsMap.set(normalizedName, {
               name: sireAnc.name,
               sireGenerations: [n1],
               damGenerations: [n2],
@@ -268,6 +231,11 @@ export function calculateCOI(
       }
     }
   }
+  
+  const commonAncestors = Array.from(commonAncestorsMap.values());
+  
+  console.log(`Total COI: ${(totalCOI * 100).toFixed(4)}%`);
+  console.log('Common ancestors found:', commonAncestors);
   
   return {
     coi: totalCOI * 100, // Convert to percentage

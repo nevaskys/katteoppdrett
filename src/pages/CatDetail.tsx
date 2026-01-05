@@ -143,7 +143,7 @@ export default function CatDetail() {
           )}
 
           {/* Judging Results Section */}
-          <CatJudgingResults catId={cat.id} />
+          <CatJudgingResults catId={cat.id} catName={cat.name} />
         </div>
       </div>
     </div>

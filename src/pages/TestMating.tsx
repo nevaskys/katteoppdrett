@@ -41,10 +41,9 @@ export default function TestMating() {
   const damPedigreeInputRef = useRef<HTMLInputElement>(null);
   const sirePedigreeInputRef = useRef<HTMLInputElement>(null);
 
-  // Cast cats to include pedigree_url from database
-  const catsWithPedigree = cats as (typeof cats[number] & { pedigree_url?: string })[];
-  const females = catsWithPedigree.filter(c => c.gender === 'female');
-  const males = catsWithPedigree.filter(c => c.gender === 'male');
+  // Filter cats by gender
+  const females = cats.filter(c => c.gender === 'female');
+  const males = cats.filter(c => c.gender === 'male');
   
   const selectedDam = females.find(c => c.id === damId);
   const selectedSire = males.find(c => c.id === sireId);
@@ -195,8 +194,8 @@ export default function TestMating() {
 
   const getDamName = () => selectedDam?.name || externalDamName || 'Ekstern hunn';
   const getSireName = () => selectedSire?.name || externalSireName || 'Ekstern hann';
-  const getDamPedigreeImage = () => selectedDam?.pedigree_url || externalDamPedigree;
-  const getSirePedigreeImage = () => selectedSire?.pedigree_url || externalSirePedigree;
+  const getDamPedigreeImage = () => selectedDam?.pedigreeImage || externalDamPedigree;
+  const getSirePedigreeImage = () => selectedSire?.pedigreeImage || externalSirePedigree;
 
   const riskLevel = coiResult ? getCOIRiskLevel(coiResult.coi) : null;
 
@@ -226,10 +225,10 @@ export default function TestMating() {
               setShowResult(false);
               setCoiResult(null);
               
-              // Parse pedigree from cat's pedigree_url if available
+              // Parse pedigree from cat's pedigreeImage if available
               const cat = females.find(c => c.id === v);
-              if (cat?.pedigree_url) {
-                await parsePedigreeImage(cat.pedigree_url, true, () => {}, setDamPedigreeData, setIsParsingDam);
+              if (cat?.pedigreeImage) {
+                await parsePedigreeImage(cat.pedigreeImage, true, () => {}, setDamPedigreeData, setIsParsingDam);
               }
             }}>
               <SelectTrigger>
@@ -260,9 +259,9 @@ export default function TestMating() {
                   ✓ Stamtavle klar ({[damPedigreeData.sire, damPedigreeData.dam, damPedigreeData.sire_sire, damPedigreeData.sire_dam].filter(a => a?.name).length}+ forfedre)
                 </p>
               )}
-              {selectedDam.pedigree_url && (
+              {selectedDam.pedigreeImage && (
                 <img 
-                  src={selectedDam.pedigree_url} 
+                  src={selectedDam.pedigreeImage} 
                   alt={`${selectedDam.name} stamtavle`}
                   className="max-h-40 object-contain rounded border"
                 />
@@ -352,10 +351,10 @@ export default function TestMating() {
               setShowResult(false);
               setCoiResult(null);
               
-              // Parse pedigree from cat's pedigree_url if available
+              // Parse pedigree from cat's pedigreeImage if available
               const cat = males.find(c => c.id === v);
-              if (cat?.pedigree_url) {
-                await parsePedigreeImage(cat.pedigree_url, true, () => {}, setSirePedigreeData, setIsParsingSire);
+              if (cat?.pedigreeImage) {
+                await parsePedigreeImage(cat.pedigreeImage, true, () => {}, setSirePedigreeData, setIsParsingSire);
               }
             }}>
               <SelectTrigger>
@@ -386,9 +385,9 @@ export default function TestMating() {
                   ✓ Stamtavle klar ({[sirePedigreeData.sire, sirePedigreeData.dam, sirePedigreeData.sire_sire, sirePedigreeData.sire_dam].filter(a => a?.name).length}+ forfedre)
                 </p>
               )}
-              {selectedSire.pedigree_url && (
+              {selectedSire.pedigreeImage && (
                 <img 
-                  src={selectedSire.pedigree_url} 
+                  src={selectedSire.pedigreeImage} 
                   alt={`${selectedSire.name} stamtavle`}
                   className="max-h-40 object-contain rounded border"
                 />

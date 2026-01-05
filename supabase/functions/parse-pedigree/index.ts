@@ -20,13 +20,15 @@ interface PedigreeData {
   registration?: string;
   chipNumber?: string;
   gender?: 'male' | 'female';
-  // Full pedigree tree
+  // Full pedigree tree - Generation 1
   sire?: Ancestor;
   dam?: Ancestor;
+  // Generation 2
   sire_sire?: Ancestor;
   sire_dam?: Ancestor;
   dam_sire?: Ancestor;
   dam_dam?: Ancestor;
+  // Generation 3
   sire_sire_sire?: Ancestor;
   sire_sire_dam?: Ancestor;
   sire_dam_sire?: Ancestor;
@@ -35,6 +37,23 @@ interface PedigreeData {
   dam_sire_dam?: Ancestor;
   dam_dam_sire?: Ancestor;
   dam_dam_dam?: Ancestor;
+  // Generation 4
+  sire_sire_sire_sire?: Ancestor;
+  sire_sire_sire_dam?: Ancestor;
+  sire_sire_dam_sire?: Ancestor;
+  sire_sire_dam_dam?: Ancestor;
+  sire_dam_sire_sire?: Ancestor;
+  sire_dam_sire_dam?: Ancestor;
+  sire_dam_dam_sire?: Ancestor;
+  sire_dam_dam_dam?: Ancestor;
+  dam_sire_sire_sire?: Ancestor;
+  dam_sire_sire_dam?: Ancestor;
+  dam_sire_dam_sire?: Ancestor;
+  dam_sire_dam_dam?: Ancestor;
+  dam_dam_sire_sire?: Ancestor;
+  dam_dam_sire_dam?: Ancestor;
+  dam_dam_dam_sire?: Ancestor;
+  dam_dam_dam_dam?: Ancestor;
 }
 
 serve(async (req) => {
@@ -62,7 +81,7 @@ serve(async (req) => {
       );
     }
 
-    const pedigreePrompt = `Analyser dette stamtavle-bildet for en katt. Ekstraher HELE stamtavlen med alle forfedre.
+    const pedigreePrompt = `Analyser dette stamtavle-bildet for en katt. Ekstraher HELE stamtavlen med alle forfedre opp til 4 generasjoner.
 
 VIKTIG: En stamtavle har et hierarkisk format der:
 - Hovedkatten er subjektet
@@ -102,7 +121,17 @@ Ekstraher følgende informasjon:
 - dam_dam_sire: Mormors far (name, registration)
 - dam_dam_dam: Mormors mor (name, registration)
 
-Returner BARE et JSON-objekt med denne strukturen:
+5. TIPP-OLDEFORELDRE (generasjon 4):
+- sire_sire_sire_sire, sire_sire_sire_dam: Farfars fars foreldre
+- sire_sire_dam_sire, sire_sire_dam_dam: Farfars mors foreldre
+- sire_dam_sire_sire, sire_dam_sire_dam: Farmors fars foreldre
+- sire_dam_dam_sire, sire_dam_dam_dam: Farmors mors foreldre
+- dam_sire_sire_sire, dam_sire_sire_dam: Morfars fars foreldre
+- dam_sire_dam_sire, dam_sire_dam_dam: Morfars mors foreldre
+- dam_dam_sire_sire, dam_dam_sire_dam: Mormors fars foreldre
+- dam_dam_dam_sire, dam_dam_dam_dam: Mormors mors foreldre
+
+Returner et JSON-objekt med denne strukturen (bruk null for forfedre som ikke finnes):
 {
   "name": "kattens navn",
   "breed": "rase",
@@ -112,12 +141,12 @@ Returner BARE et JSON-objekt med denne strukturen:
   "registration": "reg.nr",
   "chipNumber": "chip eller null",
   "gender": "male eller female",
-  "sire": {"name": "fars navn", "registration": "reg.nr"},
-  "dam": {"name": "mors navn", "registration": "reg.nr"},
-  "sire_sire": {"name": "farfars navn", "registration": "reg.nr"},
-  "sire_dam": {"name": "farmors navn", "registration": "reg.nr"},
-  "dam_sire": {"name": "morfars navn", "registration": "reg.nr"},
-  "dam_dam": {"name": "mormors navn", "registration": "reg.nr"},
+  "sire": {"name": "navn", "registration": "reg.nr"},
+  "dam": {"name": "navn", "registration": "reg.nr"},
+  "sire_sire": {"name": "navn", "registration": "reg.nr"},
+  "sire_dam": {"name": "navn", "registration": "reg.nr"},
+  "dam_sire": {"name": "navn", "registration": "reg.nr"},
+  "dam_dam": {"name": "navn", "registration": "reg.nr"},
   "sire_sire_sire": {"name": "navn", "registration": "reg.nr"},
   "sire_sire_dam": {"name": "navn", "registration": "reg.nr"},
   "sire_dam_sire": {"name": "navn", "registration": "reg.nr"},
@@ -125,7 +154,23 @@ Returner BARE et JSON-objekt med denne strukturen:
   "dam_sire_sire": {"name": "navn", "registration": "reg.nr"},
   "dam_sire_dam": {"name": "navn", "registration": "reg.nr"},
   "dam_dam_sire": {"name": "navn", "registration": "reg.nr"},
-  "dam_dam_dam": {"name": "navn", "registration": "reg.nr"}
+  "dam_dam_dam": {"name": "navn", "registration": "reg.nr"},
+  "sire_sire_sire_sire": {"name": "navn", "registration": "reg.nr"},
+  "sire_sire_sire_dam": {"name": "navn", "registration": "reg.nr"},
+  "sire_sire_dam_sire": {"name": "navn", "registration": "reg.nr"},
+  "sire_sire_dam_dam": {"name": "navn", "registration": "reg.nr"},
+  "sire_dam_sire_sire": {"name": "navn", "registration": "reg.nr"},
+  "sire_dam_sire_dam": {"name": "navn", "registration": "reg.nr"},
+  "sire_dam_dam_sire": {"name": "navn", "registration": "reg.nr"},
+  "sire_dam_dam_dam": {"name": "navn", "registration": "reg.nr"},
+  "dam_sire_sire_sire": {"name": "navn", "registration": "reg.nr"},
+  "dam_sire_sire_dam": {"name": "navn", "registration": "reg.nr"},
+  "dam_sire_dam_sire": {"name": "navn", "registration": "reg.nr"},
+  "dam_sire_dam_dam": {"name": "navn", "registration": "reg.nr"},
+  "dam_dam_sire_sire": {"name": "navn", "registration": "reg.nr"},
+  "dam_dam_sire_dam": {"name": "navn", "registration": "reg.nr"},
+  "dam_dam_dam_sire": {"name": "navn", "registration": "reg.nr"},
+  "dam_dam_dam_dam": {"name": "navn", "registration": "reg.nr"}
 }
 
 VIKTIG: 

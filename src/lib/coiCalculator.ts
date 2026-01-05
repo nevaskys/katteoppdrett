@@ -221,12 +221,17 @@ export function calculateCOI(
         if (!processedPairs.has(pairKey)) {
           processedPairs.add(pairKey);
           
-          // Wright's formula: (1/2)^(n1+n2+1)
-          // n1 = generations from offspring to common ancestor through sire
-          // n2 = generations from offspring to common ancestor through dam
-          const n1 = sireAnc.generation + 1; // +1 because sire is generation 1 from offspring
-          const n2 = damAnc.generation + 1;  // +1 because dam is generation 1 from offspring
+          // Wright's formula: F = Σ (1/2)^(n1+n2+1)
+          // n1 = number of generations from sire to common ancestor
+          // n2 = number of generations from dam to common ancestor
+          // The generation stored is already the distance from sire/dam to the ancestor
+          // We add +1 to account for the path from offspring to sire/dam
+          const n1 = sireAnc.generation; // generations from sire to common ancestor
+          const n2 = damAnc.generation;  // generations from dam to common ancestor
           
+          // Total path: offspring -> sire (1) -> ... -> common ancestor (n1)
+          //             offspring -> dam (1) -> ... -> common ancestor (n2)
+          // Formula: (1/2)^(n1 + n2 + 1) where n1 and n2 are from parent to ancestor
           const contribution = Math.pow(0.5, n1 + n2 + 1);
           
           // Check if already added

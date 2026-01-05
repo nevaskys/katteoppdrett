@@ -54,6 +54,39 @@ interface PedigreeData {
   dam_dam_sire_dam?: Ancestor;
   dam_dam_dam_sire?: Ancestor;
   dam_dam_dam_dam?: Ancestor;
+  // Generation 5
+  sire_sire_sire_sire_sire?: Ancestor;
+  sire_sire_sire_sire_dam?: Ancestor;
+  sire_sire_sire_dam_sire?: Ancestor;
+  sire_sire_sire_dam_dam?: Ancestor;
+  sire_sire_dam_sire_sire?: Ancestor;
+  sire_sire_dam_sire_dam?: Ancestor;
+  sire_sire_dam_dam_sire?: Ancestor;
+  sire_sire_dam_dam_dam?: Ancestor;
+  sire_dam_sire_sire_sire?: Ancestor;
+  sire_dam_sire_sire_dam?: Ancestor;
+  sire_dam_sire_dam_sire?: Ancestor;
+  sire_dam_sire_dam_dam?: Ancestor;
+  sire_dam_dam_sire_sire?: Ancestor;
+  sire_dam_dam_sire_dam?: Ancestor;
+  sire_dam_dam_dam_sire?: Ancestor;
+  sire_dam_dam_dam_dam?: Ancestor;
+  dam_sire_sire_sire_sire?: Ancestor;
+  dam_sire_sire_sire_dam?: Ancestor;
+  dam_sire_sire_dam_sire?: Ancestor;
+  dam_sire_sire_dam_dam?: Ancestor;
+  dam_sire_dam_sire_sire?: Ancestor;
+  dam_sire_dam_sire_dam?: Ancestor;
+  dam_sire_dam_dam_sire?: Ancestor;
+  dam_sire_dam_dam_dam?: Ancestor;
+  dam_dam_sire_sire_sire?: Ancestor;
+  dam_dam_sire_sire_dam?: Ancestor;
+  dam_dam_sire_dam_sire?: Ancestor;
+  dam_dam_sire_dam_dam?: Ancestor;
+  dam_dam_dam_sire_sire?: Ancestor;
+  dam_dam_dam_sire_dam?: Ancestor;
+  dam_dam_dam_dam_sire?: Ancestor;
+  dam_dam_dam_dam_dam?: Ancestor;
 }
 
 serve(async (req) => {
@@ -81,7 +114,7 @@ serve(async (req) => {
       );
     }
 
-    const pedigreePrompt = `Analyser dette stamtavle-bildet for en katt. Ekstraher HELE stamtavlen med alle forfedre opp til 4 generasjoner.
+    const pedigreePrompt = `Analyser dette stamtavle-bildet for en katt. Ekstraher HELE stamtavlen med alle forfedre opp til 5 generasjoner.
 
 VIKTIG: En stamtavle har et hierarkisk format der:
 - Hovedkatten er subjektet
@@ -112,14 +145,14 @@ Ekstraher følgende informasjon:
 - dam_dam: Mormor (name, registration)
 
 4. OLDEFORELDRE (generasjon 3):
-- sire_sire_sire: Farfars far (name, registration)
-- sire_sire_dam: Farfars mor (name, registration)
-- sire_dam_sire: Farmors far (name, registration)
-- sire_dam_dam: Farmors mor (name, registration)
-- dam_sire_sire: Morfars far (name, registration)
-- dam_sire_dam: Morfars mor (name, registration)
-- dam_dam_sire: Mormors far (name, registration)
-- dam_dam_dam: Mormors mor (name, registration)
+- sire_sire_sire: Farfars far
+- sire_sire_dam: Farfars mor
+- sire_dam_sire: Farmors far
+- sire_dam_dam: Farmors mor
+- dam_sire_sire: Morfars far
+- dam_sire_dam: Morfars mor
+- dam_dam_sire: Mormors far
+- dam_dam_dam: Mormors mor
 
 5. TIPP-OLDEFORELDRE (generasjon 4):
 - sire_sire_sire_sire, sire_sire_sire_dam: Farfars fars foreldre
@@ -131,7 +164,25 @@ Ekstraher følgende informasjon:
 - dam_dam_sire_sire, dam_dam_sire_dam: Mormors fars foreldre
 - dam_dam_dam_sire, dam_dam_dam_dam: Mormors mors foreldre
 
-Returner et JSON-objekt med denne strukturen (bruk null for forfedre som ikke finnes):
+6. GENERASJON 5 (tipp-tipp-oldeforeldre):
+- sire_sire_sire_sire_sire, sire_sire_sire_sire_dam
+- sire_sire_sire_dam_sire, sire_sire_sire_dam_dam
+- sire_sire_dam_sire_sire, sire_sire_dam_sire_dam
+- sire_sire_dam_dam_sire, sire_sire_dam_dam_dam
+- sire_dam_sire_sire_sire, sire_dam_sire_sire_dam
+- sire_dam_sire_dam_sire, sire_dam_sire_dam_dam
+- sire_dam_dam_sire_sire, sire_dam_dam_sire_dam
+- sire_dam_dam_dam_sire, sire_dam_dam_dam_dam
+- dam_sire_sire_sire_sire, dam_sire_sire_sire_dam
+- dam_sire_sire_dam_sire, dam_sire_sire_dam_dam
+- dam_sire_dam_sire_sire, dam_sire_dam_sire_dam
+- dam_sire_dam_dam_sire, dam_sire_dam_dam_dam
+- dam_dam_sire_sire_sire, dam_dam_sire_sire_dam
+- dam_dam_sire_dam_sire, dam_dam_sire_dam_dam
+- dam_dam_dam_sire_sire, dam_dam_dam_sire_dam
+- dam_dam_dam_dam_sire, dam_dam_dam_dam_dam
+
+Returner et JSON-objekt med denne strukturen:
 {
   "name": "kattens navn",
   "breed": "rase",
@@ -143,40 +194,23 @@ Returner et JSON-objekt med denne strukturen (bruk null for forfedre som ikke fi
   "gender": "male eller female",
   "sire": {"name": "navn", "registration": "reg.nr"},
   "dam": {"name": "navn", "registration": "reg.nr"},
-  "sire_sire": {"name": "navn", "registration": "reg.nr"},
-  "sire_dam": {"name": "navn", "registration": "reg.nr"},
-  "dam_sire": {"name": "navn", "registration": "reg.nr"},
-  "dam_dam": {"name": "navn", "registration": "reg.nr"},
-  "sire_sire_sire": {"name": "navn", "registration": "reg.nr"},
-  "sire_sire_dam": {"name": "navn", "registration": "reg.nr"},
-  "sire_dam_sire": {"name": "navn", "registration": "reg.nr"},
-  "sire_dam_dam": {"name": "navn", "registration": "reg.nr"},
-  "dam_sire_sire": {"name": "navn", "registration": "reg.nr"},
-  "dam_sire_dam": {"name": "navn", "registration": "reg.nr"},
-  "dam_dam_sire": {"name": "navn", "registration": "reg.nr"},
-  "dam_dam_dam": {"name": "navn", "registration": "reg.nr"},
-  "sire_sire_sire_sire": {"name": "navn", "registration": "reg.nr"},
-  "sire_sire_sire_dam": {"name": "navn", "registration": "reg.nr"},
-  "sire_sire_dam_sire": {"name": "navn", "registration": "reg.nr"},
-  "sire_sire_dam_dam": {"name": "navn", "registration": "reg.nr"},
-  "sire_dam_sire_sire": {"name": "navn", "registration": "reg.nr"},
-  "sire_dam_sire_dam": {"name": "navn", "registration": "reg.nr"},
-  "sire_dam_dam_sire": {"name": "navn", "registration": "reg.nr"},
-  "sire_dam_dam_dam": {"name": "navn", "registration": "reg.nr"},
-  "dam_sire_sire_sire": {"name": "navn", "registration": "reg.nr"},
-  "dam_sire_sire_dam": {"name": "navn", "registration": "reg.nr"},
-  "dam_sire_dam_sire": {"name": "navn", "registration": "reg.nr"},
-  "dam_sire_dam_dam": {"name": "navn", "registration": "reg.nr"},
-  "dam_dam_sire_sire": {"name": "navn", "registration": "reg.nr"},
-  "dam_dam_sire_dam": {"name": "navn", "registration": "reg.nr"},
-  "dam_dam_dam_sire": {"name": "navn", "registration": "reg.nr"},
-  "dam_dam_dam_dam": {"name": "navn", "registration": "reg.nr"}
+  "sire_sire": {"name": "...", "registration": "..."},
+  "sire_dam": {"name": "...", "registration": "..."},
+  "dam_sire": {"name": "...", "registration": "..."},
+  "dam_dam": {"name": "...", "registration": "..."},
+  "sire_sire_sire": {"name": "...", "registration": "..."},
+  ... (alle generasjon 3 forfedre)
+  "sire_sire_sire_sire": {"name": "...", "registration": "..."},
+  ... (alle generasjon 4 forfedre)
+  "sire_sire_sire_sire_sire": {"name": "...", "registration": "..."},
+  ... (alle generasjon 5 forfedre)
 }
 
 VIKTIG: 
 - Bruk null for felt/forfedre som ikke finnes i bildet
 - Returner KUN JSON, ingen annen tekst
-- Prøv å lese alle navn så nøyaktig som mulig`;
+- Prøv å lese alle navn så nøyaktig som mulig
+- Les alle 5 generasjoner hvis de er synlige i bildet`;
 
     let imageContent: { type: string; image_url?: { url: string }; text?: string }[];
 
@@ -225,7 +259,7 @@ VIKTIG:
       }
     }
 
-    console.log('Sending request to Lovable AI...');
+    console.log('Sending request to Lovable AI for 5-generation pedigree parsing...');
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -241,7 +275,7 @@ VIKTIG:
             content: imageContent
           }
         ],
-        max_tokens: 2000,
+        max_tokens: 4000,
       }),
     });
 
@@ -283,7 +317,28 @@ VIKTIG:
       );
     }
 
-    console.log('Parsed pedigree data:', pedigreeData);
+    // Count how many ancestors were extracted
+    const gen5Fields = [
+      'sire_sire_sire_sire_sire', 'sire_sire_sire_sire_dam',
+      'sire_sire_sire_dam_sire', 'sire_sire_sire_dam_dam',
+      'sire_sire_dam_sire_sire', 'sire_sire_dam_sire_dam',
+      'sire_sire_dam_dam_sire', 'sire_sire_dam_dam_dam',
+      'sire_dam_sire_sire_sire', 'sire_dam_sire_sire_dam',
+      'sire_dam_sire_dam_sire', 'sire_dam_sire_dam_dam',
+      'sire_dam_dam_sire_sire', 'sire_dam_dam_sire_dam',
+      'sire_dam_dam_dam_sire', 'sire_dam_dam_dam_dam',
+      'dam_sire_sire_sire_sire', 'dam_sire_sire_sire_dam',
+      'dam_sire_sire_dam_sire', 'dam_sire_sire_dam_dam',
+      'dam_sire_dam_sire_sire', 'dam_sire_dam_sire_dam',
+      'dam_sire_dam_dam_sire', 'dam_sire_dam_dam_dam',
+      'dam_dam_sire_sire_sire', 'dam_dam_sire_sire_dam',
+      'dam_dam_sire_dam_sire', 'dam_dam_sire_dam_dam',
+      'dam_dam_dam_sire_sire', 'dam_dam_dam_sire_dam',
+      'dam_dam_dam_dam_sire', 'dam_dam_dam_dam_dam'
+    ];
+    
+    const gen5Count = gen5Fields.filter(f => (pedigreeData as Record<string, unknown>)[f] != null).length;
+    console.log(`Parsed pedigree: ${pedigreeData.name}, Gen 5 ancestors found: ${gen5Count}/32`);
 
     return new Response(
       JSON.stringify({ success: true, data: pedigreeData }),

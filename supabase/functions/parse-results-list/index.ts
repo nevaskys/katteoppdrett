@@ -141,12 +141,29 @@ VIKTIG:
       throw new Error('Kunne ikke analysere bildet');
     }
 
-    const aiData = await aiResponse.json();
+    const aiText = await aiResponse.text();
+    console.log('AI response length:', aiText.length);
+    
+    if (!aiText || aiText.trim() === '') {
+      throw new Error('Tom respons fra AI');
+    }
+    
+    let aiData;
+    try {
+      aiData = JSON.parse(aiText);
+    } catch (parseErr) {
+      console.error('Failed to parse AI response:', aiText.substring(0, 500));
+      throw new Error('Kunne ikke tolke AI-respons');
+    }
+    
     const content = aiData.choices?.[0]?.message?.content;
 
     if (!content) {
+      console.error('No content in AI response:', JSON.stringify(aiData).substring(0, 500));
       throw new Error('Ingen respons fra AI');
     }
+
+    console.log('AI content:', content.substring(0, 200));
 
     // Parse JSON from response
     let jsonStr = content;
@@ -160,7 +177,14 @@ VIKTIG:
       }
     }
 
-    const parsed = JSON.parse(jsonStr);
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonStr);
+    } catch (parseErr) {
+      console.error('Failed to parse results JSON:', jsonStr.substring(0, 500));
+      throw new Error('Kunne ikke tolke resultatene fra bildet');
+    }
+    
     const results: ParsedResult[] = parsed.results || [];
 
     console.log(`Parsed ${results.length} results from image`);

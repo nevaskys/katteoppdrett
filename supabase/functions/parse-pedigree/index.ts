@@ -214,24 +214,34 @@ VIKTIG:
 
     let imageContent: { type: string; image_url?: { url: string }; text?: string }[];
 
-    if (imageData) {
-      // Image is base64 data URL
+    // Check if imageUrl is actually a data URL (base64)
+    const isDataUrl = imageUrl && imageUrl.startsWith('data:');
+    
+    if (imageData || isDataUrl) {
+      // Image is already base64 data URL
+      const dataUrl = imageData || imageUrl;
+      console.log('Using base64 data URL for image');
       imageContent = [
         {
           type: "image_url",
-          image_url: { url: imageData }
+          image_url: { url: dataUrl }
         },
         {
           type: "text",
           text: pedigreePrompt
         }
       ];
-    } else {
-      // Fetch image from URL first
+    } else if (imageUrl) {
+      // Fetch image from external URL
       console.log('Fetching image from URL:', imageUrl);
       try {
-        const imageResponse = await fetch(imageUrl);
+        const imageResponse = await fetch(imageUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
         if (!imageResponse.ok) {
+          console.error('Failed to fetch image:', imageResponse.status, imageResponse.statusText);
           throw new Error(`Kunne ikke hente bilde: ${imageResponse.status}`);
         }
         const imageBlob = await imageResponse.blob();
@@ -240,6 +250,7 @@ VIKTIG:
         const mimeType = imageResponse.headers.get('content-type') || 'image/png';
         const dataUrl = `data:${mimeType};base64,${base64}`;
         
+        console.log('Successfully fetched and converted image to base64');
         imageContent = [
           {
             type: "image_url",
@@ -253,10 +264,15 @@ VIKTIG:
       } catch (urlError) {
         console.error('Error fetching image from URL:', urlError);
         return new Response(
-          JSON.stringify({ success: false, error: 'Kunne ikke hente bilde fra URL' }),
+          JSON.stringify({ success: false, error: 'Kunne ikke hente bilde fra URL. Sjekk at URLen er tilgjengelig.' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+    } else {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Bilde eller URL er påkrevd' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log('Sending request to Lovable AI for 5-generation pedigree parsing...');

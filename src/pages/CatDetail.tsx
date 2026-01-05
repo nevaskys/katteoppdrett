@@ -126,12 +126,6 @@ export default function CatDetail() {
                 <dt className="text-muted-foreground">Color</dt>
                 <dd className="font-medium">{cat.color}</dd>
               </div>
-              {cat.chipNumber && (
-                <div>
-                  <dt className="text-muted-foreground">Chip Number</dt>
-                  <dd className="font-medium font-mono text-xs">{cat.chipNumber}</dd>
-                </div>
-              )}
               {cat.registration && (
                 <div className="col-span-2">
                   <dt className="text-muted-foreground">Registration</dt>

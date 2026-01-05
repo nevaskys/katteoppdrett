@@ -10,7 +10,6 @@ interface DbCat {
   date_of_birth: string | null;
   color: string | null;
   ems_code: string | null;
-  microchip: string | null;
   registration_number: string | null;
   owner: string | null;
   breeder: string | null;
@@ -28,7 +27,6 @@ function dbToCat(db: DbCat): Cat {
     breed: db.breed,
     gender: db.gender,
     birthDate: db.date_of_birth || '',
-    chipNumber: db.microchip || undefined,
     registration: db.registration_number || undefined,
     color: db.color || '',
     emsCode: db.ems_code || undefined,
@@ -46,7 +44,6 @@ function catToDb(cat: Partial<Cat> & { name: string; breed: string; gender: 'mal
     date_of_birth: cat.birthDate || null,
     color: cat.color || null,
     ems_code: cat.emsCode || null,
-    microchip: cat.chipNumber || null,
     registration_number: cat.registration || null,
     images: cat.images || [],
     pedigree_url: cat.pedigreeImage || null,

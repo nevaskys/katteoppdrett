@@ -256,47 +256,80 @@ export type Database = {
       }
       litters: {
         Row: {
+          alternative_combinations: string | null
           birth_date: string | null
+          blood_type_notes: string | null
+          buyers_info: string | null
+          completion_date: string | null
           created_at: string
+          evaluation: string | null
           expected_date: string | null
           external_father_name: string | null
           external_father_pedigree_url: string | null
           father_id: string | null
           id: string
+          inbreeding_coefficient: number | null
           kitten_count: number | null
+          mating_date: string | null
           mother_id: string | null
+          mother_weight_log: Json | null
           name: string
           notes: string | null
+          nrr_registered: boolean | null
+          pregnancy_notes: string | null
+          reasoning: string | null
           status: string
           updated_at: string
         }
         Insert: {
+          alternative_combinations?: string | null
           birth_date?: string | null
+          blood_type_notes?: string | null
+          buyers_info?: string | null
+          completion_date?: string | null
           created_at?: string
+          evaluation?: string | null
           expected_date?: string | null
           external_father_name?: string | null
           external_father_pedigree_url?: string | null
           father_id?: string | null
           id?: string
+          inbreeding_coefficient?: number | null
           kitten_count?: number | null
+          mating_date?: string | null
           mother_id?: string | null
+          mother_weight_log?: Json | null
           name: string
           notes?: string | null
+          nrr_registered?: boolean | null
+          pregnancy_notes?: string | null
+          reasoning?: string | null
           status?: string
           updated_at?: string
         }
         Update: {
+          alternative_combinations?: string | null
           birth_date?: string | null
+          blood_type_notes?: string | null
+          buyers_info?: string | null
+          completion_date?: string | null
           created_at?: string
+          evaluation?: string | null
           expected_date?: string | null
           external_father_name?: string | null
           external_father_pedigree_url?: string | null
           father_id?: string | null
           id?: string
+          inbreeding_coefficient?: number | null
           kitten_count?: number | null
+          mating_date?: string | null
           mother_id?: string | null
+          mother_weight_log?: Json | null
           name?: string
           notes?: string | null
+          nrr_registered?: boolean | null
+          pregnancy_notes?: string | null
+          reasoning?: string | null
           status?: string
           updated_at?: string
         }

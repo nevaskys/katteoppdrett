@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash2, Plus, Scale, Loader2 } from 'lucide-react';
-import { useLitter, useUpdateLitter, useDeleteLitter } from '@/hooks/useLitters';
+import { ArrowLeft, Edit, Trash2, Plus, Scale, Loader2, CheckCircle, ArrowRight } from 'lucide-react';
+import { useLitterById, useUpdateLitterNew, useDeleteLitterNew, useUpdateLitterStatus } from '@/hooks/useLittersNew';
 import { useCats } from '@/hooks/useCats';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,23 +32,20 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Kitten, WeightEntry } from '@/types';
 import { toast } from 'sonner';
+import { LitterStatusBadge } from '@/components/litters/LitterStatusBadge';
+import { LitterStatus, LITTER_STATUS_CONFIG } from '@/types/litter';
+
+const STATUS_FLOW: LitterStatus[] = ['planned', 'pending', 'active', 'completed'];
 
 export default function LitterDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data: litter, isLoading: litterLoading } = useLitter(id);
+  const { data: litter, isLoading: litterLoading } = useLitterById(id);
   const { data: cats = [], isLoading: catsLoading } = useCats();
-  const updateLitterMutation = useUpdateLitter();
-  const deleteLitterMutation = useDeleteLitter();
-  
-  const [kittenDialogOpen, setKittenDialogOpen] = useState(false);
-  const [weightDialogOpen, setWeightDialogOpen] = useState(false);
-  const [selectedKitten, setSelectedKitten] = useState<Kitten | null>(null);
-  
-  const [newKitten, setNewKitten] = useState<{ name: string; gender: 'male' | 'female'; color: string; markings: string }>({ name: '', gender: 'female', color: '', markings: '' });
-  const [newWeight, setNewWeight] = useState({ date: new Date().toISOString().split('T')[0], weight: '' });
+  const updateLitterMutation = useUpdateLitterNew();
+  const deleteLitterMutation = useDeleteLitterNew();
+  const updateStatusMutation = useUpdateLitterStatus();
 
   const isLoading = litterLoading || catsLoading;
 
@@ -76,57 +73,36 @@ export default function LitterDetail() {
 
   const handleDelete = () => {
     deleteLitterMutation.mutate(litter.id, {
-      onSuccess: () => navigate('/litters'),
+      onSuccess: () => {
+        toast.success('Kull slettet');
+        navigate('/litters');
+      },
+      onError: () => toast.error('Kunne ikke slette kull'),
     });
   };
 
-  const handleAddKitten = () => {
-    if (!newKitten.name || !newKitten.color) {
-      toast.error('Navn og farge er påkrevd');
-      return;
+  const currentStatusIndex = STATUS_FLOW.indexOf(litter.status);
+  const nextStatus = currentStatusIndex < STATUS_FLOW.length - 1 
+    ? STATUS_FLOW[currentStatusIndex + 1] 
+    : null;
+
+  const handleAdvanceStatus = () => {
+    if (!nextStatus) return;
+    updateStatusMutation.mutate({ id: litter.id, status: nextStatus }, {
+      onSuccess: () => {
+        toast.success(`Status endret til ${LITTER_STATUS_CONFIG[nextStatus].label}`);
+      },
+      onError: () => toast.error('Kunne ikke endre status'),
+    });
+  };
+
+  const getNextStatusLabel = () => {
+    switch (nextStatus) {
+      case 'pending': return 'Merk som ventende (parring gjennomført)';
+      case 'active': return 'Merk som aktivt (kattunger født)';
+      case 'completed': return 'Merk som avsluttet';
+      default: return null;
     }
-    const kitten: Kitten = {
-      id: crypto.randomUUID(),
-      name: newKitten.name,
-      gender: newKitten.gender,
-      color: newKitten.color,
-      markings: newKitten.markings || undefined,
-      weightLog: [],
-    };
-    updateLitterMutation.mutate({ ...litter, kittens: [...litter.kittens, kitten] }, {
-      onSuccess: () => {
-        setNewKitten({ name: '', gender: 'female', color: '', markings: '' });
-        setKittenDialogOpen(false);
-        toast.success('Kattunge lagt til');
-      },
-    });
-  };
-
-  const handleAddWeight = () => {
-    if (!selectedKitten || !newWeight.weight) return;
-    const entry: WeightEntry = {
-      id: crypto.randomUUID(),
-      date: newWeight.date,
-      weight: parseInt(newWeight.weight),
-    };
-    const updatedKittens = litter.kittens.map(k =>
-      k.id === selectedKitten.id
-        ? { ...k, weightLog: [...k.weightLog, entry].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) }
-        : k
-    );
-    updateLitterMutation.mutate({ ...litter, kittens: updatedKittens }, {
-      onSuccess: () => {
-        setNewWeight({ date: new Date().toISOString().split('T')[0], weight: '' });
-        setWeightDialogOpen(false);
-        toast.success('Vekt registrert');
-      },
-    });
-  };
-
-  const handleDeleteKitten = (kittenId: string) => {
-    updateLitterMutation.mutate({ ...litter, kittens: litter.kittens.filter(k => k.id !== kittenId) }, {
-      onSuccess: () => toast.success('Kattunge fjernet'),
-    });
   };
 
   return (
@@ -135,9 +111,12 @@ export default function LitterDetail() {
         <Button variant="ghost" size="icon" asChild>
           <Link to="/litters"><ArrowLeft className="h-5 w-5" /></Link>
         </Button>
-        <h1 className="page-title flex-1">Litter Details</h1>
+        <div className="flex-1">
+          <h1 className="page-title">{litter.name}</h1>
+          <LitterStatusBadge status={litter.status} className="mt-1" />
+        </div>
         <Button variant="outline" asChild>
-          <Link to={`/litters/${litter.id}/edit`}><Edit className="h-4 w-4 mr-2" /> Edit</Link>
+          <Link to={`/litters/${litter.id}/edit`}><Edit className="h-4 w-4 mr-2" /> Rediger</Link>
         </Button>
         <AlertDialog>
           <AlertDialogTrigger asChild>
@@ -145,207 +124,192 @@ export default function LitterDetail() {
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete this litter?</AlertDialogTitle>
+              <AlertDialogTitle>Slette dette kullet?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will also delete all kitten records. This action cannot be undone.
+                Dette vil også slette alle kattunge-oppføringer. Denne handlingen kan ikke angres.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+              <AlertDialogCancel>Avbryt</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete}>Slett</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="stat-card">
-          <h2 className="text-lg font-semibold mb-4">Parents</h2>
+      {/* Status workflow */}
+      {nextStatus && (
+        <div className="bg-accent/50 border rounded-lg p-4 flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium">Neste steg i prosessen</p>
+            <p className="text-sm text-muted-foreground">{LITTER_STATUS_CONFIG[nextStatus].description}</p>
+          </div>
+          <Button onClick={handleAdvanceStatus} disabled={updateStatusMutation.isPending}>
+            {updateStatusMutation.isPending ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <ArrowRight className="h-4 w-4 mr-2" />
+            )}
+            {getNextStatusLabel()}
+          </Button>
+        </div>
+      )}
+
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Parents section */}
+        <div className="bg-card border rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">Foreldre</h2>
           <dl className="space-y-3 text-sm">
             <div>
-              <dt className="text-muted-foreground">Dam (Mother)</dt>
+              <dt className="text-muted-foreground">Mor</dt>
               <dd className="font-medium">
                 {mother ? (
                   <Link to={`/cats/${mother.id}`} className="text-primary hover:underline">
                     {mother.name}
                   </Link>
-                ) : 'Unknown'}
+                ) : 'Ikke valgt'}
               </dd>
             </div>
             <div>
-              <dt className="text-muted-foreground">Sire (Father)</dt>
+              <dt className="text-muted-foreground">Far</dt>
               <dd className="font-medium">
                 {father ? (
                   <Link to={`/cats/${father.id}`} className="text-primary hover:underline">
                     {father.name}
                   </Link>
-                ) : 'Unknown'}
+                ) : litter.externalFatherName ? (
+                  <span>
+                    {litter.externalFatherName}
+                    {litter.externalFatherPedigreeUrl && (
+                      <a 
+                        href={litter.externalFatherPedigreeUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline ml-2"
+                      >
+                        (stamtavle)
+                      </a>
+                    )}
+                  </span>
+                ) : 'Ikke valgt'}
               </dd>
             </div>
-            <div>
-              <dt className="text-muted-foreground">Birth Date</dt>
-              <dd className="font-medium">{new Date(litter.birthDate).toLocaleDateString()}</dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Expected Count</dt>
-              <dd className="font-medium">{litter.count}</dd>
-            </div>
           </dl>
-          {litter.notes && (
-            <div className="mt-4 pt-4 border-t">
-              <p className="text-sm text-muted-foreground">{litter.notes}</p>
-            </div>
-          )}
         </div>
 
-        <div className="lg:col-span-2 stat-card">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Kittens ({litter.kittens.length})</h2>
-            <Dialog open={kittenDialogOpen} onOpenChange={setKittenDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm"><Plus className="h-4 w-4 mr-2" /> Add Kitten</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add Kitten</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Name</Label>
-                    <Input
-                      value={newKitten.name}
-                      onChange={e => setNewKitten(prev => ({ ...prev, name: e.target.value }))}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Gender</Label>
-                    <Select
-                      value={newKitten.gender}
-                      onValueChange={value => setNewKitten(prev => ({ ...prev, gender: value as 'male' | 'female' }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="female">♀ Female</SelectItem>
-                        <SelectItem value="male">♂ Male</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Color</Label>
-                    <Input
-                      value={newKitten.color}
-                      onChange={e => setNewKitten(prev => ({ ...prev, color: e.target.value }))}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Markings</Label>
-                    <Input
-                      value={newKitten.markings}
-                      onChange={e => setNewKitten(prev => ({ ...prev, markings: e.target.value }))}
-                    />
-                  </div>
-                  <Button onClick={handleAddKitten} className="w-full">Add Kitten</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          {litter.kittens.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No kittens recorded yet</p>
-          ) : (
-            <div className="space-y-3">
-              {litter.kittens.map(kitten => (
-                <div key={kitten.id} className="p-3 rounded-lg bg-accent/50 flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{kitten.name}</span>
-                      <Badge variant={kitten.gender === 'female' ? 'secondary' : 'outline'} className="text-xs">
-                        {kitten.gender === 'female' ? '♀' : '♂'}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {kitten.color}{kitten.markings && ` - ${kitten.markings}`}
-                    </p>
-                    {kitten.weightLog.length > 0 && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Latest: {kitten.weightLog[0].weight}g ({new Date(kitten.weightLog[0].date).toLocaleDateString()})
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex gap-1">
-                    <Dialog open={weightDialogOpen && selectedKitten?.id === kitten.id} onOpenChange={(open) => {
-                      setWeightDialogOpen(open);
-                      if (open) setSelectedKitten(kitten);
-                    }}>
-                      <DialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Scale className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Record Weight for {kitten.name}</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label>Date</Label>
-                            <Input
-                              type="date"
-                              value={newWeight.date}
-                              onChange={e => setNewWeight(prev => ({ ...prev, date: e.target.value }))}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Weight (grams)</Label>
-                            <Input
-                              type="number"
-                              value={newWeight.weight}
-                              onChange={e => setNewWeight(prev => ({ ...prev, weight: e.target.value }))}
-                            />
-                          </div>
-                          <Button onClick={handleAddWeight} className="w-full">Save Weight</Button>
-                          {kitten.weightLog.length > 0 && (
-                            <div className="pt-4 border-t">
-                              <p className="text-sm font-medium mb-2">Weight History</p>
-                              <div className="space-y-1 max-h-32 overflow-auto">
-                                {kitten.weightLog.map(w => (
-                                  <div key={w.id} className="text-sm flex justify-between">
-                                    <span className="text-muted-foreground">{new Date(w.date).toLocaleDateString()}</span>
-                                    <span>{w.weight}g</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete {kitten.name}?</AlertDialogTitle>
-                          <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDeleteKitten(kitten.id)}>Delete</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+        {/* Dates section */}
+        <div className="bg-card border rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">Datoer</h2>
+          <dl className="space-y-3 text-sm">
+            {litter.matingDate && (
+              <div>
+                <dt className="text-muted-foreground">Parringsdato</dt>
+                <dd className="font-medium">{new Date(litter.matingDate).toLocaleDateString('nb-NO')}</dd>
+              </div>
+            )}
+            {litter.expectedDate && (
+              <div>
+                <dt className="text-muted-foreground">Forventet fødsel</dt>
+                <dd className="font-medium">{new Date(litter.expectedDate).toLocaleDateString('nb-NO')}</dd>
+              </div>
+            )}
+            {litter.birthDate && (
+              <div>
+                <dt className="text-muted-foreground">Fødselsdato</dt>
+                <dd className="font-medium">{new Date(litter.birthDate).toLocaleDateString('nb-NO')}</dd>
+              </div>
+            )}
+            {litter.completionDate && (
+              <div>
+                <dt className="text-muted-foreground">Siste kattunge flyttet</dt>
+                <dd className="font-medium">{new Date(litter.completionDate).toLocaleDateString('nb-NO')}</dd>
+              </div>
+            )}
+            {litter.kittenCount && litter.kittenCount > 0 && (
+              <div>
+                <dt className="text-muted-foreground">Antall kattunger</dt>
+                <dd className="font-medium">{litter.kittenCount}</dd>
+              </div>
+            )}
+          </dl>
         </div>
       </div>
+
+      {/* Planning info */}
+      {(litter.reasoning || litter.inbreedingCoefficient || litter.bloodTypeNotes || litter.alternativeCombinations) && (
+        <div className="bg-card border rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">Planlegging</h2>
+          <div className="space-y-4">
+            {litter.inbreedingCoefficient && (
+              <div>
+                <dt className="text-sm text-muted-foreground">Innavlsprosent</dt>
+                <dd className="font-medium">{litter.inbreedingCoefficient}%</dd>
+              </div>
+            )}
+            {litter.reasoning && (
+              <div>
+                <dt className="text-sm text-muted-foreground">Begrunnelse</dt>
+                <dd className="mt-1 whitespace-pre-wrap">{litter.reasoning}</dd>
+              </div>
+            )}
+            {litter.bloodTypeNotes && (
+              <div>
+                <dt className="text-sm text-muted-foreground">Blodtype / NI-vurdering</dt>
+                <dd className="mt-1 whitespace-pre-wrap">{litter.bloodTypeNotes}</dd>
+              </div>
+            )}
+            {litter.alternativeCombinations && (
+              <div>
+                <dt className="text-sm text-muted-foreground">Alternative kombinasjoner</dt>
+                <dd className="mt-1 whitespace-pre-wrap">{litter.alternativeCombinations}</dd>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Pregnancy notes */}
+      {litter.pregnancyNotes && (
+        <div className="bg-card border rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">Drektighetsoppfølging</h2>
+          <p className="whitespace-pre-wrap">{litter.pregnancyNotes}</p>
+        </div>
+      )}
+
+      {/* General notes */}
+      {litter.notes && (
+        <div className="bg-card border rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">Notater</h2>
+          <p className="whitespace-pre-wrap">{litter.notes}</p>
+        </div>
+      )}
+
+      {/* Completion info */}
+      {litter.status === 'completed' && (litter.evaluation || litter.buyersInfo || litter.nrrRegistered) && (
+        <div className="bg-card border rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">Avslutning</h2>
+          <div className="space-y-4">
+            {litter.nrrRegistered && (
+              <div className="flex items-center gap-2 text-green-600">
+                <CheckCircle className="h-4 w-4" />
+                <span className="text-sm font-medium">Registrert i NRR</span>
+              </div>
+            )}
+            {litter.buyersInfo && (
+              <div>
+                <dt className="text-sm text-muted-foreground">Kjøpere / Fôrverter</dt>
+                <dd className="mt-1 whitespace-pre-wrap">{litter.buyersInfo}</dd>
+              </div>
+            )}
+            {litter.evaluation && (
+              <div>
+                <dt className="text-sm text-muted-foreground">Evaluering</dt>
+                <dd className="mt-1 whitespace-pre-wrap">{litter.evaluation}</dd>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

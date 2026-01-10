@@ -1,14 +1,16 @@
+import { useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useCats } from '@/hooks/useCats';
-import { useLitter, useAddLitter, useUpdateLitter } from '@/hooks/useLitters';
+import { useLitterById, useCreateLitter, useUpdateLitterNew } from '@/hooks/useLittersNew';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -17,12 +19,29 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { LitterStatus, LITTER_STATUS_CONFIG } from '@/types/litter';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const litterSchema = z.object({
-  motherId: z.string().min(1, 'Mor er påkrevd'),
-  fatherId: z.string().min(1, 'Far er påkrevd'),
-  birthDate: z.string().min(1, 'Fødselsdato er påkrevd'),
-  count: z.coerce.number().min(1, 'Antall må være minst 1'),
+  name: z.string().min(1, 'Navn er påkrevd'),
+  status: z.enum(['planned', 'pending', 'active', 'completed']),
+  motherId: z.string().optional(),
+  fatherId: z.string().optional(),
+  externalFatherName: z.string().optional(),
+  externalFatherPedigreeUrl: z.string().optional(),
+  matingDate: z.string().optional(),
+  expectedDate: z.string().optional(),
+  birthDate: z.string().optional(),
+  completionDate: z.string().optional(),
+  reasoning: z.string().optional(),
+  inbreedingCoefficient: z.coerce.number().optional(),
+  bloodTypeNotes: z.string().optional(),
+  alternativeCombinations: z.string().optional(),
+  pregnancyNotes: z.string().optional(),
+  kittenCount: z.coerce.number().optional(),
+  nrrRegistered: z.boolean().optional(),
+  evaluation: z.string().optional(),
+  buyersInfo: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -32,49 +51,97 @@ export default function LitterForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: cats = [], isLoading: catsLoading } = useCats();
-  const { data: existingLitter, isLoading: litterLoading } = useLitter(id);
-  const addLitterMutation = useAddLitter();
-  const updateLitterMutation = useUpdateLitter();
+  const { data: existingLitter, isLoading: litterLoading } = useLitterById(id);
+  const createLitterMutation = useCreateLitter();
+  const updateLitterMutation = useUpdateLitterNew();
   
-  const isEditing = !!existingLitter;
-  const isLoading = catsLoading || litterLoading;
+  const isEditing = !!id && !!existingLitter;
+  const isLoading = catsLoading || (id && litterLoading);
 
   const femaleCats = cats.filter(c => c.gender === 'female');
   const maleCats = cats.filter(c => c.gender === 'male');
 
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<LitterFormData>({
+  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<LitterFormData>({
     resolver: zodResolver(litterSchema),
-    defaultValues: existingLitter ? {
-      motherId: existingLitter.motherId,
-      fatherId: existingLitter.fatherId,
-      birthDate: existingLitter.birthDate,
-      count: existingLitter.count,
-      notes: existingLitter.notes || '',
-    } : {},
+    defaultValues: {
+      status: 'planned',
+      nrrRegistered: false,
+    },
   });
+
+  useEffect(() => {
+    if (existingLitter) {
+      reset({
+        name: existingLitter.name,
+        status: existingLitter.status,
+        motherId: existingLitter.motherId || undefined,
+        fatherId: existingLitter.fatherId || undefined,
+        externalFatherName: existingLitter.externalFatherName || undefined,
+        externalFatherPedigreeUrl: existingLitter.externalFatherPedigreeUrl || undefined,
+        matingDate: existingLitter.matingDate || undefined,
+        expectedDate: existingLitter.expectedDate || undefined,
+        birthDate: existingLitter.birthDate || undefined,
+        completionDate: existingLitter.completionDate || undefined,
+        reasoning: existingLitter.reasoning || undefined,
+        inbreedingCoefficient: existingLitter.inbreedingCoefficient || undefined,
+        bloodTypeNotes: existingLitter.bloodTypeNotes || undefined,
+        alternativeCombinations: existingLitter.alternativeCombinations || undefined,
+        pregnancyNotes: existingLitter.pregnancyNotes || undefined,
+        kittenCount: existingLitter.kittenCount || undefined,
+        nrrRegistered: existingLitter.nrrRegistered,
+        evaluation: existingLitter.evaluation || undefined,
+        buyersInfo: existingLitter.buyersInfo || undefined,
+        notes: existingLitter.notes || undefined,
+      });
+    }
+  }, [existingLitter, reset]);
+
+  const currentStatus = watch('status');
 
   const onSubmit = (data: LitterFormData) => {
     const litterData = {
-      motherId: data.motherId,
-      fatherId: data.fatherId,
-      birthDate: data.birthDate,
-      count: data.count,
-      notes: data.notes || undefined,
-      kittens: existingLitter?.kittens || [],
+      name: data.name,
+      status: data.status as LitterStatus,
+      motherId: data.motherId || null,
+      fatherId: data.fatherId || null,
+      externalFatherName: data.externalFatherName || null,
+      externalFatherPedigreeUrl: data.externalFatherPedigreeUrl || null,
+      matingDate: data.matingDate || null,
+      expectedDate: data.expectedDate || null,
+      birthDate: data.birthDate || null,
+      completionDate: data.completionDate || null,
+      reasoning: data.reasoning || null,
+      inbreedingCoefficient: data.inbreedingCoefficient || null,
+      bloodTypeNotes: data.bloodTypeNotes || null,
+      alternativeCombinations: data.alternativeCombinations || null,
+      pregnancyNotes: data.pregnancyNotes || null,
+      kittenCount: data.kittenCount || null,
+      nrrRegistered: data.nrrRegistered || false,
+      evaluation: data.evaluation || null,
+      buyersInfo: data.buyersInfo || null,
+      notes: data.notes || null,
     };
 
     if (isEditing && existingLitter) {
-      updateLitterMutation.mutate({ ...litterData, id: existingLitter.id, createdAt: existingLitter.createdAt }, {
+      updateLitterMutation.mutate({ ...litterData, id: existingLitter.id }, {
         onSuccess: () => {
           toast.success('Kull oppdatert');
-          navigate('/litters');
+          navigate(`/litters/${existingLitter.id}`);
+        },
+        onError: (error) => {
+          toast.error('Kunne ikke oppdatere kull');
+          console.error(error);
         },
       });
     } else {
-      addLitterMutation.mutate(litterData as any, {
-        onSuccess: () => {
-          toast.success('Kull lagt til');
-          navigate('/litters');
+      createLitterMutation.mutate(litterData, {
+        onSuccess: (newLitter) => {
+          toast.success('Kull opprettet');
+          navigate(`/litters/${newLitter.id}`);
+        },
+        onError: (error) => {
+          toast.error('Kunne ikke opprette kull');
+          console.error(error);
         },
       });
     }
@@ -88,88 +155,266 @@ export default function LitterForm() {
     );
   }
 
-  if (cats.length === 0) {
-    return (
-      <div className="empty-state">
-        <p className="text-lg font-medium">Legg til katter først</p>
-        <p className="text-sm mb-4">Du må legge til foreldrekatter før du kan opprette et kull</p>
-        <Button asChild>
-          <Link to="/cats/new">Legg til katt</Link>
-        </Button>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-3xl">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
           <Link to="/litters"><ArrowLeft className="h-5 w-5" /></Link>
         </Button>
-        <h1 className="page-title">{isEditing ? 'Rediger kull' : 'Legg til kull'}</h1>
+        <h1 className="page-title">{isEditing ? 'Rediger kull' : 'Nytt kull'}</h1>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="stat-card space-y-6">
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>Mor *</Label>
-            <Select
-              value={watch('motherId')}
-              onValueChange={(value) => setValue('motherId', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Velg mor" />
-              </SelectTrigger>
-              <SelectContent>
-                {femaleCats.map(cat => (
-                  <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.motherId && <p className="text-sm text-destructive">{errors.motherId.message}</p>}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div className="bg-card border rounded-lg p-6 space-y-6">
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Navn på kull *</Label>
+              <Input 
+                id="name" 
+                {...register('name')} 
+                placeholder="F.eks. 'A-kullet 2024'" 
+              />
+              {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Status *</Label>
+              <Select
+                value={currentStatus}
+                onValueChange={(value) => setValue('status', value as LitterStatus)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(LITTER_STATUS_CONFIG).map(([key, config]) => (
+                    <SelectItem key={key} value={key}>
+                      {config.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Far *</Label>
-            <Select
-              value={watch('fatherId')}
-              onValueChange={(value) => setValue('fatherId', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Velg far" />
-              </SelectTrigger>
-              <SelectContent>
-                {maleCats.map(cat => (
-                  <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.fatherId && <p className="text-sm text-destructive">{errors.fatherId.message}</p>}
-          </div>
+          <div className="border-t pt-6">
+            <h3 className="text-sm font-medium mb-4">Foreldre</h3>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Mor</Label>
+                <Select
+                  value={watch('motherId') || ''}
+                  onValueChange={(value) => setValue('motherId', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Velg mor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {femaleCats.map(cat => (
+                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="birthDate">Fødselsdato *</Label>
-            <Input id="birthDate" type="date" {...register('birthDate')} />
-            {errors.birthDate && <p className="text-sm text-destructive">{errors.birthDate.message}</p>}
-          </div>
+              <div className="space-y-2">
+                <Label>Far (egen katt)</Label>
+                <Select
+                  value={watch('fatherId') || ''}
+                  onValueChange={(value) => setValue('fatherId', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Velg far" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {maleCats.map(cat => (
+                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="count">Antall kattunger *</Label>
-            <Input id="count" type="number" min="1" {...register('count')} />
-            {errors.count && <p className="text-sm text-destructive">{errors.count.message}</p>}
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="externalFatherName">Ekstern far (navn)</Label>
+                <Input 
+                  id="externalFatherName" 
+                  {...register('externalFatherName')} 
+                  placeholder="Hvis far ikke er registrert"
+                />
+              </div>
 
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="notes">Notater</Label>
-            <Textarea id="notes" {...register('notes')} rows={3} />
+              <div className="space-y-2">
+                <Label htmlFor="externalFatherPedigreeUrl">Stamtavle-URL (ekstern far)</Label>
+                <Input 
+                  id="externalFatherPedigreeUrl" 
+                  {...register('externalFatherPedigreeUrl')} 
+                  placeholder="Link til stamtavle"
+                />
+              </div>
+            </div>
           </div>
         </div>
+
+        <Tabs defaultValue="planning" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="planning">Planlegging</TabsTrigger>
+            <TabsTrigger value="pregnancy">Drektighet</TabsTrigger>
+            <TabsTrigger value="birth">Fødsel</TabsTrigger>
+            <TabsTrigger value="completion">Avslutning</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="planning" className="bg-card border rounded-lg p-6 space-y-4">
+            <h3 className="text-sm font-medium">Planleggingsfase</h3>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reasoning">Begrunnelse for kombinasjonen</Label>
+                <Textarea 
+                  id="reasoning" 
+                  {...register('reasoning')} 
+                  rows={3}
+                  placeholder="Hvorfor velger du denne kombinasjonen?"
+                />
+              </div>
+              
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="inbreedingCoefficient">Innavlsprosent (%)</Label>
+                  <Input 
+                    id="inbreedingCoefficient" 
+                    type="number" 
+                    step="0.01"
+                    {...register('inbreedingCoefficient')} 
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="bloodTypeNotes">Blodtype / NI-vurdering</Label>
+                <Textarea 
+                  id="bloodTypeNotes" 
+                  {...register('bloodTypeNotes')} 
+                  rows={2}
+                  placeholder="Notater om blodtype og NI-risiko"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="alternativeCombinations">Alternative kombinasjoner</Label>
+                <Textarea 
+                  id="alternativeCombinations" 
+                  {...register('alternativeCombinations')} 
+                  rows={2}
+                  placeholder="Andre kombinasjoner du vurderer"
+                />
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="pregnancy" className="bg-card border rounded-lg p-6 space-y-4">
+            <h3 className="text-sm font-medium">Drektighetsoppfølging</h3>
+            <div className="space-y-4">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="matingDate">Parringsdato</Label>
+                  <Input id="matingDate" type="date" {...register('matingDate')} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="expectedDate">Forventet fødsel</Label>
+                  <Input id="expectedDate" type="date" {...register('expectedDate')} />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="pregnancyNotes">Drektighetsnotater</Label>
+                <Textarea 
+                  id="pregnancyNotes" 
+                  {...register('pregnancyNotes')} 
+                  rows={4}
+                  placeholder="Uke-for-uke notater, observasjoner, vektutvikling hos mor..."
+                />
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="birth" className="bg-card border rounded-lg p-6 space-y-4">
+            <h3 className="text-sm font-medium">Fødsel og kattunger</h3>
+            <div className="space-y-4">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="birthDate">Fødselsdato</Label>
+                  <Input id="birthDate" type="date" {...register('birthDate')} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="kittenCount">Antall kattunger</Label>
+                  <Input id="kittenCount" type="number" min="0" {...register('kittenCount')} />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="notes">Fødselsnotater / Generelle notater</Label>
+                <Textarea 
+                  id="notes" 
+                  {...register('notes')} 
+                  rows={4}
+                  placeholder="Notater om fødselen, NI-observasjoner, helse..."
+                />
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="completion" className="bg-card border rounded-lg p-6 space-y-4">
+            <h3 className="text-sm font-medium">Avslutning og arkiv</h3>
+            <div className="space-y-4">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="completionDate">Flyttedato siste kattunge</Label>
+                  <Input id="completionDate" type="date" {...register('completionDate')} />
+                </div>
+                <div className="flex items-center space-x-2 pt-8">
+                  <Checkbox 
+                    id="nrrRegistered" 
+                    checked={watch('nrrRegistered')} 
+                    onCheckedChange={(checked) => setValue('nrrRegistered', checked as boolean)}
+                  />
+                  <Label htmlFor="nrrRegistered" className="text-sm font-normal">
+                    Registrert i NRR
+                  </Label>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="buyersInfo">Kjøpere / Fôrverter</Label>
+                <Textarea 
+                  id="buyersInfo" 
+                  {...register('buyersInfo')} 
+                  rows={3}
+                  placeholder="Informasjon om hvem som har fått kattunger"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="evaluation">Evaluering av kombinasjonen</Label>
+                <Textarea 
+                  id="evaluation" 
+                  {...register('evaluation')} 
+                  rows={4}
+                  placeholder="Læringspunkter, om kombinasjonen bør gjentas..."
+                />
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
 
         <div className="flex gap-3 justify-end">
           <Button type="button" variant="outline" asChild>
             <Link to="/litters">Avbryt</Link>
           </Button>
-          <Button type="submit">{isEditing ? 'Lagre endringer' : 'Legg til kull'}</Button>
+          <Button type="submit" disabled={createLitterMutation.isPending || updateLitterMutation.isPending}>
+            {(createLitterMutation.isPending || updateLitterMutation.isPending) && (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            )}
+            {isEditing ? 'Lagre endringer' : 'Opprett kull'}
+          </Button>
         </div>
       </form>
     </div>

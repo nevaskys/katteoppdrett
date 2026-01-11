@@ -273,12 +273,14 @@ export type Database = {
           mating_date: string | null
           mating_date_from: string | null
           mating_date_to: string | null
+          mating_notes: string | null
           mother_id: string | null
           mother_weight_log: Json | null
           name: string
           notes: string | null
           nrr_registered: boolean | null
           pregnancy_notes: string | null
+          pregnancy_notes_log: Json | null
           reasoning: string | null
           status: string
           updated_at: string
@@ -301,12 +303,14 @@ export type Database = {
           mating_date?: string | null
           mating_date_from?: string | null
           mating_date_to?: string | null
+          mating_notes?: string | null
           mother_id?: string | null
           mother_weight_log?: Json | null
           name: string
           notes?: string | null
           nrr_registered?: boolean | null
           pregnancy_notes?: string | null
+          pregnancy_notes_log?: Json | null
           reasoning?: string | null
           status?: string
           updated_at?: string
@@ -329,12 +333,14 @@ export type Database = {
           mating_date?: string | null
           mating_date_from?: string | null
           mating_date_to?: string | null
+          mating_notes?: string | null
           mother_id?: string | null
           mother_weight_log?: Json | null
           name?: string
           notes?: string | null
           nrr_registered?: boolean | null
           pregnancy_notes?: string | null
+          pregnancy_notes_log?: Json | null
           reasoning?: string | null
           status?: string
           updated_at?: string

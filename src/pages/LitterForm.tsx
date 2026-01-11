@@ -20,10 +20,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { LitterStatus, LITTER_STATUS_CONFIG, MotherWeightEntry } from '@/types/litter';
+import { LitterStatus, LITTER_STATUS_CONFIG, MotherWeightEntry, PregnancyNoteEntry } from '@/types/litter';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PregnancyCalendar } from '@/components/litters/PregnancyCalendar';
 import { MotherWeightLog } from '@/components/litters/MotherWeightLog';
+import { PregnancyNotesLog } from '@/components/litters/PregnancyNotesLog';
 
 const GESTATION_DAYS = 65;
 
@@ -43,6 +44,7 @@ const litterSchema = z.object({
   inbreedingCoefficient: z.coerce.number().optional(),
   bloodTypeNotes: z.string().optional(),
   alternativeCombinations: z.string().optional(),
+  matingNotes: z.string().optional(),
   pregnancyNotes: z.string().optional(),
   kittenCount: z.coerce.number().optional(),
   nrrRegistered: z.boolean().optional(),
@@ -62,6 +64,7 @@ export default function LitterForm() {
   const updateLitterMutation = useUpdateLitterNew();
   
   const [motherWeightLog, setMotherWeightLog] = useState<MotherWeightEntry[]>([]);
+  const [pregnancyNotesLog, setPregnancyNotesLog] = useState<PregnancyNoteEntry[]>([]);
   
   const isEditing = !!id && !!existingLitter;
   const isLoading = catsLoading || (id && litterLoading);
@@ -95,6 +98,7 @@ export default function LitterForm() {
         inbreedingCoefficient: existingLitter.inbreedingCoefficient || undefined,
         bloodTypeNotes: existingLitter.bloodTypeNotes || undefined,
         alternativeCombinations: existingLitter.alternativeCombinations || undefined,
+        matingNotes: existingLitter.matingNotes || undefined,
         pregnancyNotes: existingLitter.pregnancyNotes || undefined,
         kittenCount: existingLitter.kittenCount || undefined,
         nrrRegistered: existingLitter.nrrRegistered,
@@ -103,6 +107,7 @@ export default function LitterForm() {
         notes: existingLitter.notes || undefined,
       });
       setMotherWeightLog(existingLitter.motherWeightLog || []);
+      setPregnancyNotesLog(existingLitter.pregnancyNotesLog || []);
     }
   }, [existingLitter, reset]);
 
@@ -139,7 +144,9 @@ export default function LitterForm() {
       inbreedingCoefficient: data.inbreedingCoefficient || null,
       bloodTypeNotes: data.bloodTypeNotes || null,
       alternativeCombinations: data.alternativeCombinations || null,
+      matingNotes: data.matingNotes || null,
       pregnancyNotes: data.pregnancyNotes || null,
+      pregnancyNotesLog: pregnancyNotesLog,
       motherWeightLog: motherWeightLog,
       kittenCount: data.kittenCount || null,
       nrrRegistered: data.nrrRegistered || false,
@@ -282,8 +289,9 @@ export default function LitterForm() {
         </div>
 
         <Tabs defaultValue="planning" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="planning">Planlegging</TabsTrigger>
+            <TabsTrigger value="mating">Parring</TabsTrigger>
             <TabsTrigger value="pregnancy">Drektighet</TabsTrigger>
             <TabsTrigger value="birth">Fødsel</TabsTrigger>
             <TabsTrigger value="completion">Avslutning</TabsTrigger>
@@ -336,10 +344,9 @@ export default function LitterForm() {
             </div>
           </TabsContent>
           
-          <TabsContent value="pregnancy" className="bg-card border rounded-lg p-6 space-y-6">
-            <h3 className="text-sm font-medium">Drektighetsoppfølging</h3>
+          <TabsContent value="mating" className="bg-card border rounded-lg p-6 space-y-6">
+            <h3 className="text-sm font-medium">Parringsinformasjon</h3>
             
-            {/* Mating dates */}
             <div className="space-y-4">
               <div className="bg-pink-50 dark:bg-pink-950/30 border border-pink-200 dark:border-pink-800 rounded-lg p-4">
                 <h4 className="text-sm font-medium text-pink-900 dark:text-pink-100 mb-3">
@@ -388,6 +395,22 @@ export default function LitterForm() {
                 </div>
               </div>
               
+              <div className="space-y-2">
+                <Label htmlFor="matingNotes">Parringsnotater</Label>
+                <Textarea 
+                  id="matingNotes" 
+                  {...register('matingNotes')} 
+                  rows={4}
+                  placeholder="Observasjoner fra parringen, antall parringer, hvordan det gikk..."
+                />
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="pregnancy" className="bg-card border rounded-lg p-6 space-y-6">
+            <h3 className="text-sm font-medium">Drektighetsoppfølging</h3>
+            
+            <div className="space-y-4">
               {/* Show pregnancy calendar if mating date is set */}
               {matingDateFrom && (
                 <PregnancyCalendar
@@ -398,6 +421,12 @@ export default function LitterForm() {
                 />
               )}
               
+              {/* Pregnancy notes log */}
+              <PregnancyNotesLog
+                entries={pregnancyNotesLog}
+                onChange={setPregnancyNotesLog}
+              />
+              
               {/* Mother weight log */}
               <div className="border-t pt-4">
                 <MotherWeightLog
@@ -406,13 +435,14 @@ export default function LitterForm() {
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="pregnancyNotes">Drektighetsnotater</Label>
+              <div className="border-t pt-4 space-y-2">
+                <Label htmlFor="pregnancyNotes">Generelle drektighetsnotater (eldre format)</Label>
                 <Textarea 
                   id="pregnancyNotes" 
                   {...register('pregnancyNotes')} 
-                  rows={4}
-                  placeholder="Uke-for-uke notater, observasjoner..."
+                  rows={3}
+                  placeholder="Eldre notater..."
+                  className="text-muted-foreground"
                 />
               </div>
             </div>

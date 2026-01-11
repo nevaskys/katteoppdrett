@@ -271,6 +271,8 @@ export type Database = {
           inbreeding_coefficient: number | null
           kitten_count: number | null
           mating_date: string | null
+          mating_date_from: string | null
+          mating_date_to: string | null
           mother_id: string | null
           mother_weight_log: Json | null
           name: string
@@ -297,6 +299,8 @@ export type Database = {
           inbreeding_coefficient?: number | null
           kitten_count?: number | null
           mating_date?: string | null
+          mating_date_from?: string | null
+          mating_date_to?: string | null
           mother_id?: string | null
           mother_weight_log?: Json | null
           name: string
@@ -323,6 +327,8 @@ export type Database = {
           inbreeding_coefficient?: number | null
           kitten_count?: number | null
           mating_date?: string | null
+          mating_date_from?: string | null
+          mating_date_to?: string | null
           mother_id?: string | null
           mother_weight_log?: Json | null
           name?: string

@@ -12,6 +12,8 @@ interface DbLitter {
   external_father_name: string | null;
   external_father_pedigree_url: string | null;
   mating_date: string | null;
+  mating_date_from: string | null;
+  mating_date_to: string | null;
   expected_date: string | null;
   birth_date: string | null;
   completion_date: string | null;
@@ -44,6 +46,8 @@ function dbToLitter(db: DbLitter): Litter {
     externalFatherName: db.external_father_name,
     externalFatherPedigreeUrl: db.external_father_pedigree_url,
     matingDate: db.mating_date,
+    matingDateFrom: db.mating_date_from,
+    matingDateTo: db.mating_date_to,
     expectedDate: db.expected_date,
     birthDate: db.birth_date,
     completionDate: db.completion_date,
@@ -72,6 +76,8 @@ function litterToDb(litter: Partial<Litter>) {
     external_father_name: litter.externalFatherName || null,
     external_father_pedigree_url: litter.externalFatherPedigreeUrl || null,
     mating_date: litter.matingDate || null,
+    mating_date_from: litter.matingDateFrom || null,
+    mating_date_to: litter.matingDateTo || null,
     expected_date: litter.expectedDate || null,
     birth_date: litter.birthDate || null,
     completion_date: litter.completionDate || null,

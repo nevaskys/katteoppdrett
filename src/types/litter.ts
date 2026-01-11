@@ -7,6 +7,12 @@ export interface MotherWeightEntry {
   notes?: string;
 }
 
+export interface PregnancyNoteEntry {
+  id: string;
+  date: string;
+  note: string;
+}
+
 export interface Litter {
   id: string;
   name: string;
@@ -32,8 +38,12 @@ export interface Litter {
   bloodTypeNotes: string | null;
   alternativeCombinations: string | null;
   
+  // Mating phase
+  matingNotes: string | null;
+  
   // Pregnancy phase
   pregnancyNotes: string | null;
+  pregnancyNotesLog: PregnancyNoteEntry[];
   motherWeightLog: MotherWeightEntry[];
   
   // Active phase

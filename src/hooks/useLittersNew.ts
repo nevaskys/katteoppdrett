@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Litter, LitterStatus, MotherWeightEntry } from '@/types/litter';
+import { Litter, LitterStatus, MotherWeightEntry, PregnancyNoteEntry } from '@/types/litter';
 import { Json } from '@/integrations/supabase/types';
 
 interface DbLitter {
@@ -21,7 +21,9 @@ interface DbLitter {
   inbreeding_coefficient: number | null;
   blood_type_notes: string | null;
   alternative_combinations: string | null;
+  mating_notes: string | null;
   pregnancy_notes: string | null;
+  pregnancy_notes_log: Json;
   mother_weight_log: Json;
   kitten_count: number | null;
   nrr_registered: boolean | null;
@@ -35,6 +37,10 @@ interface DbLitter {
 function dbToLitter(db: DbLitter): Litter {
   const motherWeightLog = Array.isArray(db.mother_weight_log) 
     ? (db.mother_weight_log as unknown as MotherWeightEntry[])
+    : [];
+  
+  const pregnancyNotesLog = Array.isArray(db.pregnancy_notes_log) 
+    ? (db.pregnancy_notes_log as unknown as PregnancyNoteEntry[])
     : [];
   
   return {
@@ -55,7 +61,9 @@ function dbToLitter(db: DbLitter): Litter {
     inbreedingCoefficient: db.inbreeding_coefficient,
     bloodTypeNotes: db.blood_type_notes,
     alternativeCombinations: db.alternative_combinations,
+    matingNotes: db.mating_notes,
     pregnancyNotes: db.pregnancy_notes,
+    pregnancyNotesLog,
     motherWeightLog,
     kittenCount: db.kitten_count,
     nrrRegistered: db.nrr_registered ?? false,
@@ -85,7 +93,9 @@ function litterToDb(litter: Partial<Litter>) {
     inbreeding_coefficient: litter.inbreedingCoefficient || null,
     blood_type_notes: litter.bloodTypeNotes || null,
     alternative_combinations: litter.alternativeCombinations || null,
+    mating_notes: litter.matingNotes || null,
     pregnancy_notes: litter.pregnancyNotes || null,
+    pregnancy_notes_log: (litter.pregnancyNotesLog || []) as unknown as Json,
     mother_weight_log: (litter.motherWeightLog || []) as unknown as Json,
     kitten_count: litter.kittenCount || null,
     nrr_registered: litter.nrrRegistered || false,

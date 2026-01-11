@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Cat, Users, ClipboardList, CheckSquare, Home, Menu, X, Heart, LogOut, Award, Lightbulb } from 'lucide-react';
+import { Cat, Users, CheckSquare, Home, Menu, X, Heart, LogOut, Award, Lightbulb } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,7 +16,6 @@ const navItems = [
   { path: '/litters', label: 'Kull', icon: Users },
   { path: '/judging-results', label: 'Utstillingsresultater', icon: Award },
   { path: '/test-mating', label: 'Testparring', icon: Heart },
-  { path: '/waitlist', label: 'Venteliste', icon: ClipboardList },
   { path: '/tasks', label: 'Oppgaver', icon: CheckSquare },
   { path: '/ideas', label: 'Ideer', icon: Lightbulb },
 ];

@@ -59,17 +59,6 @@ export interface Litter {
   createdAt: string;
 }
 
-export type WaitlistStatus = 'new' | 'contacted' | 'waitlist' | 'deposit' | 'sold' | 'declined';
-
-export interface WaitlistEntry {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  status: WaitlistStatus;
-  notes?: string;
-  createdAt: string;
-}
 
 export type TaskStatus = 'pending' | 'completed';
 

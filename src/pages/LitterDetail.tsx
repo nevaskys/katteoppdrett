@@ -1,26 +1,8 @@
-import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash2, Plus, Scale, Loader2, CheckCircle, ArrowRight } from 'lucide-react';
-import { useLitterById, useUpdateLitterNew, useDeleteLitterNew, useUpdateLitterStatus } from '@/hooks/useLittersNew';
+import { ArrowLeft, Edit, Trash2, Loader2, CheckCircle, ArrowRight } from 'lucide-react';
+import { useLitterById, useDeleteLitterNew, useUpdateLitterStatus } from '@/hooks/useLittersNew';
 import { useCats } from '@/hooks/useCats';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,7 +16,10 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { LitterStatusBadge } from '@/components/litters/LitterStatusBadge';
+import { PregnancyCalendar } from '@/components/litters/PregnancyCalendar';
 import { LitterStatus, LITTER_STATUS_CONFIG } from '@/types/litter';
+import { format } from 'date-fns';
+import { nb } from 'date-fns/locale';
 
 const STATUS_FLOW: LitterStatus[] = ['planned', 'pending', 'active', 'completed'];
 
@@ -43,7 +28,6 @@ export default function LitterDetail() {
   const navigate = useNavigate();
   const { data: litter, isLoading: litterLoading } = useLitterById(id);
   const { data: cats = [], isLoading: catsLoading } = useCats();
-  const updateLitterMutation = useUpdateLitterNew();
   const deleteLitterMutation = useDeleteLitterNew();
   const updateStatusMutation = useUpdateLitterStatus();
 
@@ -201,28 +185,33 @@ export default function LitterDetail() {
         <div className="bg-card border rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4">Datoer</h2>
           <dl className="space-y-3 text-sm">
-            {litter.matingDate && (
+            {(litter.matingDateFrom || litter.matingDate) && (
               <div>
-                <dt className="text-muted-foreground">Parringsdato</dt>
-                <dd className="font-medium">{new Date(litter.matingDate).toLocaleDateString('nb-NO')}</dd>
+                <dt className="text-muted-foreground">Parring</dt>
+                <dd className="font-medium">
+                  {format(new Date(litter.matingDateFrom || litter.matingDate!), 'd. MMM yyyy', { locale: nb })}
+                  {litter.matingDateTo && litter.matingDateTo !== litter.matingDateFrom && (
+                    <> – {format(new Date(litter.matingDateTo), 'd. MMM yyyy', { locale: nb })}</>
+                  )}
+                </dd>
               </div>
             )}
             {litter.expectedDate && (
               <div>
                 <dt className="text-muted-foreground">Forventet fødsel</dt>
-                <dd className="font-medium">{new Date(litter.expectedDate).toLocaleDateString('nb-NO')}</dd>
+                <dd className="font-medium">{format(new Date(litter.expectedDate), 'd. MMM yyyy', { locale: nb })}</dd>
               </div>
             )}
             {litter.birthDate && (
               <div>
                 <dt className="text-muted-foreground">Fødselsdato</dt>
-                <dd className="font-medium">{new Date(litter.birthDate).toLocaleDateString('nb-NO')}</dd>
+                <dd className="font-medium">{format(new Date(litter.birthDate), 'd. MMM yyyy', { locale: nb })}</dd>
               </div>
             )}
             {litter.completionDate && (
               <div>
                 <dt className="text-muted-foreground">Siste kattunge flyttet</dt>
-                <dd className="font-medium">{new Date(litter.completionDate).toLocaleDateString('nb-NO')}</dd>
+                <dd className="font-medium">{format(new Date(litter.completionDate), 'd. MMM yyyy', { locale: nb })}</dd>
               </div>
             )}
             {litter.kittenCount && litter.kittenCount > 0 && (
@@ -234,6 +223,16 @@ export default function LitterDetail() {
           </dl>
         </div>
       </div>
+
+      {/* Pregnancy Calendar - show for pending status */}
+      {(litter.status === 'pending' || litter.status === 'active') && (litter.matingDateFrom || litter.matingDate) && (
+        <PregnancyCalendar
+          matingDateFrom={litter.matingDateFrom || litter.matingDate!}
+          matingDateTo={litter.matingDateTo}
+          expectedDate={litter.expectedDate}
+          birthDate={litter.birthDate}
+        />
+      )}
 
       {/* Planning info */}
       {(litter.reasoning || litter.inbreedingCoefficient || litter.bloodTypeNotes || litter.alternativeCombinations) && (

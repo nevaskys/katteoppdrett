@@ -14,14 +14,16 @@ export function LitterCard({ litter, cats }: LitterCardProps) {
   const father = cats.find(c => c.id === litter.fatherId);
   
   const getDisplayDate = () => {
+    const matingStart = litter.matingDateFrom || litter.matingDate;
+    
     switch (litter.status) {
       case 'planned':
         return null;
       case 'pending':
         return litter.expectedDate 
           ? `Forventet: ${new Date(litter.expectedDate).toLocaleDateString('nb-NO')}`
-          : litter.matingDate 
-            ? `Parring: ${new Date(litter.matingDate).toLocaleDateString('nb-NO')}`
+          : matingStart 
+            ? `Parring: ${new Date(matingStart).toLocaleDateString('nb-NO')}`
             : null;
       case 'active':
       case 'completed':

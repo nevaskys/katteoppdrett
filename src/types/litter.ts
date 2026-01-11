@@ -19,7 +19,9 @@ export interface Litter {
   externalFatherPedigreeUrl: string | null;
   
   // Dates
-  matingDate: string | null;
+  matingDateFrom: string | null;
+  matingDateTo: string | null;
+  matingDate: string | null; // legacy, will be removed
   expectedDate: string | null;
   birthDate: string | null;
   completionDate: string | null;

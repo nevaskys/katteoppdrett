@@ -3,7 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Calculator } from 'lucide-react';
+import { addDays, format } from 'date-fns';
 import { useCats } from '@/hooks/useCats';
 import { useLitterById, useCreateLitter, useUpdateLitterNew } from '@/hooks/useLittersNew';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,9 @@ import {
 import { toast } from 'sonner';
 import { LitterStatus, LITTER_STATUS_CONFIG } from '@/types/litter';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PregnancyCalendar } from '@/components/litters/PregnancyCalendar';
+
+const GESTATION_DAYS = 65;
 
 const litterSchema = z.object({
   name: z.string().min(1, 'Navn er påkrevd'),
@@ -29,7 +33,8 @@ const litterSchema = z.object({
   fatherId: z.string().optional(),
   externalFatherName: z.string().optional(),
   externalFatherPedigreeUrl: z.string().optional(),
-  matingDate: z.string().optional(),
+  matingDateFrom: z.string().optional(),
+  matingDateTo: z.string().optional(),
   expectedDate: z.string().optional(),
   birthDate: z.string().optional(),
   completionDate: z.string().optional(),
@@ -78,7 +83,8 @@ export default function LitterForm() {
         fatherId: existingLitter.fatherId || undefined,
         externalFatherName: existingLitter.externalFatherName || undefined,
         externalFatherPedigreeUrl: existingLitter.externalFatherPedigreeUrl || undefined,
-        matingDate: existingLitter.matingDate || undefined,
+        matingDateFrom: existingLitter.matingDateFrom || existingLitter.matingDate || undefined,
+        matingDateTo: existingLitter.matingDateTo || undefined,
         expectedDate: existingLitter.expectedDate || undefined,
         birthDate: existingLitter.birthDate || undefined,
         completionDate: existingLitter.completionDate || undefined,
@@ -97,6 +103,19 @@ export default function LitterForm() {
   }, [existingLitter, reset]);
 
   const currentStatus = watch('status');
+  const matingDateFrom = watch('matingDateFrom');
+  const matingDateTo = watch('matingDateTo');
+  const expectedDate = watch('expectedDate');
+  const birthDate = watch('birthDate');
+
+  // Auto-calculate expected date when mating date changes
+  const handleCalculateExpectedDate = () => {
+    if (matingDateFrom) {
+      const calculated = addDays(new Date(matingDateFrom), GESTATION_DAYS);
+      setValue('expectedDate', format(calculated, 'yyyy-MM-dd'));
+      toast.success(`Forventet fødsel beregnet: ${format(calculated, 'd. MMM yyyy')}`);
+    }
+  };
 
   const onSubmit = (data: LitterFormData) => {
     const litterData = {
@@ -106,7 +125,9 @@ export default function LitterForm() {
       fatherId: data.fatherId || null,
       externalFatherName: data.externalFatherName || null,
       externalFatherPedigreeUrl: data.externalFatherPedigreeUrl || null,
-      matingDate: data.matingDate || null,
+      matingDateFrom: data.matingDateFrom || null,
+      matingDateTo: data.matingDateTo || null,
+      matingDate: data.matingDateFrom || null, // Keep legacy field in sync
       expectedDate: data.expectedDate || null,
       birthDate: data.birthDate || null,
       completionDate: data.completionDate || null,
@@ -310,19 +331,67 @@ export default function LitterForm() {
             </div>
           </TabsContent>
           
-          <TabsContent value="pregnancy" className="bg-card border rounded-lg p-6 space-y-4">
+          <TabsContent value="pregnancy" className="bg-card border rounded-lg p-6 space-y-6">
             <h3 className="text-sm font-medium">Drektighetsoppfølging</h3>
+            
+            {/* Mating dates */}
             <div className="space-y-4">
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="matingDate">Parringsdato</Label>
-                  <Input id="matingDate" type="date" {...register('matingDate')} />
+              <div className="bg-pink-50 dark:bg-pink-950/30 border border-pink-200 dark:border-pink-800 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-pink-900 dark:text-pink-100 mb-3">
+                  Parringsdatoer
+                </h4>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="matingDateFrom">Fra dato</Label>
+                    <Input 
+                      id="matingDateFrom" 
+                      type="date" 
+                      {...register('matingDateFrom')} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="matingDateTo">Til dato (valgfritt)</Label>
+                    <Input 
+                      id="matingDateTo" 
+                      type="date" 
+                      {...register('matingDateTo')} 
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="expectedDate">Forventet fødsel</Label>
-                  <Input id="expectedDate" type="date" {...register('expectedDate')} />
+                
+                <div className="mt-4 flex items-center gap-4">
+                  <div className="flex-1">
+                    <Label htmlFor="expectedDate">Forventet fødsel</Label>
+                    <Input 
+                      id="expectedDate" 
+                      type="date" 
+                      {...register('expectedDate')} 
+                      className="mt-1"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCalculateExpectedDate}
+                    disabled={!matingDateFrom}
+                    className="mt-6"
+                  >
+                    <Calculator className="h-4 w-4 mr-2" />
+                    Beregn ({GESTATION_DAYS} dager)
+                  </Button>
                 </div>
               </div>
+              
+              {/* Show pregnancy calendar if mating date is set */}
+              {matingDateFrom && (
+                <PregnancyCalendar
+                  matingDateFrom={matingDateFrom}
+                  matingDateTo={matingDateTo}
+                  expectedDate={expectedDate}
+                  birthDate={birthDate}
+                />
+              )}
               
               <div className="space-y-2">
                 <Label htmlFor="pregnancyNotes">Drektighetsnotater</Label>

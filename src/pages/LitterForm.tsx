@@ -7,6 +7,7 @@ import { ArrowLeft, Loader2, Calculator } from 'lucide-react';
 import { addDays, format } from 'date-fns';
 import { useCats } from '@/hooks/useCats';
 import { useLitterById, useCreateLitter, useUpdateLitterNew } from '@/hooks/useLittersNew';
+import { useKittensByLitter, useSaveKittens } from '@/hooks/useKittens';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -25,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PregnancyCalendar } from '@/components/litters/PregnancyCalendar';
 import { MotherWeightLog } from '@/components/litters/MotherWeightLog';
 import { PregnancyNotesLog } from '@/components/litters/PregnancyNotesLog';
+import { KittenEditor, KittenData } from '@/components/litters/KittenEditor';
 
 const GESTATION_DAYS = 65;
 
@@ -60,14 +62,17 @@ export default function LitterForm() {
   const navigate = useNavigate();
   const { data: cats = [], isLoading: catsLoading } = useCats();
   const { data: existingLitter, isLoading: litterLoading } = useLitterById(id);
+  const { data: existingKittens = [], isLoading: kittensLoading } = useKittensByLitter(id);
   const createLitterMutation = useCreateLitter();
   const updateLitterMutation = useUpdateLitterNew();
+  const saveKittensMutation = useSaveKittens();
   
   const [motherWeightLog, setMotherWeightLog] = useState<MotherWeightEntry[]>([]);
   const [pregnancyNotesLog, setPregnancyNotesLog] = useState<PregnancyNoteEntry[]>([]);
+  const [kittensData, setKittensData] = useState<KittenData[]>([]);
   
   const isEditing = !!id && !!existingLitter;
-  const isLoading = catsLoading || (id && litterLoading);
+  const isLoading = catsLoading || (id && litterLoading) || (id && kittensLoading);
 
   const femaleCats = cats.filter(c => c.gender === 'female');
   const maleCats = cats.filter(c => c.gender === 'male');
@@ -111,11 +116,34 @@ export default function LitterForm() {
     }
   }, [existingLitter, reset]);
 
+  // Load existing kittens
+  useEffect(() => {
+    if (existingKittens && existingKittens.length > 0) {
+      setKittensData(existingKittens.map(k => ({
+        id: k.id,
+        name: k.name || '',
+        gender: k.gender as 'male' | 'female' | null,
+        color: k.color || '',
+        emsCode: k.ems_code || '',
+        status: (k.status as KittenData['status']) || 'available',
+        reservedBy: k.reserved_by || '',
+        notes: k.notes || '',
+      })));
+    }
+  }, [existingKittens]);
+
   const currentStatus = watch('status');
+  const motherId = watch('motherId');
+  const fatherId = watch('fatherId');
   const matingDateFrom = watch('matingDateFrom');
   const matingDateTo = watch('matingDateTo');
   const expectedDate = watch('expectedDate');
   const birthDate = watch('birthDate');
+  const kittenCount = watch('kittenCount');
+
+  // Find selected cat names for display
+  const selectedMother = femaleCats.find(c => c.id === motherId);
+  const selectedFather = maleCats.find(c => c.id === fatherId);
 
   // Auto-calculate expected date when mating date changes
   const handleCalculateExpectedDate = () => {
@@ -155,9 +183,29 @@ export default function LitterForm() {
       notes: data.notes || null,
     };
 
+    const saveKittensIfNeeded = async (litterId: string) => {
+      if (kittensData.length > 0) {
+        await saveKittensMutation.mutateAsync({
+          litterId,
+          kittens: kittensData.map(k => ({
+            id: k.id,
+            litterId,
+            name: k.name,
+            gender: k.gender,
+            color: k.color,
+            emsCode: k.emsCode,
+            status: k.status,
+            reservedBy: k.reservedBy,
+            notes: k.notes,
+          })),
+        });
+      }
+    };
+
     if (isEditing && existingLitter) {
       updateLitterMutation.mutate({ ...litterData, id: existingLitter.id }, {
-        onSuccess: () => {
+        onSuccess: async () => {
+          await saveKittensIfNeeded(existingLitter.id);
           toast.success('Kull oppdatert');
           navigate(`/litters/${existingLitter.id}`);
         },
@@ -168,7 +216,8 @@ export default function LitterForm() {
       });
     } else {
       createLitterMutation.mutate(litterData, {
-        onSuccess: (newLitter) => {
+        onSuccess: async (newLitter) => {
+          await saveKittensIfNeeded(newLitter.id);
           toast.success('Kull opprettet');
           navigate(`/litters/${newLitter.id}`);
         },
@@ -236,13 +285,16 @@ export default function LitterForm() {
               <div className="space-y-2">
                 <Label>Mor</Label>
                 <Select
-                  value={watch('motherId') || ''}
-                  onValueChange={(value) => setValue('motherId', value)}
+                  value={motherId || '__none__'}
+                  onValueChange={(value) => setValue('motherId', value === '__none__' ? undefined : value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Velg mor" />
+                    <SelectValue placeholder="Velg mor">
+                      {selectedMother?.name || 'Velg mor'}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="__none__">Velg mor</SelectItem>
                     {femaleCats.map(cat => (
                       <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                     ))}
@@ -253,13 +305,16 @@ export default function LitterForm() {
               <div className="space-y-2">
                 <Label>Far (egen katt)</Label>
                 <Select
-                  value={watch('fatherId') || ''}
-                  onValueChange={(value) => setValue('fatherId', value)}
+                  value={fatherId || '__none__'}
+                  onValueChange={(value) => setValue('fatherId', value === '__none__' ? undefined : value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Velg far" />
+                    <SelectValue placeholder="Velg far">
+                      {selectedFather?.name || 'Velg far'}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="__none__">Velg far</SelectItem>
                     {maleCats.map(cat => (
                       <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                     ))}
@@ -448,9 +503,9 @@ export default function LitterForm() {
             </div>
           </TabsContent>
           
-          <TabsContent value="birth" className="bg-card border rounded-lg p-6 space-y-4">
+          <TabsContent value="birth" className="bg-card border rounded-lg p-6 space-y-6">
             <h3 className="text-sm font-medium">Fødsel og kattunger</h3>
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="birthDate">Fødselsdato</Label>
@@ -469,6 +524,15 @@ export default function LitterForm() {
                   {...register('notes')} 
                   rows={4}
                   placeholder="Notater om fødselen, NI-observasjoner, helse..."
+                />
+              </div>
+              
+              {/* Kitten details editor */}
+              <div className="border-t pt-6">
+                <KittenEditor
+                  kittens={kittensData}
+                  onChange={setKittensData}
+                  suggestedCount={kittenCount}
                 />
               </div>
             </div>

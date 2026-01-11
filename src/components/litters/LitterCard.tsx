@@ -53,25 +53,20 @@ export function LitterCard({ litter, cats }: LitterCardProps) {
   
   const nextMilestone = getNextMilestone();
   
-  const getDisplayDate = () => {
-    switch (litter.status) {
-      case 'planned':
-        return null;
-      case 'pending':
-        return expectedDate 
-          ? `Forventet: ${format(expectedDate, 'd. MMM yyyy', { locale: nb })}`
-          : null;
-      case 'active':
-      case 'completed':
-        return litter.birthDate 
-          ? `Født: ${format(new Date(litter.birthDate), 'd. MMM yyyy', { locale: nb })}`
-          : null;
-      default:
-        return null;
+  // Days until expected birth
+  const daysUntilBirth = expectedDate 
+    ? differenceInDays(expectedDate, today)
+    : null;
+  
+  const getMatingDateDisplay = () => {
+    if (!matingStart) return null;
+    if (litter.matingDateTo) {
+      return `${format(new Date(matingStart), 'd. MMM', { locale: nb })} - ${format(new Date(litter.matingDateTo), 'd. MMM', { locale: nb })}`;
     }
+    return format(new Date(matingStart), 'd. MMM yyyy', { locale: nb });
   };
   
-  const displayDate = getDisplayDate();
+  const matingDateDisplay = getMatingDateDisplay();
   
   return (
     <Link
@@ -103,15 +98,31 @@ export function LitterCard({ litter, cats }: LitterCardProps) {
           </span>
         </div>
         
-        {displayDate && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Calendar className="h-4 w-4" />
-            {displayDate}
+        {/* Key dates for pending litters */}
+        {litter.status === 'pending' && (
+          <div className="space-y-1.5 mt-2">
+            {matingDateDisplay && (
+              <div className="flex items-center gap-2 text-sm">
+                <Calendar className="h-4 w-4 text-pink-500" />
+                <span className="text-muted-foreground">Parret:</span>
+                <span className="font-medium">{matingDateDisplay}</span>
+              </div>
+            )}
+            {expectedDate && (
+              <div className="flex items-center gap-2 text-sm">
+                <Baby className="h-4 w-4 text-green-600" />
+                <span className="text-muted-foreground">Termin:</span>
+                <span className="font-medium">{format(expectedDate, 'd. MMM yyyy', { locale: nb })}</span>
+                {daysUntilBirth !== null && daysUntilBirth > 0 && (
+                  <span className="text-xs text-muted-foreground">({daysUntilBirth} dager)</span>
+                )}
+              </div>
+            )}
           </div>
         )}
         
         {/* Show pregnancy progress for pending */}
-        {litter.status === 'pending' && daysPregnant !== null && (
+        {litter.status === 'pending' && daysPregnant !== null && daysPregnant >= 0 && (
           <div className="mt-3 space-y-2">
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Dag {daysPregnant} av {GESTATION_DAYS}</span>
@@ -135,6 +146,15 @@ export function LitterCard({ litter, cats }: LitterCardProps) {
                 </span>
               </div>
             )}
+          </div>
+        )}
+        
+        {/* Birth date for active/completed */}
+        {(litter.status === 'active' || litter.status === 'completed') && litter.birthDate && (
+          <div className="flex items-center gap-2 text-sm mt-2">
+            <Calendar className="h-4 w-4 text-green-600" />
+            <span className="text-muted-foreground">Født:</span>
+            <span className="font-medium">{format(new Date(litter.birthDate), 'd. MMM yyyy', { locale: nb })}</span>
           </div>
         )}
         

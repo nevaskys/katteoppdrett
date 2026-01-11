@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,9 +20,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { LitterStatus, LITTER_STATUS_CONFIG } from '@/types/litter';
+import { LitterStatus, LITTER_STATUS_CONFIG, MotherWeightEntry } from '@/types/litter';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PregnancyCalendar } from '@/components/litters/PregnancyCalendar';
+import { MotherWeightLog } from '@/components/litters/MotherWeightLog';
 
 const GESTATION_DAYS = 65;
 
@@ -59,6 +60,8 @@ export default function LitterForm() {
   const { data: existingLitter, isLoading: litterLoading } = useLitterById(id);
   const createLitterMutation = useCreateLitter();
   const updateLitterMutation = useUpdateLitterNew();
+  
+  const [motherWeightLog, setMotherWeightLog] = useState<MotherWeightEntry[]>([]);
   
   const isEditing = !!id && !!existingLitter;
   const isLoading = catsLoading || (id && litterLoading);
@@ -99,6 +102,7 @@ export default function LitterForm() {
         buyersInfo: existingLitter.buyersInfo || undefined,
         notes: existingLitter.notes || undefined,
       });
+      setMotherWeightLog(existingLitter.motherWeightLog || []);
     }
   }, [existingLitter, reset]);
 
@@ -136,6 +140,7 @@ export default function LitterForm() {
       bloodTypeNotes: data.bloodTypeNotes || null,
       alternativeCombinations: data.alternativeCombinations || null,
       pregnancyNotes: data.pregnancyNotes || null,
+      motherWeightLog: motherWeightLog,
       kittenCount: data.kittenCount || null,
       nrrRegistered: data.nrrRegistered || false,
       evaluation: data.evaluation || null,
@@ -393,13 +398,21 @@ export default function LitterForm() {
                 />
               )}
               
+              {/* Mother weight log */}
+              <div className="border-t pt-4">
+                <MotherWeightLog
+                  entries={motherWeightLog}
+                  onChange={setMotherWeightLog}
+                />
+              </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="pregnancyNotes">Drektighetsnotater</Label>
                 <Textarea 
                   id="pregnancyNotes" 
                   {...register('pregnancyNotes')} 
                   rows={4}
-                  placeholder="Uke-for-uke notater, observasjoner, vektutvikling hos mor..."
+                  placeholder="Uke-for-uke notater, observasjoner..."
                 />
               </div>
             </div>

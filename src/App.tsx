@@ -13,7 +13,7 @@ import CatForm from "./pages/CatForm";
 import LittersList from "./pages/LittersList";
 import LitterDetail from "./pages/LitterDetail";
 import LitterForm from "./pages/LitterForm";
-import WaitlistPage from "./pages/WaitlistPage";
+
 import TasksPage from "./pages/TasksPage";
 import TestMating from "./pages/TestMating";
 import JudgingResultsList from "./pages/JudgingResultsList";
@@ -47,8 +47,6 @@ const App = () => (
                     <Route path="/litters/new" element={<LitterForm />} />
                     <Route path="/litters/:id" element={<LitterDetail />} />
                     <Route path="/litters/:id/edit" element={<LitterForm />} />
-                    <Route path="/waitlist" element={<WaitlistPage />} />
-                    <Route path="/waitlist/new" element={<WaitlistPage />} />
                     <Route path="/tasks" element={<TasksPage />} />
                     <Route path="/tasks/new" element={<TasksPage />} />
                     <Route path="/test-mating" element={<TestMating />} />

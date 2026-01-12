@@ -18,16 +18,26 @@ export function PregnancyCalendar({
   expectedDate,
   birthDate 
 }: PregnancyCalendarProps) {
-  const startDate = new Date(matingDateFrom);
-  const endDate = matingDateTo ? new Date(matingDateTo) : startDate;
+  // Parse dates at midnight to avoid timezone issues
+  const parseDate = (dateStr: string) => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+  
+  const startDate = parseDate(matingDateFrom);
+  const endDate = matingDateTo ? parseDate(matingDateTo) : startDate;
+  
+  // Get today at midnight for consistent calculations
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
   
   // Calculate based on first mating date for expected delivery
   const calculatedExpectedDate = addDays(startDate, GESTATION_DAYS);
-  const displayExpectedDate = expectedDate ? new Date(expectedDate) : calculatedExpectedDate;
+  const displayExpectedDate = expectedDate ? parseDate(expectedDate) : calculatedExpectedDate;
   
   // Calculate days pregnant (from first mating)
   const daysPregnant = differenceInDays(today, startDate);
+  // Days until birth - from today to expected date
   const daysUntilBirth = differenceInDays(displayExpectedDate, today);
   
   // If already born, show that instead

@@ -42,11 +42,11 @@ export default function CatsList() {
               className="stat-card hover:shadow-md transition-shadow group"
             >
               <div className="flex items-start gap-4">
-                <div className="h-16 w-16 rounded-lg bg-accent flex items-center justify-center flex-shrink-0 overflow-hidden">
+                <div className="h-12 w-12 rounded-lg bg-accent flex items-center justify-center flex-shrink-0 overflow-hidden">
                   {cat.images[0] ? (
-                    <img src={cat.images[0]} alt={cat.name} className="h-full w-full object-cover" />
+                    <img src={cat.images[0]} alt={cat.name} className="h-full w-full object-contain" />
                   ) : (
-                    <CatIcon className="h-8 w-8 text-accent-foreground/50" />
+                    <CatIcon className="h-6 w-6 text-accent-foreground/50" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -55,7 +55,12 @@ export default function CatsList() {
                   </h3>
                   <p className="text-sm text-muted-foreground">{cat.breed}</p>
                   <div className="flex items-center gap-2 mt-2">
-                    <Badge variant={cat.gender === 'female' ? 'secondary' : 'outline'}>
+                    <Badge 
+                      className={cat.gender === 'female' 
+                        ? 'bg-pink-100 text-pink-700 hover:bg-pink-100 border-pink-200' 
+                        : 'bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200'
+                      }
+                    >
                       {cat.gender === 'female' ? '♀ Hunn' : '♂ Hann'}
                     </Badge>
                     <span className="text-xs text-muted-foreground">{cat.emsCode || cat.color}</span>

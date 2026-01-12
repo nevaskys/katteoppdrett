@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash2, Loader2, CheckCircle, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Loader2, CheckCircle, ArrowRight, Baby } from 'lucide-react';
 import { useLitterById, useDeleteLitterNew, useUpdateLitterStatus } from '@/hooks/useLittersNew';
 import { useCats } from '@/hooks/useCats';
 import { Button } from '@/components/ui/button';
@@ -17,11 +17,15 @@ import {
 import { toast } from 'sonner';
 import { LitterStatusBadge } from '@/components/litters/LitterStatusBadge';
 import { PregnancyCalendar } from '@/components/litters/PregnancyCalendar';
+import { BirthNotesEditor } from '@/components/litters/BirthNotesEditor';
+import { KittenWeightEditor } from '@/components/litters/KittenWeightEditor';
+import { KittenList } from '@/components/litters/KittenList';
 import { LitterStatus, LITTER_STATUS_CONFIG } from '@/types/litter';
-import { format } from 'date-fns';
+import { format, differenceInDays, addDays } from 'date-fns';
 import { nb } from 'date-fns/locale';
 
 const STATUS_FLOW: LitterStatus[] = ['planned', 'pending', 'active', 'completed'];
+const GESTATION_DAYS = 65;
 
 export default function LitterDetail() {
   const { id } = useParams<{ id: string }>();
@@ -54,6 +58,17 @@ export default function LitterDetail() {
 
   const mother = cats.find(c => c.id === litter.motherId);
   const father = cats.find(c => c.id === litter.fatherId);
+  
+  // Calculate days until birth for pending litters
+  const matingStart = litter.matingDateFrom || litter.matingDate;
+  const expectedDate = litter.expectedDate 
+    ? new Date(litter.expectedDate)
+    : matingStart 
+      ? addDays(new Date(matingStart), GESTATION_DAYS)
+      : null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const daysUntilBirth = expectedDate ? differenceInDays(expectedDate, today) : null;
 
   const handleDelete = () => {
     deleteLitterMutation.mutate(litter.id, {
@@ -120,6 +135,27 @@ export default function LitterDetail() {
           </AlertDialogContent>
         </AlertDialog>
       </div>
+
+      {/* Days until birth banner for pending litters */}
+      {litter.status === 'pending' && daysUntilBirth !== null && daysUntilBirth > 0 && (
+        <div className={`rounded-lg p-4 flex items-center gap-3 ${
+          daysUntilBirth <= 7 
+            ? 'bg-pink-100 dark:bg-pink-900/30 border border-pink-200 dark:border-pink-800' 
+            : 'bg-accent/50 border'
+        }`}>
+          <Baby className={`h-5 w-5 ${daysUntilBirth <= 7 ? 'text-pink-600' : 'text-muted-foreground'}`} />
+          <div>
+            <p className={`font-medium ${daysUntilBirth <= 7 ? 'text-pink-700 dark:text-pink-300' : ''}`}>
+              {daysUntilBirth} {daysUntilBirth === 1 ? 'dag' : 'dager'} til estimert fødsel
+            </p>
+            {expectedDate && (
+              <p className="text-sm text-muted-foreground">
+                Termin: {format(expectedDate, 'd. MMMM yyyy', { locale: nb })}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Status workflow */}
       {nextStatus && (
@@ -265,6 +301,36 @@ export default function LitterDetail() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Active litter: Birth notes and kittens */}
+      {(litter.status === 'active' || litter.status === 'completed') && (
+        <>
+          {/* Quick actions for active litters */}
+          {litter.status === 'active' && (
+            <div className="bg-card border rounded-lg p-4">
+              <h2 className="text-lg font-semibold mb-3">Hurtighandlinger</h2>
+              <div className="flex flex-wrap gap-2">
+                <BirthNotesEditor litter={litter} />
+                <KittenWeightEditor litterId={litter.id} />
+              </div>
+            </div>
+          )}
+
+          {/* Birth notes display */}
+          {litter.birthNotes && (
+            <div className="bg-card border rounded-lg p-6">
+              <h2 className="text-lg font-semibold mb-4">Fødselsnotater</h2>
+              <p className="whitespace-pre-wrap">{litter.birthNotes}</p>
+            </div>
+          )}
+
+          {/* Kittens list */}
+          <div className="bg-card border rounded-lg p-6">
+            <h2 className="text-lg font-semibold mb-4">Kattunger</h2>
+            <KittenList litterId={litter.id} />
+          </div>
+        </>
       )}
 
       {/* Pregnancy notes */}

@@ -12,6 +12,7 @@ export interface DbKitten {
   reserved_by: string | null;
   notes: string | null;
   images: string[] | null;
+  birth_weight: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -26,6 +27,7 @@ export interface KittenInput {
   status: 'available' | 'reserved' | 'sold' | 'keeping';
   reservedBy: string;
   notes: string;
+  birthWeight?: number | null;
 }
 
 function kittenToDb(kitten: KittenInput) {
@@ -38,6 +40,7 @@ function kittenToDb(kitten: KittenInput) {
     status: kitten.status || 'available',
     reserved_by: kitten.reservedBy || null,
     notes: kitten.notes || null,
+    birth_weight: kitten.birthWeight || null,
   };
 }
 

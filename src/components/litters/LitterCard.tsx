@@ -17,7 +17,6 @@ const MILESTONES = [
   { day: 21, label: 'Ultralyd mulig', emoji: '🔬' },
   { day: 35, label: 'Mage synlig', emoji: '🤰' },
   { day: 58, label: 'Redeboksperiode', emoji: '📦' },
-  { day: 63, label: 'Snart fødsel', emoji: '⏰' },
 ];
 
 export function LitterCard({ litter, cats }: LitterCardProps) {
@@ -134,7 +133,12 @@ export function LitterCard({ litter, cats }: LitterCardProps) {
                 style={{ width: `${Math.min(100, (daysPregnant / GESTATION_DAYS) * 100)}%` }}
               />
             </div>
-            {nextMilestone && (
+            {daysUntilBirth !== null && daysUntilBirth > 0 && daysUntilBirth <= 7 ? (
+              <div className="flex items-center gap-2 text-xs bg-pink-100 dark:bg-pink-900/30 text-pink-800 dark:text-pink-300 rounded px-2 py-1.5">
+                <span>⏰</span>
+                <span className="font-medium">{daysUntilBirth} {daysUntilBirth === 1 ? 'dag' : 'dager'} til termin</span>
+              </div>
+            ) : nextMilestone ? (
               <div className="flex items-center gap-2 text-xs bg-muted/50 rounded px-2 py-1.5">
                 <span>{nextMilestone.emoji}</span>
                 <span className="font-medium">{nextMilestone.label}</span>
@@ -145,7 +149,7 @@ export function LitterCard({ litter, cats }: LitterCardProps) {
                   )}
                 </span>
               </div>
-            )}
+            ) : null}
           </div>
         )}
         

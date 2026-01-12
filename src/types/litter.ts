@@ -48,6 +48,7 @@ export interface Litter {
   
   // Active phase
   kittenCount: number | null;
+  birthNotes: string | null;
   
   // Completion phase
   nrrRegistered: boolean;

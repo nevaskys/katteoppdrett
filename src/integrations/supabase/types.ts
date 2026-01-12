@@ -203,6 +203,7 @@ export type Database = {
       }
       kittens: {
         Row: {
+          birth_weight: number | null
           color: string | null
           created_at: string
           ems_code: string | null
@@ -217,6 +218,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          birth_weight?: number | null
           color?: string | null
           created_at?: string
           ems_code?: string | null
@@ -231,6 +233,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          birth_weight?: number | null
           color?: string | null
           created_at?: string
           ems_code?: string | null
@@ -258,6 +261,7 @@ export type Database = {
         Row: {
           alternative_combinations: string | null
           birth_date: string | null
+          birth_notes: string | null
           blood_type_notes: string | null
           buyers_info: string | null
           completion_date: string | null
@@ -288,6 +292,7 @@ export type Database = {
         Insert: {
           alternative_combinations?: string | null
           birth_date?: string | null
+          birth_notes?: string | null
           blood_type_notes?: string | null
           buyers_info?: string | null
           completion_date?: string | null
@@ -318,6 +323,7 @@ export type Database = {
         Update: {
           alternative_combinations?: string | null
           birth_date?: string | null
+          birth_notes?: string | null
           blood_type_notes?: string | null
           buyers_info?: string | null
           completion_date?: string | null

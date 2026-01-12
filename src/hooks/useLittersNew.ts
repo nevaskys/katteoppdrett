@@ -26,6 +26,7 @@ interface DbLitter {
   pregnancy_notes_log: Json;
   mother_weight_log: Json;
   kitten_count: number | null;
+  birth_notes: string | null;
   nrr_registered: boolean | null;
   evaluation: string | null;
   buyers_info: string | null;
@@ -66,6 +67,7 @@ function dbToLitter(db: DbLitter): Litter {
     pregnancyNotesLog,
     motherWeightLog,
     kittenCount: db.kitten_count,
+    birthNotes: db.birth_notes,
     nrrRegistered: db.nrr_registered ?? false,
     evaluation: db.evaluation,
     buyersInfo: db.buyers_info,
@@ -98,6 +100,7 @@ function litterToDb(litter: Partial<Litter>) {
     pregnancy_notes_log: (litter.pregnancyNotesLog || []) as unknown as Json,
     mother_weight_log: (litter.motherWeightLog || []) as unknown as Json,
     kitten_count: litter.kittenCount || null,
+    birth_notes: litter.birthNotes || null,
     nrr_registered: litter.nrrRegistered || false,
     evaluation: litter.evaluation || null,
     buyers_info: litter.buyersInfo || null,

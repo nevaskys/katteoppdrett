@@ -27,6 +27,8 @@ import { PregnancyCalendar } from '@/components/litters/PregnancyCalendar';
 import { MotherWeightLog } from '@/components/litters/MotherWeightLog';
 import { PregnancyNotesLog } from '@/components/litters/PregnancyNotesLog';
 import { KittenEditor, KittenData } from '@/components/litters/KittenEditor';
+import { ParentImages } from '@/components/litters/ParentImages';
+import { LitterReceiptsEditor } from '@/components/litters/LitterReceiptsEditor';
 
 const GESTATION_DAYS = 65;
 
@@ -70,6 +72,7 @@ export default function LitterForm() {
   const [motherWeightLog, setMotherWeightLog] = useState<MotherWeightEntry[]>([]);
   const [pregnancyNotesLog, setPregnancyNotesLog] = useState<PregnancyNoteEntry[]>([]);
   const [kittensData, setKittensData] = useState<KittenData[]>([]);
+  const [litterImages, setLitterImages] = useState<string[]>([]);
   
   const isEditing = !!id && !!existingLitter;
   const isLoading = catsLoading || (id && litterLoading) || (id && kittensLoading);
@@ -113,6 +116,7 @@ export default function LitterForm() {
       });
       setMotherWeightLog(existingLitter.motherWeightLog || []);
       setPregnancyNotesLog(existingLitter.pregnancyNotesLog || []);
+      setLitterImages(existingLitter.images || []);
     }
   }, [existingLitter, reset]);
 
@@ -181,6 +185,7 @@ export default function LitterForm() {
       evaluation: data.evaluation || null,
       buyersInfo: data.buyersInfo || null,
       notes: data.notes || null,
+      images: litterImages,
     };
 
     const saveKittensIfNeeded = async (litterId: string) => {

@@ -20,6 +20,7 @@ import { PregnancyCalendar } from '@/components/litters/PregnancyCalendar';
 import { BirthNotesEditor } from '@/components/litters/BirthNotesEditor';
 import { KittenWeightEditor } from '@/components/litters/KittenWeightEditor';
 import { KittenList } from '@/components/litters/KittenList';
+import { ParentImages } from '@/components/litters/ParentImages';
 import { LitterStatus, LITTER_STATUS_CONFIG } from '@/types/litter';
 import { format, differenceInDays, addDays } from 'date-fns';
 import { nb } from 'date-fns/locale';
@@ -136,6 +137,15 @@ export default function LitterDetail() {
         </AlertDialog>
       </div>
 
+      {/* Parent images */}
+      <div className="bg-card border rounded-lg">
+        <ParentImages 
+          mother={mother} 
+          father={father} 
+          externalFatherName={litter.externalFatherName}
+        />
+      </div>
+
       {/* Days until birth banner for pending litters */}
       {litter.status === 'pending' && daysUntilBirth !== null && daysUntilBirth > 0 && (
         <div className={`rounded-lg p-4 flex items-center gap-3 ${
@@ -154,24 +164,6 @@ export default function LitterDetail() {
               </p>
             )}
           </div>
-        </div>
-      )}
-
-      {/* Status workflow */}
-      {nextStatus && (
-        <div className="bg-accent/50 border rounded-lg p-4 flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium">Neste steg i prosessen</p>
-            <p className="text-sm text-muted-foreground">{LITTER_STATUS_CONFIG[nextStatus].description}</p>
-          </div>
-          <Button onClick={handleAdvanceStatus} disabled={updateStatusMutation.isPending}>
-            {updateStatusMutation.isPending ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <ArrowRight className="h-4 w-4 mr-2" />
-            )}
-            {getNextStatusLabel()}
-          </Button>
         </div>
       )}
 
@@ -372,6 +364,50 @@ export default function LitterDetail() {
                 <dd className="mt-1 whitespace-pre-wrap">{litter.evaluation}</dd>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Receipts/images display */}
+      {litter.images && litter.images.length > 0 && (
+        <div className="bg-card border rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">Kvitteringer og dokumenter</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {litter.images.map((url, index) => (
+              <a 
+                key={index} 
+                href={url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="block"
+              >
+                <img
+                  src={url}
+                  alt={`Kvittering ${index + 1}`}
+                  className="w-full h-24 object-cover rounded-md border hover:opacity-80 transition-opacity"
+                />
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Status workflow - moved to bottom right */}
+      {nextStatus && (
+        <div className="flex justify-end">
+          <div className="bg-accent/50 border rounded-lg p-4 flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-sm font-medium">Neste steg i prosessen</p>
+              <p className="text-sm text-muted-foreground">{LITTER_STATUS_CONFIG[nextStatus].description}</p>
+            </div>
+            <Button onClick={handleAdvanceStatus} disabled={updateStatusMutation.isPending}>
+              {updateStatusMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <ArrowRight className="h-4 w-4 mr-2" />
+              )}
+              {getNextStatusLabel()}
+            </Button>
           </div>
         </div>
       )}

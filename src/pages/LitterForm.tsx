@@ -252,6 +252,14 @@ export default function LitterForm() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Parent images at the top */}
+        {(motherId || fatherId) && (
+          <ParentImages
+            mother={selectedMother || null}
+            father={selectedFather || null}
+          />
+        )}
+
         <div className="bg-card border rounded-lg p-6 space-y-6">
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -582,6 +590,17 @@ export default function LitterForm() {
                   placeholder="Læringspunkter, om kombinasjonen bør gjentas..."
                 />
               </div>
+
+              {/* Receipts and images */}
+              {isEditing && existingLitter && (
+                <div className="border-t pt-6">
+                  <LitterReceiptsEditor
+                    images={litterImages}
+                    onChange={setLitterImages}
+                    litterId={existingLitter.id}
+                  />
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>

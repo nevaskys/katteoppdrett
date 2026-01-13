@@ -29,6 +29,7 @@ import { PregnancyNotesLog } from '@/components/litters/PregnancyNotesLog';
 import { KittenEditor, KittenData } from '@/components/litters/KittenEditor';
 import { ParentImages } from '@/components/litters/ParentImages';
 import { LitterReceiptsEditor } from '@/components/litters/LitterReceiptsEditor';
+import { ReceiptsButton } from '@/components/litters/ReceiptsButton';
 
 const GESTATION_DAYS = 65;
 
@@ -410,6 +411,17 @@ export default function LitterForm() {
                 />
               </div>
             </div>
+            
+            {/* Receipts button at bottom left */}
+            {isEditing && existingLitter && (
+              <div className="border-t pt-4 flex justify-start">
+                <ReceiptsButton
+                  images={litterImages}
+                  onChange={setLitterImages}
+                  litterId={existingLitter.id}
+                />
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="mating" className="bg-card border rounded-lg p-6 space-y-6">
@@ -473,6 +485,17 @@ export default function LitterForm() {
                 />
               </div>
             </div>
+            
+            {/* Receipts button at bottom left */}
+            {isEditing && existingLitter && (
+              <div className="border-t pt-4 flex justify-start">
+                <ReceiptsButton
+                  images={litterImages}
+                  onChange={setLitterImages}
+                  litterId={existingLitter.id}
+                />
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="pregnancy" className="bg-card border rounded-lg p-6 space-y-6">
@@ -514,6 +537,17 @@ export default function LitterForm() {
                 />
               </div>
             </div>
+            
+            {/* Receipts button at bottom left */}
+            {isEditing && existingLitter && (
+              <div className="border-t pt-4 flex justify-start">
+                <ReceiptsButton
+                  images={litterImages}
+                  onChange={setLitterImages}
+                  litterId={existingLitter.id}
+                />
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="birth" className="bg-card border rounded-lg p-6 space-y-6">
@@ -549,6 +583,17 @@ export default function LitterForm() {
                 />
               </div>
             </div>
+            
+            {/* Receipts button at bottom left */}
+            {isEditing && existingLitter && (
+              <div className="border-t pt-4 flex justify-start">
+                <ReceiptsButton
+                  images={litterImages}
+                  onChange={setLitterImages}
+                  litterId={existingLitter.id}
+                />
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="completion" className="bg-card border rounded-lg p-6 space-y-4">
@@ -590,18 +635,18 @@ export default function LitterForm() {
                   placeholder="Læringspunkter, om kombinasjonen bør gjentas..."
                 />
               </div>
-
-              {/* Receipts and images */}
-              {isEditing && existingLitter && (
-                <div className="border-t pt-6">
-                  <LitterReceiptsEditor
-                    images={litterImages}
-                    onChange={setLitterImages}
-                    litterId={existingLitter.id}
-                  />
-                </div>
-              )}
             </div>
+            
+            {/* Receipts button at bottom left */}
+            {isEditing && existingLitter && (
+              <div className="border-t pt-4 flex justify-start">
+                <ReceiptsButton
+                  images={litterImages}
+                  onChange={setLitterImages}
+                  litterId={existingLitter.id}
+                />
+              </div>
+            )}
           </TabsContent>
         </Tabs>
 

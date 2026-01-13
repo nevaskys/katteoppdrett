@@ -293,66 +293,63 @@ export default function LitterForm() {
             </div>
           </div>
 
-          <div className="border-t pt-6">
-            <h3 className="text-sm font-medium mb-4">Foreldre</h3>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Mor</Label>
-                <Select
-                  value={motherId || '__none__'}
-                  onValueChange={(value) => setValue('motherId', value === '__none__' ? undefined : value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Velg mor">
-                      {selectedMother?.name || 'Velg mor'}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">Velg mor</SelectItem>
-                    {femaleCats.map(cat => (
-                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Mor</Label>
+              <Select
+                value={motherId || '__none__'}
+                onValueChange={(value) => setValue('motherId', value === '__none__' ? undefined : value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Velg mor">
+                    {selectedMother?.name || 'Velg mor'}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Velg mor</SelectItem>
+                  {femaleCats.map(cat => (
+                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div className="space-y-2">
-                <Label>Far (egen katt)</Label>
-                <Select
-                  value={fatherId || '__none__'}
-                  onValueChange={(value) => setValue('fatherId', value === '__none__' ? undefined : value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Velg far">
-                      {selectedFather?.name || 'Velg far'}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">Velg far</SelectItem>
-                    {maleCats.map(cat => (
-                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2">
+              <Label>Far (egen katt)</Label>
+              <Select
+                value={fatherId || '__none__'}
+                onValueChange={(value) => setValue('fatherId', value === '__none__' ? undefined : value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Velg far">
+                    {selectedFather?.name || 'Velg far'}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Velg far</SelectItem>
+                  {maleCats.map(cat => (
+                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="externalFatherName">Ekstern far (navn)</Label>
-                <Input 
-                  id="externalFatherName" 
-                  {...register('externalFatherName')} 
-                  placeholder="Hvis far ikke er registrert"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="externalFatherName">Ekstern far (navn)</Label>
+              <Input 
+                id="externalFatherName" 
+                {...register('externalFatherName')} 
+                placeholder="Hvis far ikke er registrert"
+              />
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="externalFatherPedigreeUrl">Stamtavle-URL (ekstern far)</Label>
-                <Input 
-                  id="externalFatherPedigreeUrl" 
-                  {...register('externalFatherPedigreeUrl')} 
-                  placeholder="Link til stamtavle"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="externalFatherPedigreeUrl">Stamtavle-URL (ekstern far)</Label>
+              <Input 
+                id="externalFatherPedigreeUrl" 
+                {...register('externalFatherPedigreeUrl')} 
+                placeholder="Link til stamtavle"
+              />
             </div>
           </div>
         </div>

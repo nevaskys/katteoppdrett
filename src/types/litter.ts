@@ -57,6 +57,7 @@ export interface Litter {
   
   // General
   notes: string | null;
+  images: string[]; // Receipts and documents
   createdAt: string;
   updatedAt: string;
 }

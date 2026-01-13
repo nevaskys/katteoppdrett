@@ -31,6 +31,7 @@ interface DbLitter {
   evaluation: string | null;
   buyers_info: string | null;
   notes: string | null;
+  images: string[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -72,6 +73,7 @@ function dbToLitter(db: DbLitter): Litter {
     evaluation: db.evaluation,
     buyersInfo: db.buyers_info,
     notes: db.notes,
+    images: db.images || [],
     createdAt: db.created_at,
     updatedAt: db.updated_at,
   };
@@ -105,6 +107,7 @@ function litterToDb(litter: Partial<Litter>) {
     evaluation: litter.evaluation || null,
     buyers_info: litter.buyersInfo || null,
     notes: litter.notes || null,
+    images: litter.images || [],
   };
 }
 

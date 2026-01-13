@@ -21,6 +21,9 @@ import { BirthNotesEditor } from '@/components/litters/BirthNotesEditor';
 import { KittenWeightEditor } from '@/components/litters/KittenWeightEditor';
 import { KittenList } from '@/components/litters/KittenList';
 import { ParentImages } from '@/components/litters/ParentImages';
+import { MatingDatesEditor } from '@/components/litters/MatingDatesEditor';
+import { ActiveLitterEditor } from '@/components/litters/ActiveLitterEditor';
+import { QuickKittenEditor } from '@/components/litters/QuickKittenEditor';
 import { LitterStatus, LITTER_STATUS_CONFIG } from '@/types/litter';
 import { format, differenceInDays, addDays } from 'date-fns';
 import { nb } from 'date-fns/locale';
@@ -167,10 +170,34 @@ export default function LitterDetail() {
         </div>
       )}
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Parents section */}
-        <div className="bg-card border rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">Foreldre</h2>
+      {/* Quick actions for pending litters */}
+      {litter.status === 'pending' && (
+        <div className="bg-card border rounded-lg p-4">
+          <h2 className="text-lg font-semibold mb-3">Hurtighandlinger</h2>
+          <div className="flex flex-wrap gap-2">
+            <MatingDatesEditor litter={litter} />
+          </div>
+        </div>
+      )}
+
+      {/* Quick actions for active litters */}
+      {litter.status === 'active' && (
+        <div className="bg-card border rounded-lg p-4">
+          <h2 className="text-lg font-semibold mb-3">Hurtighandlinger</h2>
+          <div className="flex flex-wrap gap-2">
+            <ActiveLitterEditor litter={litter} />
+            <QuickKittenEditor litterId={litter.id} />
+            <BirthNotesEditor litter={litter} />
+            <KittenWeightEditor litterId={litter.id} />
+          </div>
+        </div>
+      )}
+
+      {/* Dates section - single card */}
+      <div className="bg-card border rounded-lg p-6">
+        <h2 className="text-lg font-semibold mb-4">Informasjon</h2>
+        <div className="grid sm:grid-cols-2 gap-6">
+          {/* Parents info */}
           <dl className="space-y-3 text-sm">
             <div>
               <dt className="text-muted-foreground">Mor</dt>
@@ -207,11 +234,8 @@ export default function LitterDetail() {
               </dd>
             </div>
           </dl>
-        </div>
 
-        {/* Dates section */}
-        <div className="bg-card border rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">Datoer</h2>
+          {/* Dates info */}
           <dl className="space-y-3 text-sm">
             {(litter.matingDateFrom || litter.matingDate) && (
               <div>
@@ -224,13 +248,14 @@ export default function LitterDetail() {
                 </dd>
               </div>
             )}
-            {litter.expectedDate && (
+            {/* Show expected date for pending, birth date for active/completed */}
+            {litter.status === 'pending' && litter.expectedDate && (
               <div>
                 <dt className="text-muted-foreground">Forventet fødsel</dt>
                 <dd className="font-medium">{format(new Date(litter.expectedDate), 'd. MMM yyyy', { locale: nb })}</dd>
               </div>
             )}
-            {litter.birthDate && (
+            {(litter.status === 'active' || litter.status === 'completed') && litter.birthDate && (
               <div>
                 <dt className="text-muted-foreground">Fødselsdato</dt>
                 <dd className="font-medium">{format(new Date(litter.birthDate), 'd. MMM yyyy', { locale: nb })}</dd>
@@ -298,17 +323,6 @@ export default function LitterDetail() {
       {/* Active litter: Birth notes and kittens */}
       {(litter.status === 'active' || litter.status === 'completed') && (
         <>
-          {/* Quick actions for active litters */}
-          {litter.status === 'active' && (
-            <div className="bg-card border rounded-lg p-4">
-              <h2 className="text-lg font-semibold mb-3">Hurtighandlinger</h2>
-              <div className="flex flex-wrap gap-2">
-                <BirthNotesEditor litter={litter} />
-                <KittenWeightEditor litterId={litter.id} />
-              </div>
-            </div>
-          )}
-
           {/* Birth notes display */}
           {litter.birthNotes && (
             <div className="bg-card border rounded-lg p-6">

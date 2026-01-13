@@ -272,6 +272,7 @@ export type Database = {
           external_father_pedigree_url: string | null
           father_id: string | null
           id: string
+          images: string[] | null
           inbreeding_coefficient: number | null
           kitten_count: number | null
           mating_date: string | null
@@ -303,6 +304,7 @@ export type Database = {
           external_father_pedigree_url?: string | null
           father_id?: string | null
           id?: string
+          images?: string[] | null
           inbreeding_coefficient?: number | null
           kitten_count?: number | null
           mating_date?: string | null
@@ -334,6 +336,7 @@ export type Database = {
           external_father_pedigree_url?: string | null
           father_id?: string | null
           id?: string
+          images?: string[] | null
           inbreeding_coefficient?: number | null
           kitten_count?: number | null
           mating_date?: string | null

@@ -111,6 +111,41 @@ function litterToDb(litter: Partial<Litter>) {
   };
 }
 
+// Partial update function - only includes fields that are explicitly provided
+function litterToDbPartial(litter: Partial<Litter>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  
+  if (litter.name !== undefined) result.name = litter.name;
+  if (litter.status !== undefined) result.status = litter.status;
+  if (litter.motherId !== undefined) result.mother_id = litter.motherId;
+  if (litter.fatherId !== undefined) result.father_id = litter.fatherId;
+  if (litter.externalFatherName !== undefined) result.external_father_name = litter.externalFatherName;
+  if (litter.externalFatherPedigreeUrl !== undefined) result.external_father_pedigree_url = litter.externalFatherPedigreeUrl;
+  if (litter.matingDate !== undefined) result.mating_date = litter.matingDate;
+  if (litter.matingDateFrom !== undefined) result.mating_date_from = litter.matingDateFrom;
+  if (litter.matingDateTo !== undefined) result.mating_date_to = litter.matingDateTo;
+  if (litter.expectedDate !== undefined) result.expected_date = litter.expectedDate;
+  if (litter.birthDate !== undefined) result.birth_date = litter.birthDate;
+  if (litter.completionDate !== undefined) result.completion_date = litter.completionDate;
+  if (litter.reasoning !== undefined) result.reasoning = litter.reasoning;
+  if (litter.inbreedingCoefficient !== undefined) result.inbreeding_coefficient = litter.inbreedingCoefficient;
+  if (litter.bloodTypeNotes !== undefined) result.blood_type_notes = litter.bloodTypeNotes;
+  if (litter.alternativeCombinations !== undefined) result.alternative_combinations = litter.alternativeCombinations;
+  if (litter.matingNotes !== undefined) result.mating_notes = litter.matingNotes;
+  if (litter.pregnancyNotes !== undefined) result.pregnancy_notes = litter.pregnancyNotes;
+  if (litter.pregnancyNotesLog !== undefined) result.pregnancy_notes_log = litter.pregnancyNotesLog as unknown as Json;
+  if (litter.motherWeightLog !== undefined) result.mother_weight_log = litter.motherWeightLog as unknown as Json;
+  if (litter.kittenCount !== undefined) result.kitten_count = litter.kittenCount;
+  if (litter.birthNotes !== undefined) result.birth_notes = litter.birthNotes;
+  if (litter.nrrRegistered !== undefined) result.nrr_registered = litter.nrrRegistered;
+  if (litter.evaluation !== undefined) result.evaluation = litter.evaluation;
+  if (litter.buyersInfo !== undefined) result.buyers_info = litter.buyersInfo;
+  if (litter.notes !== undefined) result.notes = litter.notes;
+  if (litter.images !== undefined) result.images = litter.images;
+  
+  return result;
+}
+
 export function useLittersGrouped() {
   return useQuery({
     queryKey: ['litters'],
@@ -182,9 +217,12 @@ export function useUpdateLitterNew() {
   return useMutation({
     mutationFn: async (litter: Partial<Litter> & { id: string }) => {
       const { id, ...rest } = litter;
+      // Use partial update to only update fields that are explicitly provided
+      const updateData = litterToDbPartial(rest);
+      
       const { data, error } = await supabase
         .from('litters')
-        .update(litterToDb(rest))
+        .update(updateData)
         .eq('id', id)
         .select()
         .single();

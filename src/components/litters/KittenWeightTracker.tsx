@@ -76,6 +76,13 @@ export function KittenWeightTracker({ litterId, birthDate }: KittenWeightTracker
     return Array.from(dates).sort();
   }, [kittens, birthDate]);
 
+  // Helper to get consistent kitten label
+  const getKittenLabel = (kitten: DbKitten, index: number) => {
+    const name = kitten.name || `Kattunge ${index + 1}`;
+    const gender = kitten.gender === 'male' ? '♂' : kitten.gender === 'female' ? '♀' : '';
+    return `${name} ${gender}`.trim();
+  };
+
   // Prepare chart data
   const chartData = useMemo(() => {
     const dateMap = new Map<string, Record<string, number | null>>();
@@ -86,17 +93,17 @@ export function KittenWeightTracker({ litterId, birthDate }: KittenWeightTracker
     });
     
     // Add weights for each kitten
-    kittens.forEach(kitten => {
-      const kittenName = kitten.name || `Kattunge ${kittens.indexOf(kitten) + 1}`;
+    kittens.forEach((kitten, index) => {
+      const kittenLabel = getKittenLabel(kitten, index);
       
       allDates.forEach(date => {
         const record = dateMap.get(date)!;
         // Check if it's birth date
         if (date === birthDate && kitten.birth_weight) {
-          record[kittenName] = kitten.birth_weight;
+          record[kittenLabel] = kitten.birth_weight;
         } else {
           const entry = (kitten.weight_log || []).find(e => e.date === date);
-          record[kittenName] = entry?.weight || null;
+          record[kittenLabel] = entry?.weight || null;
         }
       });
     });
@@ -159,12 +166,6 @@ export function KittenWeightTracker({ litterId, birthDate }: KittenWeightTracker
         toast.error('Kunne ikke lagre vekter');
       },
     });
-  };
-
-  const getKittenLabel = (kitten: DbKitten, index: number) => {
-    const name = kitten.name || `Kattunge ${index + 1}`;
-    const gender = kitten.gender === 'male' ? '♂' : kitten.gender === 'female' ? '♀' : '';
-    return `${name} ${gender}`.trim();
   };
 
   const formatDateLabel = (dateStr: string) => {

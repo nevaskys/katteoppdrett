@@ -99,18 +99,6 @@ export function ImportantDeadlines() {
         </div>
       ))}
 
-      <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-        <h4 className="font-medium text-sm flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4 text-amber-500" />
-          Viktig om NRR-registrering
-        </h4>
-        <ul className="text-sm text-muted-foreground space-y-1">
-          <li>• Kullet må registreres innen 8 uker for å unngå ekstragebyr</li>
-          <li>• Begge foreldres stamtavler må være registrert</li>
-          <li>• Husk å registrere parringsmelding før fødsel</li>
-          <li>• Alle kattunger må ID-merkes før de kan registreres</li>
-        </ul>
-      </div>
     </div>
   );
 }

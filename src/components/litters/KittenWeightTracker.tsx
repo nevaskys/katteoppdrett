@@ -205,10 +205,11 @@ export function KittenWeightTracker({ litterId, birthDate }: KittenWeightTracker
           </div>
         ) : (
           <Tabs defaultValue="chart" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="chart">Diagram</TabsTrigger>
               <TabsTrigger value="table">Tabell</TabsTrigger>
               <TabsTrigger value="register">Registrer</TabsTrigger>
+              <TabsTrigger value="guide">Veiledning</TabsTrigger>
             </TabsList>
 
             <TabsContent value="chart" className="space-y-4">
@@ -370,6 +371,110 @@ export function KittenWeightTracker({ litterId, birthDate }: KittenWeightTracker
                 {updateWeights.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Lagre vekter for {formatDateLabel(selectedDate)}
               </Button>
+            </TabsContent>
+
+            <TabsContent value="guide" className="space-y-6">
+              <div className="space-y-4">
+                <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                    🐱 Normal fødselsvekt – Sibirsk katt / Neva Masquerade
+                  </h3>
+                  <ul className="text-sm space-y-1 text-blue-800 dark:text-blue-200">
+                    <li><strong>Normal:</strong> 90–120 g</li>
+                    <li><strong>Helt greit:</strong> 80–130 g</li>
+                    <li className="text-amber-700 dark:text-amber-400"><strong>Obs:</strong> &lt; 75–80 g → følg ekstra tett</li>
+                    <li className="text-muted-foreground">135–140 g → ofte store linjer / få kullsøsken</li>
+                  </ul>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Hannkatter er ofte litt tyngre enn hunner allerede ved fødsel, men ikke alltid.
+                  </p>
+                </div>
+
+                <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                  <h3 className="font-semibold text-green-900 dark:text-green-100 mb-2">
+                    📈 Vektøkning – det viktigste å følge med på
+                  </h3>
+                  <div className="grid sm:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <h4 className="font-medium text-green-800 dark:text-green-200 mb-1">🔹 Per døgn (første 2 uker)</h4>
+                      <ul className="space-y-1 text-green-700 dark:text-green-300">
+                        <li><strong>Minimum:</strong> +8–10 g</li>
+                        <li><strong>Ideelt:</strong> +10–15 g</li>
+                        <li className="text-red-600 dark:text-red-400"><strong>Varsel:</strong> 0 g økning eller vektnedgang → må følges opp umiddelbart</li>
+                      </ul>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        👉 En kattunge skal øke hver eneste dag de første 10–14 dagene.
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-green-800 dark:text-green-200 mb-1">🔹 Per uke</h4>
+                      <ul className="space-y-1 text-green-700 dark:text-green-300">
+                        <li><strong>Tommelregel:</strong> ≈ 100 g per uke</li>
+                        <li>Uke 1: +70–100 g</li>
+                        <li>Uke 2: +90–120 g</li>
+                        <li>Uke 3–4: +100–150 g</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-card border rounded-lg p-4">
+                  <h3 className="font-semibold mb-3">📊 Veiledende vektkurve (Sibir / Neva)</h3>
+                  <div className="overflow-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-2 pr-4 font-medium">Alder</th>
+                          <th className="text-left py-2 font-medium">Ca. vekt</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        <tr><td className="py-1.5 pr-4">Fødsel</td><td>90–120 g</td></tr>
+                        <tr><td className="py-1.5 pr-4">1 uke</td><td>180–220 g</td></tr>
+                        <tr><td className="py-1.5 pr-4">2 uker</td><td>280–350 g</td></tr>
+                        <tr><td className="py-1.5 pr-4">3 uker</td><td>380–500 g</td></tr>
+                        <tr><td className="py-1.5 pr-4">4 uker</td><td>480–650 g</td></tr>
+                        <tr><td className="py-1.5 pr-4">5 uker</td><td>600–800 g</td></tr>
+                        <tr><td className="py-1.5 pr-4">8 uker</td><td>1,0–1,3 kg</td></tr>
+                        <tr><td className="py-1.5 pr-4">12 uker</td><td>1,5–2,0+ kg</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Neva følger samme kurve som Sibir – fargen spiller ingen rolle, linjene gjør.
+                  </p>
+                </div>
+
+                <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                  <h3 className="font-semibold text-red-900 dark:text-red-100 mb-2">
+                    🚨 Når bør du reagere?
+                  </h3>
+                  <ul className="text-sm space-y-1 text-red-800 dark:text-red-200">
+                    <li>• Kattungen ikke legger på seg ett døgn</li>
+                    <li>• Vekten øker &lt; 7–8 g/døgn flere dager på rad</li>
+                    <li>• Én kattunge konsekvent henger 20–30 % bak søsken</li>
+                  </ul>
+                  <div className="mt-3 text-sm">
+                    <p className="font-medium text-red-900 dark:text-red-100">Tiltak:</p>
+                    <ul className="text-red-700 dark:text-red-300 space-y-1">
+                      <li>• Sjekke at den faktisk får die</li>
+                      <li>• Veie før/etter mating</li>
+                      <li>• Evt. støttefôring tidlig (ikke vente)</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                  <h3 className="font-semibold text-amber-900 dark:text-amber-100 mb-2">
+                    💡 Pro tips (som redder kull)
+                  </h3>
+                  <ul className="text-sm space-y-1 text-amber-800 dark:text-amber-200">
+                    <li>• Vei samme tidspunkt hver dag</li>
+                    <li>• Noter i gram (ikke "cirka")</li>
+                    <li>• Se på trend, ikke bare enkeltmålinger</li>
+                  </ul>
+                </div>
+              </div>
             </TabsContent>
           </Tabs>
         )}

@@ -19,6 +19,7 @@ import { LitterStatusBadge } from '@/components/litters/LitterStatusBadge';
 import { PregnancyCalendar } from '@/components/litters/PregnancyCalendar';
 import { BirthNotesEditor } from '@/components/litters/BirthNotesEditor';
 import { KittenWeightEditor } from '@/components/litters/KittenWeightEditor';
+import { KittenWeightTracker } from '@/components/litters/KittenWeightTracker';
 import { KittenList } from '@/components/litters/KittenList';
 import { ParentImages } from '@/components/litters/ParentImages';
 import { MatingDatesEditor } from '@/components/litters/MatingDatesEditor';
@@ -189,6 +190,7 @@ export default function LitterDetail() {
             <QuickKittenEditor litterId={litter.id} />
             <BirthNotesEditor litter={litter} />
             <KittenWeightEditor litterId={litter.id} />
+            <KittenWeightTracker litterId={litter.id} birthDate={litter.birthDate} />
           </div>
         </div>
       )}

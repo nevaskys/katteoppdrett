@@ -216,6 +216,7 @@ export type Database = {
           reserved_by: string | null
           status: string | null
           updated_at: string
+          weight_log: Json | null
         }
         Insert: {
           birth_weight?: number | null
@@ -231,6 +232,7 @@ export type Database = {
           reserved_by?: string | null
           status?: string | null
           updated_at?: string
+          weight_log?: Json | null
         }
         Update: {
           birth_weight?: number | null
@@ -246,6 +248,7 @@ export type Database = {
           reserved_by?: string | null
           status?: string | null
           updated_at?: string
+          weight_log?: Json | null
         }
         Relationships: [
           {

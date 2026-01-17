@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface WeightEntry {
+  date: string;
+  weight: number;
+}
+
 export interface DbKitten {
   id: string;
   litter_id: string;
@@ -13,6 +18,7 @@ export interface DbKitten {
   notes: string | null;
   images: string[] | null;
   birth_weight: number | null;
+  weight_log: WeightEntry[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -57,12 +63,14 @@ export function useKittensByLitter(litterId: string | undefined) {
         .order('created_at', { ascending: true });
       
       if (error) throw error;
-      return data as DbKitten[];
+      return (data || []).map(k => ({
+        ...k,
+        weight_log: (k.weight_log as unknown as WeightEntry[]) || [],
+      })) as DbKitten[];
     },
     enabled: !!litterId,
   });
 }
-
 export function useSaveKittens() {
   const queryClient = useQueryClient();
   

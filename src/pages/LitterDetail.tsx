@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash2, Loader2, CheckCircle, ArrowRight, Baby } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Loader2, CheckCircle, ArrowRight, Baby, BookOpen } from 'lucide-react';
 import { useLitterById, useDeleteLitterNew, useUpdateLitterStatus } from '@/hooks/useLittersNew';
 import { useCats } from '@/hooks/useCats';
 import { Button } from '@/components/ui/button';
@@ -25,9 +25,18 @@ import { ParentImages } from '@/components/litters/ParentImages';
 import { MatingDatesEditor } from '@/components/litters/MatingDatesEditor';
 import { ActiveLitterEditor } from '@/components/litters/ActiveLitterEditor';
 import { QuickKittenEditor } from '@/components/litters/QuickKittenEditor';
+import { BirthGuide } from '@/components/litters/BirthGuide';
 import { LitterStatus, LITTER_STATUS_CONFIG } from '@/types/litter';
 import { format, differenceInDays, addDays } from 'date-fns';
 import { nb } from 'date-fns/locale';
+import { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 const STATUS_FLOW: LitterStatus[] = ['planned', 'pending', 'active', 'completed'];
 const GESTATION_DAYS = 65;
@@ -39,6 +48,11 @@ export default function LitterDetail() {
   const { data: cats = [], isLoading: catsLoading } = useCats();
   const deleteLitterMutation = useDeleteLitterNew();
   const updateStatusMutation = useUpdateLitterStatus();
+  
+  // Birth guide state (local for now - could be persisted later)
+  const [birthGuideNotes, setBirthGuideNotes] = useState('');
+  const [birthGuideChecklist, setBirthGuideChecklist] = useState<Record<string, boolean>>({});
+  const [vetPhone, setVetPhone] = useState('');
 
   const isLoading = litterLoading || catsLoading;
 
@@ -177,6 +191,27 @@ export default function LitterDetail() {
           <h2 className="text-lg font-semibold mb-3">Hurtighandlinger</h2>
           <div className="flex flex-wrap gap-2">
             <MatingDatesEditor litter={litter} />
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Fødselsguide
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="sr-only">Fødselsguide</DialogTitle>
+                </DialogHeader>
+                <BirthGuide 
+                  notes={birthGuideNotes}
+                  onNotesChange={setBirthGuideNotes}
+                  checklist={birthGuideChecklist}
+                  onChecklistChange={setBirthGuideChecklist}
+                  vetPhone={vetPhone}
+                  onVetPhoneChange={setVetPhone}
+                />
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       )}

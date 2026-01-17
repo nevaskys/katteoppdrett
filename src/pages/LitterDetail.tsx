@@ -26,6 +26,7 @@ import { MatingDatesEditor } from '@/components/litters/MatingDatesEditor';
 import { ActiveLitterEditor } from '@/components/litters/ActiveLitterEditor';
 import { QuickKittenEditor } from '@/components/litters/QuickKittenEditor';
 import { BirthGuide } from '@/components/litters/BirthGuide';
+import { LitterDeadlines } from '@/components/litters/LitterDeadlines';
 import { LitterStatus, LITTER_STATUS_CONFIG } from '@/types/litter';
 import { format, differenceInDays, addDays } from 'date-fns';
 import { nb } from 'date-fns/locale';
@@ -360,6 +361,14 @@ export default function LitterDetail() {
       {/* Active litter: Birth notes and kittens */}
       {(litter.status === 'active' || litter.status === 'completed') && (
         <>
+          {/* Deadlines with calculated dates */}
+          {litter.birthDate && (
+            <div className="bg-card border rounded-lg p-6">
+              <h2 className="text-lg font-semibold mb-4">Frister og milepæler</h2>
+              <LitterDeadlines birthDate={litter.birthDate} />
+            </div>
+          )}
+
           {/* Birth notes display */}
           {litter.birthNotes && (
             <div className="bg-card border rounded-lg p-6">

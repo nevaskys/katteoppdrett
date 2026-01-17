@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Scale, Plus, Trash2, Loader2, TrendingUp } from 'lucide-react';
+import { Scale, Loader2, TrendingUp, AlertTriangle, TrendingDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -111,6 +111,86 @@ export function KittenWeightTracker({ litterId, birthDate }: KittenWeightTracker
     return Array.from(dateMap.values());
   }, [kittens, allDates, birthDate]);
 
+  // Calculate weight warnings for each kitten
+  interface WeightWarning {
+    kittenId: string;
+    kittenName: string;
+    date: string;
+    previousWeight: number;
+    currentWeight: number;
+    change: number;
+    type: 'decrease' | 'no_change' | 'low_gain';
+  }
+
+  const weightWarnings = useMemo(() => {
+    const warnings: WeightWarning[] = [];
+    
+    kittens.forEach((kitten, index) => {
+      const kittenLabel = getKittenLabel(kitten, index);
+      
+      // Build sorted weight entries including birth weight
+      const entries: { date: string; weight: number }[] = [];
+      
+      if (birthDate && kitten.birth_weight) {
+        entries.push({ date: birthDate, weight: kitten.birth_weight });
+      }
+      
+      (kitten.weight_log || []).forEach(entry => {
+        if (entry.weight) {
+          entries.push({ date: entry.date, weight: entry.weight });
+        }
+      });
+      
+      entries.sort((a, b) => a.date.localeCompare(b.date));
+      
+      // Check consecutive days
+      for (let i = 1; i < entries.length; i++) {
+        const prev = entries[i - 1];
+        const curr = entries[i];
+        const change = curr.weight - prev.weight;
+        
+        if (change < 0) {
+          warnings.push({
+            kittenId: kitten.id,
+            kittenName: kittenLabel,
+            date: curr.date,
+            previousWeight: prev.weight,
+            currentWeight: curr.weight,
+            change,
+            type: 'decrease',
+          });
+        } else if (change === 0) {
+          warnings.push({
+            kittenId: kitten.id,
+            kittenName: kittenLabel,
+            date: curr.date,
+            previousWeight: prev.weight,
+            currentWeight: curr.weight,
+            change,
+            type: 'no_change',
+          });
+        } else if (change > 0 && change < 8) {
+          warnings.push({
+            kittenId: kitten.id,
+            kittenName: kittenLabel,
+            date: curr.date,
+            previousWeight: prev.weight,
+            currentWeight: curr.weight,
+            change,
+            type: 'low_gain',
+          });
+        }
+      }
+    });
+    
+    return warnings.sort((a, b) => b.date.localeCompare(a.date));
+  }, [kittens, birthDate]);
+
+  // Helper to get warning for a specific kitten and date
+  const getWarningForCell = (kittenId: string, date: string) => {
+    return weightWarnings.find(w => w.kittenId === kittenId && w.date === date);
+  };
+
   const handleOpen = (isOpen: boolean) => {
     setOpen(isOpen);
     if (isOpen) {
@@ -213,6 +293,46 @@ export function KittenWeightTracker({ litterId, birthDate }: KittenWeightTracker
             </TabsList>
 
             <TabsContent value="chart" className="space-y-4">
+              {/* Warnings banner */}
+              {weightWarnings.length > 0 && (
+                <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-red-900 dark:text-red-100 mb-2">
+                        ⚠️ Vektvarsler ({weightWarnings.length})
+                      </h4>
+                      <div className="space-y-1 text-sm max-h-32 overflow-y-auto">
+                        {weightWarnings.slice(0, 5).map((warning, i) => (
+                          <div key={i} className={`flex items-center gap-2 ${
+                            warning.type === 'decrease' 
+                              ? 'text-red-700 dark:text-red-300' 
+                              : warning.type === 'no_change'
+                                ? 'text-amber-700 dark:text-amber-300'
+                                : 'text-orange-700 dark:text-orange-300'
+                          }`}>
+                            {warning.type === 'decrease' ? (
+                              <TrendingDown className="h-4 w-4" />
+                            ) : (
+                              <AlertTriangle className="h-4 w-4" />
+                            )}
+                            <span>
+                              <strong>{warning.kittenName}</strong> ({formatDateLabel(warning.date)}): 
+                              {warning.type === 'decrease' && ` Vektnedgang ${warning.change}g (${warning.previousWeight}g → ${warning.currentWeight}g)`}
+                              {warning.type === 'no_change' && ` Ingen vektøkning (${warning.currentWeight}g)`}
+                              {warning.type === 'low_gain' && ` Lav økning +${warning.change}g (${warning.previousWeight}g → ${warning.currentWeight}g)`}
+                            </span>
+                          </div>
+                        ))}
+                        {weightWarnings.length > 5 && (
+                          <p className="text-muted-foreground">...og {weightWarnings.length - 5} flere varsler</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               {chartData.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground border border-dashed rounded-lg">
                   <Scale className="h-10 w-10 mx-auto mb-2 opacity-50" />
@@ -294,15 +414,38 @@ export function KittenWeightTracker({ litterId, birthDate }: KittenWeightTracker
                               const entry = (kitten.weight_log || []).find(e => e.date === date);
                               weight = entry?.weight || null;
                             }
+                            const warning = getWarningForCell(kitten.id, date);
+                            
                             return (
                               <TableCell 
                                 key={kitten.id} 
-                                className="text-center"
-                                style={{ 
+                                className={`text-center relative ${
+                                  warning?.type === 'decrease' 
+                                    ? 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 font-semibold' 
+                                    : warning?.type === 'no_change'
+                                      ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 font-medium'
+                                      : warning?.type === 'low_gain'
+                                        ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300'
+                                        : ''
+                                }`}
+                                style={!warning ? { 
                                   backgroundColor: `${KITTEN_COLORS[index % KITTEN_COLORS.length]}10`,
-                                }}
+                                } : undefined}
                               >
-                                {weight ? `${weight}g` : '-'}
+                                <div className="flex items-center justify-center gap-1">
+                                  {warning?.type === 'decrease' && (
+                                    <TrendingDown className="h-3 w-3" />
+                                  )}
+                                  {warning?.type === 'no_change' && (
+                                    <AlertTriangle className="h-3 w-3" />
+                                  )}
+                                  <span>{weight ? `${weight}g` : '-'}</span>
+                                  {warning && (
+                                    <span className="text-xs">
+                                      ({warning.change >= 0 ? '+' : ''}{warning.change})
+                                    </span>
+                                  )}
+                                </div>
                               </TableCell>
                             );
                           })}

@@ -17,9 +17,7 @@ const deadlines = [
     items: [
       { week: 'Dag 1', task: 'Veiing og registrering av alle kattunger', type: 'required' },
       { week: 'Uke 1-8', task: 'Daglig veiing av kattunger', type: 'required' },
-      { week: 'Uke 3', task: 'Første ormebehandling', type: 'required' },
-      { week: 'Uke 5', task: 'Andre ormebehandling', type: 'required' },
-      { week: 'Uke 7', task: 'Tredje ormebehandling', type: 'required' },
+      { week: 'Uke 3+', task: 'Vurder ormebehandling – rådfør deg med veterinær om du er usikker', type: 'optional' },
     ],
   },
   {
@@ -44,7 +42,7 @@ const deadlines = [
     category: 'Før levering',
     items: [
       { week: 'Uke 12+', task: 'Fullvaksinert (1-2 uker etter 2. vaksine)', type: 'required' },
-      { week: 'Før levering', task: 'Ormebehandling 1 uke før', type: 'required' },
+      { week: 'Før levering', task: 'Vurder ormebehandling – rådfør deg med veterinær', type: 'optional' },
       { week: 'Før levering', task: 'Kjøpekontrakt signert', type: 'required' },
       { week: 'Ved levering', task: 'Helseattest fra veterinær', type: 'optional' },
       { week: 'Ved levering', task: 'Vaksinasjonskort, stamtavle, fôrprøve', type: 'required' },

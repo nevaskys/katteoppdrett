@@ -53,8 +53,8 @@ const deadlines = [
 ];
 
 const typeStyles = {
-  required: { label: 'Påkrevd', variant: 'default' as const, icon: Check },
-  optional: { label: 'Anbefalt', variant: 'secondary' as const, icon: Clock },
+  required: { variant: 'default' as const },
+  optional: { variant: 'secondary' as const },
   deadline: { label: 'Frist', variant: 'destructive' as const, icon: AlertTriangle },
 };
 
@@ -77,7 +77,7 @@ export function ImportantDeadlines() {
               <tbody>
                 {category.items.map((item, i) => {
                   const style = typeStyles[item.type];
-                  const Icon = style.icon;
+                  const showBadge = item.type === 'deadline';
                   return (
                     <tr key={i} className="border-b last:border-b-0">
                       <td className="p-3 w-24 text-muted-foreground whitespace-nowrap">
@@ -85,10 +85,12 @@ export function ImportantDeadlines() {
                       </td>
                       <td className="p-3">{item.task}</td>
                       <td className="p-3 text-right">
-                        <Badge variant={style.variant} className="gap-1">
-                          <Icon className="h-3 w-3" />
-                          <span className="hidden sm:inline">{style.label}</span>
-                        </Badge>
+                        {showBadge && (
+                          <Badge variant={style.variant} className="gap-1">
+                            {'icon' in style && <style.icon className="h-3 w-3" />}
+                            <span className="hidden sm:inline">{style.label}</span>
+                          </Badge>
+                        )}
                       </td>
                     </tr>
                   );

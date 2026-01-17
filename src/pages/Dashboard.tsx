@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Cat, Users, CheckSquare, Plus, Loader2, Award } from 'lucide-react';
+import { ResourcesSection } from '@/components/resources/ResourcesSection';
 import { useCats } from '@/hooks/useCats';
 import { useLittersGrouped } from '@/hooks/useLittersNew';
 import { useTasks } from '@/hooks/useTasks';
@@ -7,6 +9,10 @@ import { useJudgingResults } from '@/hooks/useJudgingResults';
 import { Button } from '@/components/ui/button';
 
 export default function Dashboard() {
+  const [birthGuideNotes, setBirthGuideNotes] = useState('');
+  const [birthGuideChecklist, setBirthGuideChecklist] = useState<Record<string, boolean>>({});
+  const [vetPhone, setVetPhone] = useState('');
+  
   const { data: cats = [], isLoading: catsLoading } = useCats();
   const { data: littersGrouped, isLoading: littersLoading } = useLittersGrouped();
   const { data: tasks = [], isLoading: tasksLoading } = useTasks();
@@ -99,6 +105,16 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* Ressurser-seksjon */}
+      <ResourcesSection
+        birthGuideNotes={birthGuideNotes}
+        birthGuideChecklist={birthGuideChecklist}
+        vetPhone={vetPhone}
+        onBirthGuideNotesChange={setBirthGuideNotes}
+        onBirthGuideChecklistChange={setBirthGuideChecklist}
+        onVetPhoneChange={setVetPhone}
+      />
     </div>
   );
 }

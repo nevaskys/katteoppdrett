@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Oppdretterhjelpen',
   webDir: 'dist',
   server: {
-    url: 'https://d4c17a8e-4e11-4b4c-aebd-031b0a7536d2.lovableproject.com?forceHideBadge=true',
+    url: 'https://id-preview--d4c17a8e-4e11-4b4c-aebd-031b0a7536d2.lovable.app?forceHideBadge=true',
     cleartext: true
   }
 };

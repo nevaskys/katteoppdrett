@@ -1,9 +1,10 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Cat, Users, CheckSquare, Home, Menu, X, Heart, LogOut, Award, Lightbulb } from 'lucide-react';
+import { Cat, Users, CheckSquare, Home, Menu, X, Heart, LogOut, Award, Lightbulb, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { useProfile } from '@/hooks/useProfile';
 import { toast } from 'sonner';
 
 interface LayoutProps {
@@ -18,13 +19,17 @@ const navItems = [
   { path: '/test-mating', label: 'Testparring', icon: Heart },
   { path: '/tasks', label: 'Oppgaver', icon: CheckSquare },
   { path: '/ideas', label: 'Ideer', icon: Lightbulb },
+  { path: '/settings', label: 'Innstillinger', icon: Settings },
 ];
 
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
+  const { getCatteryDisplayName } = useProfile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  const catteryName = getCatteryDisplayName();
 
   const handleSignOut = async () => {
     await signOut();
@@ -38,7 +43,7 @@ export function Layout({ children }: LayoutProps) {
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border px-4 py-3 flex items-center justify-between">
         <h1 className="text-lg font-semibold text-foreground flex items-center gap-2">
           <Cat className="h-5 w-5 text-primary" />
-          NO*NevaSky's
+          {catteryName}
         </h1>
         <Button
           variant="ghost"
@@ -66,7 +71,7 @@ export function Layout({ children }: LayoutProps) {
         <div className="p-6 border-b border-border hidden lg:block">
           <h1 className="text-xl font-semibold text-foreground flex items-center gap-2">
             <Cat className="h-6 w-6 text-primary" />
-            NO*NevaSky's
+            {catteryName}
           </h1>
         </div>
         <nav className="flex-1 p-4 pt-20 lg:pt-4 space-y-1 overflow-y-auto">

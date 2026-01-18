@@ -125,6 +125,12 @@ export function KittenWeightTracker({ litterId, birthDate }: KittenWeightTracker
   const weightWarnings = useMemo(() => {
     const warnings: WeightWarning[] = [];
     
+    // Only show warnings from the last 2 days
+    const today = new Date();
+    const twoDaysAgo = new Date(today);
+    twoDaysAgo.setDate(today.getDate() - 2);
+    const cutoffDate = format(twoDaysAgo, 'yyyy-MM-dd');
+    
     kittens.forEach((kitten, index) => {
       const kittenLabel = getKittenLabel(kitten, index);
       
@@ -148,6 +154,9 @@ export function KittenWeightTracker({ litterId, birthDate }: KittenWeightTracker
         const prev = entries[i - 1];
         const curr = entries[i];
         const change = curr.weight - prev.weight;
+        
+        // Skip warnings older than 2 days
+        if (curr.date < cutoffDate) continue;
         
         if (change < 0) {
           warnings.push({

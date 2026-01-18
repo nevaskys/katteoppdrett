@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Oppdretterhjelpen',
   webDir: 'dist',
   server: {
-    url: 'https://id-preview--d4c17a8e-4e11-4b4c-aebd-031b0a7536d2.lovable.app?forceHideBadge=true',
+    url: 'https://feline-breeder-buddy.lovable.app?forceHideBadge=true',
     cleartext: true
   }
 };

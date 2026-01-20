@@ -76,6 +76,9 @@ export function useSaveKittens() {
   
   return useMutation({
     mutationFn: async ({ litterId, kittens }: { litterId: string; kittens: KittenInput[] }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      
       // Get existing kittens for this litter
       const { data: existingKittens, error: fetchError } = await supabase
         .from('kittens')
@@ -111,10 +114,10 @@ export function useSaveKittens() {
           
           if (error) throw error;
         } else {
-          // Insert new
+          // Insert new with user_id
           const { error } = await supabase
             .from('kittens')
-            .insert(kittenData);
+            .insert({ ...kittenData, user_id: user.id });
           
           if (error) throw error;
         }

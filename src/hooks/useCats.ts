@@ -88,9 +88,12 @@ export function useAddCat() {
   
   return useMutation({
     mutationFn: async (cat: Omit<Cat, 'id' | 'createdAt'>) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      
       const { data, error } = await supabase
         .from('cats')
-        .insert(catToDb(cat as Cat))
+        .insert({ ...catToDb(cat as Cat), user_id: user.id })
         .select()
         .single();
       

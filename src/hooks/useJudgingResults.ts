@@ -139,9 +139,12 @@ export function useAddJudge() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (judge: { name: string; country?: string; organization?: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      
       const { data, error } = await supabase
         .from('judges')
-        .insert({ name: judge.name, country: judge.country || null, organization: judge.organization || null })
+        .insert({ name: judge.name, country: judge.country || null, organization: judge.organization || null, user_id: user.id })
         .select()
         .single();
       if (error) throw error;
@@ -170,13 +173,17 @@ export function useAddShow() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (show: { name: string; location?: string; date?: string; organization?: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      
       const { data, error } = await supabase
         .from('shows')
         .insert({ 
           name: show.name, 
           location: show.location || null, 
           date: show.date || null,
-          organization: show.organization || null 
+          organization: show.organization || null,
+          user_id: user.id 
         })
         .select()
         .single();
@@ -250,6 +257,9 @@ export function useAddJudgingResult() {
       myRating?: number;
       notes?: string;
     }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      
       const { data, error } = await supabase
         .from('judging_results')
         .insert([{
@@ -263,6 +273,7 @@ export function useAddJudgingResult() {
           structured_result: result.structuredResult || null,
           my_rating: result.myRating ?? null,
           notes: result.notes || null,
+          user_id: user.id,
         }])
         .select()
         .single();

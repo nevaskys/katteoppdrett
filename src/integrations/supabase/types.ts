@@ -31,6 +31,7 @@ export type Database = {
           pedigree_url: string | null
           registration_number: string | null
           updated_at: string
+          user_id: string
         }
         Insert: {
           breed: string
@@ -48,6 +49,7 @@ export type Database = {
           pedigree_url?: string | null
           registration_number?: string | null
           updated_at?: string
+          user_id: string
         }
         Update: {
           breed?: string
@@ -65,6 +67,7 @@ export type Database = {
           pedigree_url?: string | null
           registration_number?: string | null
           updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -110,6 +113,7 @@ export type Database = {
           notes: string | null
           organization: string | null
           updated_at: string
+          user_id: string
         }
         Insert: {
           country?: string | null
@@ -119,6 +123,7 @@ export type Database = {
           notes?: string | null
           organization?: string | null
           updated_at?: string
+          user_id: string
         }
         Update: {
           country?: string | null
@@ -128,6 +133,7 @@ export type Database = {
           notes?: string | null
           organization?: string | null
           updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -146,6 +152,7 @@ export type Database = {
           show_id: string | null
           structured_result: Json | null
           updated_at: string
+          user_id: string
         }
         Insert: {
           cat_id: string
@@ -161,6 +168,7 @@ export type Database = {
           show_id?: string | null
           structured_result?: Json | null
           updated_at?: string
+          user_id: string
         }
         Update: {
           cat_id?: string
@@ -176,6 +184,7 @@ export type Database = {
           show_id?: string | null
           structured_result?: Json | null
           updated_at?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -216,6 +225,7 @@ export type Database = {
           reserved_by: string | null
           status: string | null
           updated_at: string
+          user_id: string
           weight_log: Json | null
         }
         Insert: {
@@ -232,6 +242,7 @@ export type Database = {
           reserved_by?: string | null
           status?: string | null
           updated_at?: string
+          user_id: string
           weight_log?: Json | null
         }
         Update: {
@@ -248,6 +259,7 @@ export type Database = {
           reserved_by?: string | null
           status?: string | null
           updated_at?: string
+          user_id?: string
           weight_log?: Json | null
         }
         Relationships: [
@@ -292,6 +304,7 @@ export type Database = {
           reasoning: string | null
           status: string
           updated_at: string
+          user_id: string
         }
         Insert: {
           alternative_combinations?: string | null
@@ -324,6 +337,7 @@ export type Database = {
           reasoning?: string | null
           status?: string
           updated_at?: string
+          user_id: string
         }
         Update: {
           alternative_combinations?: string | null
@@ -356,6 +370,7 @@ export type Database = {
           reasoning?: string | null
           status?: string
           updated_at?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -423,6 +438,7 @@ export type Database = {
           notes: string | null
           organization: string | null
           updated_at: string
+          user_id: string
         }
         Insert: {
           created_at?: string
@@ -433,6 +449,7 @@ export type Database = {
           notes?: string | null
           organization?: string | null
           updated_at?: string
+          user_id: string
         }
         Update: {
           created_at?: string
@@ -443,6 +460,7 @@ export type Database = {
           notes?: string | null
           organization?: string | null
           updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -491,6 +509,7 @@ export type Database = {
           status: string | null
           title: string
           updated_at: string
+          user_id: string
         }
         Insert: {
           created_at?: string
@@ -503,6 +522,7 @@ export type Database = {
           status?: string | null
           title: string
           updated_at?: string
+          user_id: string
         }
         Update: {
           created_at?: string
@@ -515,6 +535,7 @@ export type Database = {
           status?: string | null
           title?: string
           updated_at?: string
+          user_id?: string
         }
         Relationships: [
           {

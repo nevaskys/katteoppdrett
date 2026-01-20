@@ -12,8 +12,8 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // TEMPORARY: Skip auth check for testing in iOS simulator
-  const SKIP_AUTH_FOR_TESTING = true;
+  // Authentication is now required
+  const SKIP_AUTH_FOR_TESTING = false;
 
   useEffect(() => {
     if (!SKIP_AUTH_FOR_TESTING && !loading && !user) {

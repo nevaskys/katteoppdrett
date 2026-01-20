@@ -133,9 +133,12 @@ export function useAddLitter() {
   
   return useMutation({
     mutationFn: async (litter: Omit<Litter, 'id' | 'createdAt'>) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      
       const { data, error } = await supabase
         .from('litters')
-        .insert(litterToDb(litter))
+        .insert({ ...litterToDb(litter), user_id: user.id })
         .select()
         .single();
       
@@ -149,6 +152,7 @@ export function useAddLitter() {
           gender: k.gender,
           color: k.color || null,
           notes: k.markings || null,
+          user_id: user.id,
         }));
 
         const { error: kittensError } = await supabase

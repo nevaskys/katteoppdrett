@@ -196,9 +196,12 @@ export function useCreateLitter() {
   
   return useMutation({
     mutationFn: async (litter: Partial<Litter> & { name: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      
       const { data, error } = await supabase
         .from('litters')
-        .insert(litterToDb(litter))
+        .insert({ ...litterToDb(litter), user_id: user.id })
         .select()
         .single();
       

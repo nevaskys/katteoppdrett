@@ -70,9 +70,12 @@ export function useAddTask() {
   
   return useMutation({
     mutationFn: async (task: Omit<Task, 'id' | 'createdAt'>) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      
       const { data, error } = await supabase
         .from('tasks')
-        .insert(taskToDb(task as Task))
+        .insert({ ...taskToDb(task as Task), user_id: user.id })
         .select()
         .single();
       

@@ -1,24 +1,33 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Cat, Users, CheckSquare, Home, Menu, X, Heart, LogOut, Award, Lightbulb, Settings } from 'lucide-react';
+import { Cat, Users, CheckSquare, Home, Menu, X, Heart, LogOut, Award, Lightbulb, Settings, MessageSquarePlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { toast } from 'sonner';
 
 interface LayoutProps {
   children: ReactNode;
 }
 
-const navItems = [
+interface NavItem {
+  path: string;
+  label: string;
+  icon: typeof Home;
+  adminOnly?: boolean;
+}
+
+const allNavItems: NavItem[] = [
   { path: '/', label: 'Dashboard', icon: Home },
   { path: '/cats', label: 'Katter', icon: Cat },
   { path: '/litters', label: 'Kull', icon: Users },
   { path: '/judging-results', label: 'Utstillingsresultater', icon: Award },
   { path: '/test-mating', label: 'Testparring', icon: Heart },
   { path: '/tasks', label: 'Oppgaver', icon: CheckSquare },
-  { path: '/ideas', label: 'Ideer', icon: Lightbulb },
+  { path: '/ideas', label: 'Ideer', icon: Lightbulb, adminOnly: true },
+  { path: '/suggestions', label: 'Forslag', icon: MessageSquarePlus },
   { path: '/settings', label: 'Innstillinger', icon: Settings },
 ];
 
@@ -27,9 +36,14 @@ export function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { getCatteryDisplayName } = useProfile();
+  const { isAdmin } = useIsAdmin();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const catteryName = getCatteryDisplayName();
+
+  const navItems = useMemo(() => {
+    return allNavItems.filter(item => !item.adminOnly || isAdmin);
+  }, [isAdmin]);
 
   const handleSignOut = async () => {
     await signOut();

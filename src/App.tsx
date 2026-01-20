@@ -20,6 +20,7 @@ import JudgingResultsList from "./pages/JudgingResultsList";
 import JudgingResultDetail from "./pages/JudgingResultDetail";
 import JudgingResultForm from "./pages/JudgingResultForm";
 import IdeasPage from "./pages/IdeasPage";
+import SuggestionsPage from "./pages/SuggestionsPage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 
@@ -56,6 +57,7 @@ const App = () => (
                     <Route path="/judging-results/:id" element={<JudgingResultDetail />} />
                     <Route path="/judging-results/:id/edit" element={<JudgingResultForm />} />
                     <Route path="/ideas" element={<IdeasPage />} />
+                    <Route path="/suggestions" element={<SuggestionsPage />} />
                     <Route path="/settings" element={<SettingsPage />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>

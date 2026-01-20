@@ -20,14 +20,24 @@ const resetSchema = z.object({
   email: z.string().email('Ugyldig e-postadresse'),
 });
 
+const newPasswordSchema = z.object({
+  password: z.string().min(6, 'Passord må være minst 6 tegn'),
+  confirmPassword: z.string().min(6, 'Passord må være minst 6 tegn'),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passordene må være like",
+  path: ["confirmPassword"],
+});
+
 type AuthFormData = z.infer<typeof authSchema>;
 type ResetFormData = z.infer<typeof resetSchema>;
+type NewPasswordFormData = z.infer<typeof newPasswordSchema>;
 
 export default function Auth() {
   const navigate = useNavigate();
   const { user, loading, signIn, signUp } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [isResetPassword, setIsResetPassword] = useState(false);
+  const [isSettingNewPassword, setIsSettingNewPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<AuthFormData>({
@@ -38,11 +48,34 @@ export default function Auth() {
     resolver: zodResolver(resetSchema),
   });
 
+  const { register: registerNewPassword, handleSubmit: handleSubmitNewPassword, formState: { errors: newPasswordErrors } } = useForm<NewPasswordFormData>({
+    resolver: zodResolver(newPasswordSchema),
+  });
+
+  // Check for password recovery event
   useEffect(() => {
-    if (user && !loading) {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsSettingNewPassword(true);
+      }
+    });
+
+    // Also check URL hash for recovery token
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const type = hashParams.get('type');
+    if (type === 'recovery') {
+      setIsSettingNewPassword(true);
+    }
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    // Only redirect if user is logged in AND not in password setting mode
+    if (user && !loading && !isSettingNewPassword) {
       navigate('/');
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, isSettingNewPassword]);
 
   const onSubmit = async (data: AuthFormData) => {
     setIsSubmitting(true);
@@ -99,10 +132,96 @@ export default function Auth() {
     }
   };
 
+  const onSetNewPassword = async (data: NewPasswordFormData) => {
+    setIsSubmitting(true);
+    
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: data.password,
+      });
+      
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success('Passord oppdatert! Du kan nå logge inn med ditt nye passord.');
+        setIsSettingNewPassword(false);
+        // Clear the URL hash
+        window.history.replaceState(null, '', window.location.pathname);
+        navigate('/');
+      }
+    } catch (err) {
+      toast.error('Noe gikk galt. Prøv igjen.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Set new password view (after clicking reset link)
+  if (isSettingNewPassword) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="w-full max-w-sm space-y-6">
+          <div className="text-center space-y-2">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+              <Cat className="h-8 w-8 text-primary" />
+            </div>
+            <h1 className="text-2xl font-bold">Sett nytt passord</h1>
+            <p className="text-muted-foreground">
+              Skriv inn ditt nye passord nedenfor.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmitNewPassword(onSetNewPassword)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-password">Nytt passord</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="new-password"
+                  type="password"
+                  placeholder="••••••"
+                  className="pl-10"
+                  {...registerNewPassword('password')}
+                />
+              </div>
+              {newPasswordErrors.password && (
+                <p className="text-sm text-destructive">{newPasswordErrors.password.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Bekreft passord</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  placeholder="••••••"
+                  className="pl-10"
+                  {...registerNewPassword('confirmPassword')}
+                />
+              </div>
+              {newPasswordErrors.confirmPassword && (
+                <p className="text-sm text-destructive">{newPasswordErrors.confirmPassword.message}</p>
+              )}
+            </div>
+
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Oppdater passord
+            </Button>
+          </form>
+        </div>
       </div>
     );
   }

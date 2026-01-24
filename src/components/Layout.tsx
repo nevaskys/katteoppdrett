@@ -1,5 +1,6 @@
 import { ReactNode, useState, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Cat, Users, CheckSquare, Home, Menu, X, Heart, LogOut, Award, Lightbulb, Settings, MessageSquarePlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -14,24 +15,25 @@ interface LayoutProps {
 
 interface NavItem {
   path: string;
-  label: string;
+  labelKey: string;
   icon: typeof Home;
   adminOnly?: boolean;
 }
 
 const allNavItems: NavItem[] = [
-  { path: '/', label: 'Dashboard', icon: Home },
-  { path: '/cats', label: 'Katter', icon: Cat },
-  { path: '/litters', label: 'Kull', icon: Users },
-  { path: '/judging-results', label: 'Utstillingsresultater', icon: Award },
-  { path: '/test-mating', label: 'Testparring', icon: Heart },
-  { path: '/tasks', label: 'Oppgaver', icon: CheckSquare },
-  { path: '/ideas', label: 'Ideer', icon: Lightbulb, adminOnly: true },
-  { path: '/suggestions', label: 'Forslag', icon: MessageSquarePlus },
-  { path: '/settings', label: 'Innstillinger', icon: Settings },
+  { path: '/', labelKey: 'nav.dashboard', icon: Home },
+  { path: '/cats', labelKey: 'nav.cats', icon: Cat },
+  { path: '/litters', labelKey: 'nav.litters', icon: Users },
+  { path: '/judging-results', labelKey: 'nav.results', icon: Award },
+  { path: '/test-mating', labelKey: 'nav.testMating', icon: Heart },
+  { path: '/tasks', labelKey: 'nav.tasks', icon: CheckSquare },
+  { path: '/ideas', labelKey: 'nav.ideas', icon: Lightbulb, adminOnly: true },
+  { path: '/suggestions', labelKey: 'nav.suggestions', icon: MessageSquarePlus },
+  { path: '/settings', labelKey: 'nav.settings', icon: Settings },
 ];
 
 export function Layout({ children }: LayoutProps) {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
@@ -47,7 +49,7 @@ export function Layout({ children }: LayoutProps) {
 
   const handleSignOut = async () => {
     await signOut();
-    toast.success('Logget ut');
+    toast.success(t('auth.logout'));
     navigate('/auth');
   };
 
@@ -106,7 +108,7 @@ export function Layout({ children }: LayoutProps) {
                 )}
               >
                 <Icon className="h-5 w-5" />
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             );
           })}
@@ -120,7 +122,7 @@ export function Layout({ children }: LayoutProps) {
               onClick={handleSignOut}
             >
               <LogOut className="h-5 w-5 mr-3" />
-              Logg ut
+              {t('nav.logout')}
             </Button>
           </div>
         )}

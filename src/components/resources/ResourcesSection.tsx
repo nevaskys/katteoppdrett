@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Accordion, 
   AccordionContent, 
@@ -25,50 +26,50 @@ import { ImportantDeadlines } from './ImportantDeadlines';
 const resources = [
   {
     id: 'birth-guide',
-    title: 'Fødselsguide',
-    description: 'Komplett guide for fødsel og fødselsforberedelser',
+    titleKey: 'resources.birthGuide.title',
+    descriptionKey: 'resources.birthGuide.description',
     icon: BookOpen,
     component: BirthGuide,
   },
   {
     id: 'show-packing',
-    title: 'Pakkliste utstilling',
-    description: 'Sjekkliste for utstillinger med egne notater',
+    titleKey: 'resources.showPacking.title',
+    descriptionKey: 'resources.showPacking.description',
     icon: Luggage,
     component: ShowPackingList,
   },
   {
     id: 'vaccine',
-    title: 'Vaksineoversikt',
-    description: 'Vaksiner for voksne katter og vaksinasjonsplan',
+    titleKey: 'resources.vaccine.title',
+    descriptionKey: 'resources.vaccine.description',
     icon: Syringe,
     component: VaccineOverview,
   },
   {
     id: 'kitten-calendar',
-    title: 'Kattungekalender',
-    description: 'Milepæler fra fødsel til levering',
+    titleKey: 'resources.kittenCalendar.title',
+    descriptionKey: 'resources.kittenCalendar.description',
     icon: Baby,
     component: KittenCalendar,
   },
   {
     id: 'emergency',
-    title: 'Nødkontakter',
-    description: 'Veterinær, vaktveterinær og raseklubb',
+    titleKey: 'resources.emergency.title',
+    descriptionKey: 'resources.emergency.description',
     icon: Phone,
     component: EmergencyContacts,
   },
   {
     id: 'color-genetics',
-    title: 'Fargegenetikk',
-    description: 'EMS-koder og arveregler',
+    titleKey: 'resources.colorGenetics.title',
+    descriptionKey: 'resources.colorGenetics.description',
     icon: Palette,
     component: ColorGeneticsReference,
   },
   {
     id: 'deadlines',
-    title: 'Viktige frister',
-    description: 'Registrering, vaksiner og chipmerking',
+    titleKey: 'resources.deadlines.title',
+    descriptionKey: 'resources.deadlines.description',
     icon: CalendarCheck,
     component: ImportantDeadlines,
   },
@@ -91,9 +92,11 @@ export function ResourcesSection({
   onBirthGuideChecklistChange,
   onVetPhoneChange,
 }: ResourcesSectionProps) {
+  const { t } = useTranslation();
+  
   return (
     <div className="stat-card">
-      <h2 className="text-lg font-semibold mb-4">Ressurser & Guider</h2>
+      <h2 className="text-lg font-semibold mb-4">{t('resources.title')}</h2>
       
       <Accordion type="single" collapsible className="w-full">
         {resources.map(resource => {
@@ -111,8 +114,8 @@ export function ResourcesSection({
                     <Icon className="h-4 w-4 text-primary" />
                   </div>
                   <div>
-                    <p className="font-medium">{resource.title}</p>
-                    <p className="text-xs text-muted-foreground">{resource.description}</p>
+                    <p className="font-medium">{t(resource.titleKey)}</p>
+                    <p className="text-xs text-muted-foreground">{t(resource.descriptionKey)}</p>
                   </div>
                 </div>
               </AccordionTrigger>

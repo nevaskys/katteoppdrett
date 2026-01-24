@@ -181,5 +181,36 @@
     "forgotPassword": "Forgot password?",
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?"
+  },
+  "resources": {
+    "title": "Resources & Guides",
+    "birthGuide": {
+      "title": "Birth Guide",
+      "description": "Complete guide for birth and birth preparations"
+    },
+    "showPacking": {
+      "title": "Show Packing List",
+      "description": "Checklist for shows with your own notes"
+    },
+    "vaccine": {
+      "title": "Vaccine Overview",
+      "description": "Vaccines for adult cats and vaccination schedule"
+    },
+    "kittenCalendar": {
+      "title": "Kitten Calendar",
+      "description": "Milestones from birth to delivery"
+    },
+    "emergency": {
+      "title": "Emergency Contacts",
+      "description": "Veterinarian, on-call vet and breed club"
+    },
+    "colorGenetics": {
+      "title": "Color Genetics",
+      "description": "EMS codes and inheritance rules"
+    },
+    "deadlines": {
+      "title": "Important Deadlines",
+      "description": "Registration, vaccines and microchipping"
+    }
   }
 }

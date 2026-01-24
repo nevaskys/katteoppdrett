@@ -181,5 +181,36 @@
     "forgotPassword": "Glemt passord?",
     "noAccount": "Har du ikke en konto?",
     "hasAccount": "Har du allerede en konto?"
+  },
+  "resources": {
+    "title": "Ressurser & Guider",
+    "birthGuide": {
+      "title": "Fødselsguide",
+      "description": "Komplett guide for fødsel og fødselsforberedelser"
+    },
+    "showPacking": {
+      "title": "Pakkliste utstilling",
+      "description": "Sjekkliste for utstillinger med egne notater"
+    },
+    "vaccine": {
+      "title": "Vaksineoversikt",
+      "description": "Vaksiner for voksne katter og vaksinasjonsplan"
+    },
+    "kittenCalendar": {
+      "title": "Kattungekalender",
+      "description": "Milepæler fra fødsel til levering"
+    },
+    "emergency": {
+      "title": "Nødkontakter",
+      "description": "Veterinær, vaktveterinær og raseklubb"
+    },
+    "colorGenetics": {
+      "title": "Fargegenetikk",
+      "description": "EMS-koder og arveregler"
+    },
+    "deadlines": {
+      "title": "Viktige frister",
+      "description": "Registrering, vaksiner og chipmerking"
+    }
   }
 }

@@ -214,6 +214,7 @@ export type Database = {
         Row: {
           birth_weight: number | null
           color: string | null
+          complication_type: string | null
           created_at: string
           ems_code: string | null
           gender: string | null
@@ -231,6 +232,7 @@ export type Database = {
         Insert: {
           birth_weight?: number | null
           color?: string | null
+          complication_type?: string | null
           created_at?: string
           ems_code?: string | null
           gender?: string | null
@@ -248,6 +250,7 @@ export type Database = {
         Update: {
           birth_weight?: number | null
           color?: string | null
+          complication_type?: string | null
           created_at?: string
           ems_code?: string | null
           gender?: string | null

@@ -23,6 +23,7 @@ import { KittenWeightTracker } from '@/components/litters/KittenWeightTracker';
 import { KittenList } from '@/components/litters/KittenList';
 import { ParentImages } from '@/components/litters/ParentImages';
 import { MatingDatesEditor } from '@/components/litters/MatingDatesEditor';
+import { InlineMatingDates } from '@/components/litters/InlineMatingDates';
 import { ActiveLitterEditor } from '@/components/litters/ActiveLitterEditor';
 import { QuickKittenEditor } from '@/components/litters/QuickKittenEditor';
 import { BirthGuide } from '@/components/litters/BirthGuide';
@@ -186,12 +187,16 @@ export default function LitterDetail() {
         </div>
       )}
 
+      {/* Inline mating dates for pending litters */}
+      {litter.status === 'pending' && (
+        <InlineMatingDates litter={litter} />
+      )}
+
       {/* Quick actions for pending litters */}
       {litter.status === 'pending' && (
         <div className="bg-card border rounded-lg p-4">
           <h2 className="text-lg font-semibold mb-3">Hurtighandlinger</h2>
           <div className="flex flex-wrap gap-2">
-            <MatingDatesEditor litter={litter} />
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">

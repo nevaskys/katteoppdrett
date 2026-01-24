@@ -109,8 +109,8 @@ export function VaccineOverview() {
       <div className="bg-muted/50 rounded-lg p-4 space-y-2">
         <h4 className="font-medium">Typisk vaksinasjonsplan for kattunger</h4>
         <ul className="text-sm space-y-1 text-muted-foreground">
-          <li><strong>8-9 uker:</strong> Første dose (P, C, R)</li>
-          <li><strong>12 uker:</strong> Andre dose (P, C, R) + evt. rabies ved reise</li>
+          <li><strong>8-9 uker:</strong> Første dose kjernevaksine</li>
+          <li><strong>12 uker:</strong> Andre dose kjernevaksine + evt. rabies ved reise</li>
           <li><strong>1 år:</strong> Revaksinering</li>
           <li><strong>Deretter:</strong> Årlig eller hvert 3. år avhengig av vaksine</li>
         </ul>

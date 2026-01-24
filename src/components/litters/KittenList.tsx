@@ -1,10 +1,13 @@
 import { Cat, Scale } from 'lucide-react';
-import { useKittensByLitter, DbKitten } from '@/hooks/useKittens';
+import { useKittensByLitter, DbKitten, useUpdateKittenComplication } from '@/hooks/useKittens';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { KittenComplicationTag, ComplicationType } from './KittenComplicationTag';
+import { toast } from 'sonner';
 
 interface KittenListProps {
   litterId: string;
+  editable?: boolean;
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -14,8 +17,9 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   keeping: { label: 'Beholder', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' },
 };
 
-export function KittenList({ litterId }: KittenListProps) {
+export function KittenList({ litterId, editable = true }: KittenListProps) {
   const { data: kittens = [], isLoading } = useKittensByLitter(litterId);
+  const updateComplication = useUpdateKittenComplication();
 
   if (isLoading) {
     return (
@@ -50,24 +54,45 @@ export function KittenList({ litterId }: KittenListProps) {
     return 'text-muted-foreground';
   };
 
+  const handleComplicationChange = (kittenId: string, value: ComplicationType) => {
+    updateComplication.mutate(
+      { kittenId, complicationType: value },
+      {
+        onSuccess: () => {
+          toast.success(value ? 'Komplikasjon lagt til' : 'Komplikasjon fjernet');
+        },
+        onError: () => toast.error('Kunne ikke oppdatere'),
+      }
+    );
+  };
+
   return (
     <div className="space-y-3">
       {kittens.map((kitten, index) => (
         <div 
           key={kitten.id} 
-          className="flex items-center gap-4 p-3 bg-muted/30 rounded-lg border"
+          className={`flex items-center gap-4 p-3 rounded-lg border ${
+            kitten.complication_type === 'stillborn' || kitten.complication_type === 'deceased'
+              ? 'bg-muted/50 opacity-75'
+              : 'bg-muted/30'
+          }`}
         >
           <div className="flex items-center justify-center h-10 w-10 rounded-full bg-background border text-sm font-medium shrink-0">
             {index + 1}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="font-medium">
                 {kitten.name || `Kattunge ${index + 1}`}
               </span>
               <span className={`text-sm ${getGenderColor(kitten.gender)}`}>
                 {getGenderLabel(kitten.gender)}
               </span>
+              <KittenComplicationTag 
+                value={kitten.complication_type} 
+                onChange={editable ? (value) => handleComplicationChange(kitten.id, value) : undefined}
+                readOnly={!editable}
+              />
             </div>
             <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5">
               {kitten.color && <span>{kitten.color}</span>}
@@ -79,9 +104,11 @@ export function KittenList({ litterId }: KittenListProps) {
               )}
             </div>
           </div>
-          <Badge variant="secondary" className={STATUS_LABELS[kitten.status || 'available']?.color}>
-            {STATUS_LABELS[kitten.status || 'available']?.label}
-          </Badge>
+          {!kitten.complication_type && (
+            <Badge variant="secondary" className={STATUS_LABELS[kitten.status || 'available']?.color}>
+              {STATUS_LABELS[kitten.status || 'available']?.label}
+            </Badge>
+          )}
         </div>
       ))}
     </div>

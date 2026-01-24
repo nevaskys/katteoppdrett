@@ -1,20 +1,73 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Save, Loader2 } from 'lucide-react';
+import { Settings, Save, Loader2, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+
+// FIFE member countries with their languages
+const FIFE_LANGUAGES = [
+  { code: 'nb', name: 'Norsk (bokmål)', country: 'Norge' },
+  { code: 'nn', name: 'Norsk (nynorsk)', country: 'Norge' },
+  { code: 'sv', name: 'Svenska', country: 'Sverige' },
+  { code: 'fi', name: 'Suomi', country: 'Suomi' },
+  { code: 'da', name: 'Dansk', country: 'Danmark' },
+  { code: 'is', name: 'Íslenska', country: 'Ísland' },
+  { code: 'de', name: 'Deutsch', country: 'Deutschland/Österreich/Schweiz/Luxemburg/Liechtenstein' },
+  { code: 'nl', name: 'Nederlands', country: 'Nederland/België' },
+  { code: 'fr', name: 'Français', country: 'France/Belgique/Suisse/Luxembourg/Monaco' },
+  { code: 'it', name: 'Italiano', country: 'Italia/Svizzera/San Marino' },
+  { code: 'es', name: 'Español', country: 'España' },
+  { code: 'pt', name: 'Português', country: 'Portugal' },
+  { code: 'en', name: 'English', country: 'United Kingdom' },
+  { code: 'pl', name: 'Polski', country: 'Polska' },
+  { code: 'cs', name: 'Čeština', country: 'Česká republika' },
+  { code: 'sk', name: 'Slovenčina', country: 'Slovensko' },
+  { code: 'hu', name: 'Magyar', country: 'Magyarország' },
+  { code: 'ro', name: 'Română', country: 'România' },
+  { code: 'bg', name: 'Български', country: 'България' },
+  { code: 'hr', name: 'Hrvatski', country: 'Hrvatska' },
+  { code: 'sl', name: 'Slovenščina', country: 'Slovenija' },
+  { code: 'sr', name: 'Srpski', country: 'Srbija' },
+  { code: 'mk', name: 'Македонски', country: 'Северна Македонија' },
+  { code: 'el', name: 'Ελληνικά', country: 'Ελλάδα/Κύπρος' },
+  { code: 'tr', name: 'Türkçe', country: 'Türkiye' },
+  { code: 'ru', name: 'Русский', country: 'Россия' },
+  { code: 'uk', name: 'Українська', country: 'Україна' },
+  { code: 'be', name: 'Беларуская', country: 'Беларусь' },
+  { code: 'lv', name: 'Latviešu', country: 'Latvija' },
+  { code: 'lt', name: 'Lietuvių', country: 'Lietuva' },
+  { code: 'et', name: 'Eesti', country: 'Eesti' },
+  { code: 'ar', name: 'العربية', country: 'United Arab Emirates/Tunisia/Morocco/Egypt' },
+  { code: 'he', name: 'עברית', country: 'ישראל' },
+  { code: 'id', name: 'Bahasa Indonesia', country: 'Indonesia' },
+  { code: 'ms', name: 'Bahasa Melayu', country: 'Malaysia' },
+  { code: 'th', name: 'ไทย', country: 'ประเทศไทย' },
+  { code: 'zh', name: '中文', country: '中国/香港/台灣' },
+  { code: 'ja', name: '日本語', country: '日本' },
+  { code: 'ko', name: '한국어', country: '대한민국' },
+];
 
 export default function SettingsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { profile, loading, updateProfile } = useProfile();
   const [saving, setSaving] = useState(false);
+  const [language, setLanguage] = useState(() => {
+    return localStorage.getItem('app_language') || 'nb';
+  });
   
   const [formData, setFormData] = useState({
     cattery_prefix: '',
@@ -38,17 +91,42 @@ export default function SettingsPage() {
     }
   }, [profile]);
 
+  const handleLanguageChange = (value: string) => {
+    setLanguage(value);
+    localStorage.setItem('app_language', value);
+    toast.success('Språk endret! Appen støtter foreløpig kun norsk grensesnitt.');
+  };
+
+  // Helper function to normalize website URL
+  const normalizeWebsiteUrl = (url: string): string => {
+    if (!url.trim()) return '';
+    const trimmedUrl = url.trim();
+    // If it doesn't start with http:// or https://, add https://
+    if (!trimmedUrl.match(/^https?:\/\//i)) {
+      return `https://${trimmedUrl}`;
+    }
+    return trimmedUrl;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
-    const { error } = await updateProfile(formData);
+    // Normalize the website URL before saving
+    const dataToSave = {
+      ...formData,
+      website: normalizeWebsiteUrl(formData.website),
+    };
+
+    const { error } = await updateProfile(dataToSave);
 
     if (error) {
       toast.error('Kunne ikke lagre innstillinger');
       console.error('Error saving profile:', error);
     } else {
       toast.success('Innstillinger lagret!');
+      // Update form data with normalized URL
+      setFormData(dataToSave);
     }
     setSaving(false);
   };
@@ -72,6 +150,42 @@ export default function SettingsPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Language Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5" />
+              Språk
+            </CardTitle>
+            <CardDescription>
+              Velg språk for appen (FIFE-medlemsland)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Label htmlFor="language">Velg språk</Label>
+              <Select value={language} onValueChange={handleLanguageChange}>
+                <SelectTrigger className="w-full md:w-[300px]">
+                  <SelectValue placeholder="Velg språk" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {FIFE_LANGUAGES.map((lang) => (
+                    <SelectItem key={lang.code} value={lang.code}>
+                      <span className="flex items-center gap-2">
+                        <span className="font-medium">{lang.name}</span>
+                        <span className="text-xs text-muted-foreground">({lang.country})</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Valgt språk: {FIFE_LANGUAGES.find(l => l.code === language)?.name || 'Norsk'}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Oppdrettsinfo</CardTitle>
@@ -163,11 +277,14 @@ export default function SettingsPage() {
               <Label htmlFor="website">Nettside</Label>
               <Input
                 id="website"
-                type="url"
-                placeholder="https://ditt-oppdrett.no"
+                type="text"
+                placeholder="www.ditt-oppdrett.no"
                 value={formData.website}
                 onChange={(e) => setFormData({ ...formData, website: e.target.value })}
               />
+              <p className="text-xs text-muted-foreground">
+                Du kan skrive med eller uten https:// (f.eks. www.example.com)
+              </p>
             </div>
           </CardContent>
         </Card>

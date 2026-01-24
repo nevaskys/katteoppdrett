@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Cat, Users, CheckSquare, Plus, Loader2, Award, Baby } from 'lucide-react';
 import { ResourcesSection } from '@/components/resources/ResourcesSection';
 import { useCats } from '@/hooks/useCats';
@@ -11,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { LitterStatusBadge } from '@/components/litters/LitterStatusBadge';
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const [birthGuideNotes, setBirthGuideNotes] = useState('');
   const [birthGuideChecklist, setBirthGuideChecklist] = useState<Record<string, boolean>>({});
   const [vetPhone, setVetPhone] = useState('');
@@ -36,11 +38,11 @@ export default function Dashboard() {
   }
 
   const stats = [
-    { label: 'Katter', value: cats.length, icon: Cat, href: '/cats', color: 'text-primary' },
-    { label: 'Totalt kull', value: allLitters.length, icon: Users, href: '/litters', color: 'text-accent-foreground' },
-    { label: 'Aktive kull', value: activeLitters.length, icon: Users, href: '/litters', color: 'text-green-500' },
-    { label: 'Utstillingsresultater', value: judgingResults.length, icon: Award, href: '/judging-results', color: 'text-amber-500' },
-    { label: 'Ventende oppgaver', value: pendingTasks.length, icon: CheckSquare, href: '/tasks', color: 'text-destructive' },
+    { label: t('cats.title'), value: cats.length, icon: Cat, href: '/cats', color: 'text-primary' },
+    { label: t('litters.title'), value: allLitters.length, icon: Users, href: '/litters', color: 'text-accent-foreground' },
+    { label: t('dashboard.activeLitters'), value: activeLitters.length, icon: Users, href: '/litters', color: 'text-green-500' },
+    { label: t('results.title'), value: judgingResults.length, icon: Award, href: '/judging-results', color: 'text-amber-500' },
+    { label: t('dashboard.upcomingTasks'), value: pendingTasks.length, icon: CheckSquare, href: '/tasks', color: 'text-destructive' },
   ];
 
   // Combine active + pending litters for display
@@ -49,20 +51,20 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="page-header flex items-center justify-between">
-        <h1 className="page-title">Dashboard</h1>
+        <h1 className="page-title">{t('dashboard.title')}</h1>
         {/* Hurtighandlinger som små knapper øverst */}
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline" size="sm">
-            <Link to="/cats/new"><Plus className="h-3 w-3 mr-1" /> Katt</Link>
+            <Link to="/cats/new"><Plus className="h-3 w-3 mr-1" /> {t('cats.title')}</Link>
           </Button>
           <Button asChild variant="outline" size="sm">
-            <Link to="/litters/new"><Plus className="h-3 w-3 mr-1" /> Kull</Link>
+            <Link to="/litters/new"><Plus className="h-3 w-3 mr-1" /> {t('litters.title')}</Link>
           </Button>
           <Button asChild variant="outline" size="sm">
-            <Link to="/judging-results/new"><Plus className="h-3 w-3 mr-1" /> Resultat</Link>
+            <Link to="/judging-results/new"><Plus className="h-3 w-3 mr-1" /> {t('results.result')}</Link>
           </Button>
           <Button asChild variant="outline" size="sm">
-            <Link to="/tasks"><Plus className="h-3 w-3 mr-1" /> Oppgave</Link>
+            <Link to="/tasks"><Plus className="h-3 w-3 mr-1" /> {t('tasks.title')}</Link>
           </Button>
         </div>
       </div>
@@ -87,35 +89,34 @@ export default function Dashboard() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <Baby className="h-5 w-5 text-primary" />
-            Kull-oversikt
+            {t('dashboard.litterOverview')}
           </h2>
           <Button asChild variant="ghost" size="sm">
-            <Link to="/litters">Se alle</Link>
+            <Link to="/litters">{t('dashboard.viewAllLitters')}</Link>
           </Button>
         </div>
         
-        {/* Status-sammendrag */}
         <div className="flex flex-wrap gap-3 mb-4">
           <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-full">
             <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-            <span className="text-sm font-medium text-green-700">{activeLitters.length} aktive</span>
+            <span className="text-sm font-medium text-green-700">{activeLitters.length} {t('litters.status.active').toLowerCase()}</span>
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 rounded-full">
             <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
-            <span className="text-sm font-medium text-amber-700">{pendingLitters.length} drektighet</span>
+            <span className="text-sm font-medium text-amber-700">{pendingLitters.length} {t('litters.status.pending').toLowerCase()}</span>
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-full">
             <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-            <span className="text-sm font-medium text-blue-700">{plannedLitters.length} planlagt</span>
+            <span className="text-sm font-medium text-blue-700">{plannedLitters.length} {t('litters.status.planned').toLowerCase()}</span>
           </div>
         </div>
 
         {currentLitters.length === 0 ? (
           <div className="text-center py-6">
             <Baby className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
-            <p className="text-muted-foreground text-sm">Ingen aktive eller ventende kull</p>
+            <p className="text-muted-foreground text-sm">{t('dashboard.noCurrentLitters')}</p>
             <Button asChild variant="outline" size="sm" className="mt-3">
-              <Link to="/litters/new"><Plus className="h-3 w-3 mr-1" /> Planlegg kull</Link>
+              <Link to="/litters/new"><Plus className="h-3 w-3 mr-1" /> {t('litters.addLitter')}</Link>
             </Button>
           </div>
         ) : (
@@ -138,9 +139,9 @@ export default function Dashboard() {
                     {litter.status === 'pending' && litter.expectedDate && (
                       <>Forventet {new Date(litter.expectedDate).toLocaleDateString('nb-NO')}</>
                     )}
-                    {litter.status === 'planned' && 'Planlagt'}
+                    {litter.status === 'planned' && t('litters.status.planned')}
                     {litter.kittenCount !== null && litter.kittenCount > 0 && (
-                      <> • {litter.kittenCount} kattunger</>
+                      <> • {litter.kittenCount} {t('litters.kittens').toLowerCase()}</>
                     )}
                   </p>
                 </div>
@@ -154,13 +155,13 @@ export default function Dashboard() {
         {/* Ventende oppgaver */}
         <div className="stat-card">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Ventende oppgaver</h2>
+            <h2 className="text-lg font-semibold">{t('dashboard.upcomingTasks')}</h2>
             <Button asChild variant="ghost" size="sm">
-              <Link to="/tasks">Se alle</Link>
+              <Link to="/tasks">{t('dashboard.viewAllTasks')}</Link>
             </Button>
           </div>
           {pendingTasks.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Ingen ventende oppgaver</p>
+            <p className="text-muted-foreground text-sm">{t('dashboard.noUpcomingTasks')}</p>
           ) : (
             <ul className="space-y-2">
               {pendingTasks.slice(0, 5).map(task => (

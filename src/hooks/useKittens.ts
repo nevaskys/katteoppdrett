@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { ComplicationType } from '@/components/litters/KittenComplicationTag';
 
 export interface WeightEntry {
   date: string;
@@ -19,6 +20,7 @@ export interface DbKitten {
   images: string[] | null;
   birth_weight: number | null;
   weight_log: WeightEntry[] | null;
+  complication_type: ComplicationType;
   created_at: string;
   updated_at: string;
 }
@@ -34,6 +36,7 @@ export interface KittenInput {
   reservedBy: string;
   notes: string;
   birthWeight?: number | null;
+  complicationType?: ComplicationType;
 }
 
 function kittenToDb(kitten: KittenInput) {
@@ -47,6 +50,7 @@ function kittenToDb(kitten: KittenInput) {
     reserved_by: kitten.reservedBy || null,
     notes: kitten.notes || null,
     birth_weight: kitten.birthWeight || null,
+    complication_type: kitten.complicationType || null,
   };
 }
 
@@ -66,11 +70,13 @@ export function useKittensByLitter(litterId: string | undefined) {
       return (data || []).map(k => ({
         ...k,
         weight_log: (k.weight_log as unknown as WeightEntry[]) || [],
+        complication_type: (k.complication_type as ComplicationType) || null,
       })) as DbKitten[];
     },
     enabled: !!litterId,
   });
 }
+
 export function useSaveKittens() {
   const queryClient = useQueryClient();
   
@@ -128,6 +134,25 @@ export function useSaveKittens() {
     onSuccess: (_, { litterId }) => {
       queryClient.invalidateQueries({ queryKey: ['kittens', litterId] });
       queryClient.invalidateQueries({ queryKey: ['litters'] });
+    },
+  });
+}
+
+export function useUpdateKittenComplication() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ kittenId, complicationType }: { kittenId: string; complicationType: ComplicationType }) => {
+      const { error } = await supabase
+        .from('kittens')
+        .update({ complication_type: complicationType })
+        .eq('id', kittenId);
+      
+      if (error) throw error;
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['kittens'] });
     },
   });
 }

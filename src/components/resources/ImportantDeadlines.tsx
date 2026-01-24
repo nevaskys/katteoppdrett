@@ -24,7 +24,7 @@ const deadlines = [
     category: 'Vaksinasjon & ID',
     items: [
       { week: 'Uke 8-9', task: 'Veterinærsjekk og helseundersøkelse', type: 'required' },
-      { week: 'Uke 10-11', task: 'Første vaksine (P, C, R)', type: 'required' },
+      { week: 'Uke 10-11', task: 'Første vaksine', type: 'required' },
       { week: 'Uke 10-12', task: 'ID-merking (mikrochip)', type: 'required' },
       { week: 'Uke 13-15', task: 'Andre vaksine (3-4 uker etter første)', type: 'required' },
       { week: 'Ved behov', task: 'Rabiesvaksine (ved utenlandsreise)', type: 'optional' },

@@ -7,6 +7,9 @@ import { Badge } from '@/components/ui/badge';
 export default function CatsList() {
   const { data: cats = [], isLoading } = useCats();
 
+  const femaleCats = cats.filter(cat => cat.gender === 'female');
+  const maleCats = cats.filter(cat => cat.gender === 'male');
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -14,6 +17,40 @@ export default function CatsList() {
       </div>
     );
   }
+
+  const CatCard = ({ cat }: { cat: typeof cats[0] }) => (
+    <Link
+      to={`/cats/${cat.id}`}
+      className="stat-card hover:shadow-md transition-shadow group"
+    >
+      <div className="flex items-start gap-4">
+        <div className="h-12 w-12 rounded-lg bg-accent flex items-center justify-center flex-shrink-0 overflow-hidden">
+          {cat.images[0] ? (
+            <img src={cat.images[0]} alt={cat.name} className="h-full w-full object-contain" />
+          ) : (
+            <CatIcon className="h-6 w-6 text-accent-foreground/50" />
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors break-words">
+            {cat.name}
+          </h3>
+          <p className="text-sm text-muted-foreground">{cat.breed}</p>
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
+            <Badge 
+              className={cat.gender === 'female' 
+                ? 'bg-pink-100 text-pink-700 hover:bg-pink-100 border-pink-200' 
+                : 'bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200'
+              }
+            >
+              {cat.gender === 'female' ? '♀ Hunn' : '♂ Hann'}
+            </Badge>
+            <span className="text-xs text-muted-foreground">{cat.emsCode || cat.color}</span>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
 
   return (
     <div className="space-y-6">
@@ -34,41 +71,40 @@ export default function CatsList() {
           </Button>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {cats.map(cat => (
-            <Link
-              key={cat.id}
-              to={`/cats/${cat.id}`}
-              className="stat-card hover:shadow-md transition-shadow group"
-            >
-              <div className="flex items-start gap-4">
-                <div className="h-12 w-12 rounded-lg bg-accent flex items-center justify-center flex-shrink-0 overflow-hidden">
-                  {cat.images[0] ? (
-                    <img src={cat.images[0]} alt={cat.name} className="h-full w-full object-contain" />
-                  ) : (
-                    <CatIcon className="h-6 w-6 text-accent-foreground/50" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
-                    {cat.name}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">{cat.breed}</p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Badge 
-                      className={cat.gender === 'female' 
-                        ? 'bg-pink-100 text-pink-700 hover:bg-pink-100 border-pink-200' 
-                        : 'bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200'
-                      }
-                    >
-                      {cat.gender === 'female' ? '♀ Hunn' : '♂ Hann'}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">{cat.emsCode || cat.color}</span>
-                  </div>
-                </div>
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Hunnkatter */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Badge className="bg-pink-100 text-pink-700 border-pink-200">♀ Hunnkatter</Badge>
+              <span className="text-sm text-muted-foreground">({femaleCats.length})</span>
+            </div>
+            {femaleCats.length === 0 ? (
+              <p className="text-sm text-muted-foreground italic">Ingen hunnkatter registrert</p>
+            ) : (
+              <div className="space-y-3">
+                {femaleCats.map(cat => (
+                  <CatCard key={cat.id} cat={cat} />
+                ))}
               </div>
-            </Link>
-          ))}
+            )}
+          </div>
+
+          {/* Hannkatter */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Badge className="bg-blue-100 text-blue-700 border-blue-200">♂ Hannkatter</Badge>
+              <span className="text-sm text-muted-foreground">({maleCats.length})</span>
+            </div>
+            {maleCats.length === 0 ? (
+              <p className="text-sm text-muted-foreground italic">Ingen hannkatter registrert</p>
+            ) : (
+              <div className="space-y-3">
+                {maleCats.map(cat => (
+                  <CatCard key={cat.id} cat={cat} />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

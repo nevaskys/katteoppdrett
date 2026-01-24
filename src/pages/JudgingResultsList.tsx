@@ -283,10 +283,10 @@ export default function JudgingResultsList() {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium truncate">{result.cat?.name || 'Ukjent katt'}</p>
+                    <div className="flex items-start gap-2 flex-wrap">
+                      <p className="font-medium break-words">{result.cat?.name || 'Ukjent katt'}</p>
                       {result.result && (
-                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
                           {result.result}
                         </span>
                       )}

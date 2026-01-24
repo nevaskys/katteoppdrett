@@ -230,7 +230,7 @@ export default function LitterDetail() {
             <ActiveLitterEditor litter={litter} />
             <QuickKittenEditor litterId={litter.id} />
             <BirthNotesEditor litter={litter} />
-            <KittenWeightEditor litterId={litter.id} />
+            <KittenWeightEditor litterId={litter.id} birthDate={litter.birthDate} />
             <KittenWeightTracker litterId={litter.id} birthDate={litter.birthDate} />
           </div>
         </div>

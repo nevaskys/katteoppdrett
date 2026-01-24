@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Scale, Loader2, Plus, Cat } from 'lucide-react';
+import { Scale, Loader2, Cat, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { nb } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Calendar } from '@/components/ui/calendar';
 import {
   Dialog,
   DialogContent,
@@ -13,26 +15,27 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { DbKitten, useKittensByLitter, useSaveKittens } from '@/hooks/useKittens';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface KittenWeightEditorProps {
   litterId: string;
+  birthDate?: string | null;
 }
 
-export function KittenWeightEditor({ litterId }: KittenWeightEditorProps) {
+export function KittenWeightEditor({ litterId, birthDate }: KittenWeightEditorProps) {
   const [open, setOpen] = useState(false);
+  const [weightDate, setWeightDate] = useState<Date>(new Date());
   const { data: kittens = [], isLoading } = useKittensByLitter(litterId);
   const [weights, setWeights] = useState<Record<string, number | ''>>({});
   const saveKittens = useSaveKittens();
 
-  // Initialize weights when dialog opens
+  // Initialize weights and date when dialog opens
   useEffect(() => {
     if (open && kittens.length > 0) {
       const initialWeights: Record<string, number | ''> = {};
@@ -40,8 +43,14 @@ export function KittenWeightEditor({ litterId }: KittenWeightEditorProps) {
         initialWeights[k.id] = k.birth_weight ?? '';
       });
       setWeights(initialWeights);
+      // Default to birth date if available, otherwise today
+      if (birthDate) {
+        setWeightDate(new Date(birthDate));
+      } else {
+        setWeightDate(new Date());
+      }
     }
-  }, [open, kittens]);
+  }, [open, kittens, birthDate]);
 
   const handleSave = () => {
     const kittensToSave = kittens.map(k => {
@@ -64,7 +73,7 @@ export function KittenWeightEditor({ litterId }: KittenWeightEditorProps) {
       { litterId, kittens: kittensToSave },
       {
         onSuccess: () => {
-          toast.success('Vekter lagret');
+          toast.success(`Vekter lagret for ${format(weightDate, 'd. MMM yyyy', { locale: nb })}`);
           setOpen(false);
         },
         onError: () => toast.error('Kunne ikke lagre vekter'),
@@ -99,6 +108,34 @@ export function KittenWeightEditor({ litterId }: KittenWeightEditorProps) {
             Registrer vekten i gram for hver kattunge
           </DialogDescription>
         </DialogHeader>
+        
+        <div className="mb-4">
+          <label className="text-sm font-medium mb-2 block">Dato for veiing</label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !weightDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {weightDate ? format(weightDate, 'd. MMMM yyyy', { locale: nb }) : <span>Velg dato</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={weightDate}
+                onSelect={(date) => date && setWeightDate(date)}
+                initialFocus
+                className="p-3 pointer-events-auto"
+                locale={nb}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
         
         {isLoading ? (
           <div className="flex justify-center py-8">

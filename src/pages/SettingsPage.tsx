@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Settings, Save, Loader2, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,59 +14,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useProfile } from '@/hooks/useProfile';
-import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-
-// FIFE member countries with their languages
-const FIFE_LANGUAGES = [
-  { code: 'nb', name: 'Norsk (bokmål)', country: 'Norge' },
-  { code: 'nn', name: 'Norsk (nynorsk)', country: 'Norge' },
-  { code: 'sv', name: 'Svenska', country: 'Sverige' },
-  { code: 'fi', name: 'Suomi', country: 'Suomi' },
-  { code: 'da', name: 'Dansk', country: 'Danmark' },
-  { code: 'is', name: 'Íslenska', country: 'Ísland' },
-  { code: 'de', name: 'Deutsch', country: 'Deutschland/Österreich/Schweiz/Luxemburg/Liechtenstein' },
-  { code: 'nl', name: 'Nederlands', country: 'Nederland/België' },
-  { code: 'fr', name: 'Français', country: 'France/Belgique/Suisse/Luxembourg/Monaco' },
-  { code: 'it', name: 'Italiano', country: 'Italia/Svizzera/San Marino' },
-  { code: 'es', name: 'Español', country: 'España' },
-  { code: 'pt', name: 'Português', country: 'Portugal' },
-  { code: 'en', name: 'English', country: 'United Kingdom' },
-  { code: 'pl', name: 'Polski', country: 'Polska' },
-  { code: 'cs', name: 'Čeština', country: 'Česká republika' },
-  { code: 'sk', name: 'Slovenčina', country: 'Slovensko' },
-  { code: 'hu', name: 'Magyar', country: 'Magyarország' },
-  { code: 'ro', name: 'Română', country: 'România' },
-  { code: 'bg', name: 'Български', country: 'България' },
-  { code: 'hr', name: 'Hrvatski', country: 'Hrvatska' },
-  { code: 'sl', name: 'Slovenščina', country: 'Slovenija' },
-  { code: 'sr', name: 'Srpski', country: 'Srbija' },
-  { code: 'mk', name: 'Македонски', country: 'Северна Македонија' },
-  { code: 'el', name: 'Ελληνικά', country: 'Ελλάδα/Κύπρος' },
-  { code: 'tr', name: 'Türkçe', country: 'Türkiye' },
-  { code: 'ru', name: 'Русский', country: 'Россия' },
-  { code: 'uk', name: 'Українська', country: 'Україна' },
-  { code: 'be', name: 'Беларуская', country: 'Беларусь' },
-  { code: 'lv', name: 'Latviešu', country: 'Latvija' },
-  { code: 'lt', name: 'Lietuvių', country: 'Lietuva' },
-  { code: 'et', name: 'Eesti', country: 'Eesti' },
-  { code: 'ar', name: 'العربية', country: 'United Arab Emirates/Tunisia/Morocco/Egypt' },
-  { code: 'he', name: 'עברית', country: 'ישראל' },
-  { code: 'id', name: 'Bahasa Indonesia', country: 'Indonesia' },
-  { code: 'ms', name: 'Bahasa Melayu', country: 'Malaysia' },
-  { code: 'th', name: 'ไทย', country: 'ประเทศไทย' },
-  { code: 'zh', name: '中文', country: '中国/香港/台灣' },
-  { code: 'ja', name: '日本語', country: '日本' },
-  { code: 'ko', name: '한국어', country: '대한민국' },
-];
+import { supportedLanguages, changeLanguage } from '@/i18n';
 
 export default function SettingsPage() {
-  const navigate = useNavigate();
-  const { user } = useAuth();
+  const { t, i18n } = useTranslation();
   const { profile, loading, updateProfile } = useProfile();
   const [saving, setSaving] = useState(false);
   const [language, setLanguage] = useState(() => {
-    return localStorage.getItem('app_language') || 'nb';
+    return i18n.language || 'nb';
   });
   
   const [formData, setFormData] = useState({
@@ -93,8 +49,8 @@ export default function SettingsPage() {
 
   const handleLanguageChange = (value: string) => {
     setLanguage(value);
-    localStorage.setItem('app_language', value);
-    toast.success('Språk endret! Appen støtter foreløpig kun norsk grensesnitt.');
+    changeLanguage(value);
+    toast.success(t('settings.language.selected') + ': ' + (supportedLanguages.find(l => l.code === value)?.name || value));
   };
 
   // Helper function to normalize website URL
@@ -144,8 +100,8 @@ export default function SettingsPage() {
       <div className="flex items-center gap-3">
         <Settings className="h-8 w-8 text-primary" />
         <div>
-          <h1 className="text-2xl font-bold">Innstillinger</h1>
-          <p className="text-muted-foreground">Administrer ditt oppdrett</p>
+          <h1 className="text-2xl font-bold">{t('settings.title')}</h1>
+          <p className="text-muted-foreground">{t('settings.description')}</p>
         </div>
       </div>
 
@@ -155,21 +111,21 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Globe className="h-5 w-5" />
-              Språk
+              {t('settings.language.title')}
             </CardTitle>
             <CardDescription>
-              Velg språk for appen (FIFE-medlemsland)
+              {t('settings.language.description')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <Label htmlFor="language">Velg språk</Label>
+              <Label htmlFor="language">{t('settings.language.select')}</Label>
               <Select value={language} onValueChange={handleLanguageChange}>
                 <SelectTrigger className="w-full md:w-[300px]">
-                  <SelectValue placeholder="Velg språk" />
+                  <SelectValue placeholder={t('settings.language.select')} />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px]">
-                  {FIFE_LANGUAGES.map((lang) => (
+                  {supportedLanguages.map((lang) => (
                     <SelectItem key={lang.code} value={lang.code}>
                       <span className="flex items-center gap-2">
                         <span className="font-medium">{lang.name}</span>
@@ -180,7 +136,7 @@ export default function SettingsPage() {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Valgt språk: {FIFE_LANGUAGES.find(l => l.code === language)?.name || 'Norsk'}
+                {t('settings.language.selected')}: {supportedLanguages.find(l => l.code === language)?.name || 'Norsk'}
               </p>
             </div>
           </CardContent>

@@ -12,7 +12,7 @@ export const resources = {
 } as const;
 
 // Supported languages with their display names
-export const supportedLanguages = [
+export const supportedLanguages: Array<{ code: string; name: string; country: string }> = [
   { code: 'nb', name: 'Norsk (bokmål)', country: 'Norge' },
   { code: 'nn', name: 'Norsk (nynorsk)', country: 'Norge' },
   { code: 'sv', name: 'Svenska', country: 'Sverige' },
@@ -52,7 +52,7 @@ export const supportedLanguages = [
   { code: 'zh', name: '中文', country: '中国/香港/台灣' },
   { code: 'ja', name: '日本語', country: '日本' },
   { code: 'ko', name: '한국어', country: '대한민국' },
-] as const;
+];
 
 // Get saved language or default to Norwegian
 const getSavedLanguage = (): string => {

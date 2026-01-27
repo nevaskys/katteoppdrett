@@ -19,7 +19,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { DbKitten, useKittensByLitter, useSaveKittens } from '@/hooks/useKittens';
+import { DbKitten, useKittensByLitter, WeightEntry } from '@/hooks/useKittens';
+import { useUpdateKittenWeights } from '@/hooks/useKittenWeights';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -33,14 +34,18 @@ export function KittenWeightEditor({ litterId, birthDate }: KittenWeightEditorPr
   const [weightDate, setWeightDate] = useState<Date>(new Date());
   const { data: kittens = [], isLoading } = useKittensByLitter(litterId);
   const [weights, setWeights] = useState<Record<string, number | ''>>({});
-  const saveKittens = useSaveKittens();
+  const updateWeights = useUpdateKittenWeights();
 
   // Initialize weights and date when dialog opens
   useEffect(() => {
     if (open && kittens.length > 0) {
       const initialWeights: Record<string, number | ''> = {};
       kittens.forEach(k => {
-        initialWeights[k.id] = k.birth_weight ?? '';
+        // Check if there's already a weight entry for the selected date
+        const existingEntry = k.weight_log?.find(
+          entry => entry.date === format(weightDate, 'yyyy-MM-dd')
+        );
+        initialWeights[k.id] = existingEntry?.weight ?? '';
       });
       setWeights(initialWeights);
       // Default to birth date if available, otherwise today
@@ -52,33 +57,55 @@ export function KittenWeightEditor({ litterId, birthDate }: KittenWeightEditorPr
     }
   }, [open, kittens, birthDate]);
 
-  const handleSave = () => {
-    const kittensToSave = kittens.map(k => {
-      const weight = weights[k.id];
-      return {
-        id: k.id,
-        litterId,
-        name: k.name || '',
-        gender: k.gender as 'male' | 'female' | null,
-        color: k.color || '',
-        emsCode: k.ems_code || '',
-        status: (k.status || 'available') as 'available' | 'reserved' | 'sold' | 'keeping',
-        reservedBy: k.reserved_by || '',
-        notes: k.notes || '',
-        birthWeight: typeof weight === 'number' ? weight : null,
-      };
-    });
+  // Update weights when date changes
+  useEffect(() => {
+    if (open && kittens.length > 0) {
+      const dateStr = format(weightDate, 'yyyy-MM-dd');
+      const updatedWeights: Record<string, number | ''> = {};
+      kittens.forEach(k => {
+        const existingEntry = k.weight_log?.find(entry => entry.date === dateStr);
+        updatedWeights[k.id] = existingEntry?.weight ?? '';
+      });
+      setWeights(updatedWeights);
+    }
+  }, [weightDate, open, kittens]);
 
-    saveKittens.mutate(
-      { litterId, kittens: kittensToSave },
-      {
-        onSuccess: () => {
-          toast.success(`Vekter lagret for ${format(weightDate, 'd. MMM yyyy', { locale: nb })}`);
-          setOpen(false);
-        },
-        onError: () => toast.error('Kunne ikke lagre vekter'),
-      }
-    );
+  const handleSave = () => {
+    const dateStr = format(weightDate, 'yyyy-MM-dd');
+    
+    const updates = kittens
+      .filter(k => typeof weights[k.id] === 'number')
+      .map(k => {
+        const newWeight = weights[k.id] as number;
+        const existingLog = k.weight_log || [];
+        
+        // Remove any existing entry for this date
+        const filteredLog = existingLog.filter(entry => entry.date !== dateStr);
+        
+        // Add the new entry
+        const updatedLog: WeightEntry[] = [
+          ...filteredLog,
+          { date: dateStr, weight: newWeight }
+        ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        
+        return {
+          kittenId: k.id,
+          weightLog: updatedLog,
+        };
+      });
+
+    if (updates.length === 0) {
+      toast.error('Ingen vekter å lagre');
+      return;
+    }
+
+    updateWeights.mutate(updates, {
+      onSuccess: () => {
+        toast.success(`Vekter lagret for ${format(weightDate, 'd. MMM yyyy', { locale: nb })}`);
+        setOpen(false);
+      },
+      onError: () => toast.error('Kunne ikke lagre vekter'),
+    });
   };
 
   const getGenderLabel = (gender: string | null) => {
@@ -186,8 +213,8 @@ export function KittenWeightEditor({ litterId, birthDate }: KittenWeightEditorPr
           <Button variant="outline" onClick={() => setOpen(false)}>
             Avbryt
           </Button>
-          <Button onClick={handleSave} disabled={saveKittens.isPending || kittens.length === 0}>
-            {saveKittens.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+          <Button onClick={handleSave} disabled={updateWeights.isPending || kittens.length === 0}>
+            {updateWeights.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Lagre
           </Button>
         </DialogFooter>

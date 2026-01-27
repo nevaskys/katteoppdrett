@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Scale, Loader2, TrendingUp, AlertTriangle, TrendingDown } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Scale, Loader2, TrendingUp, AlertTriangle, TrendingDown, Plus, Save, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,7 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DbKitten, WeightEntry, useKittensByLitter } from '@/hooks/useKittens';
 import { useUpdateKittenWeights } from '@/hooks/useKittenWeights';
 import { toast } from 'sonner';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, addDays } from 'date-fns';
 import { nb } from 'date-fns/locale';
 import {
   LineChart,
@@ -60,6 +60,11 @@ export function KittenWeightTracker({ litterId, birthDate }: KittenWeightTracker
   const updateWeights = useUpdateKittenWeights();
   const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
   const [weights, setWeights] = useState<Record<string, number | ''>>({});
+  
+  // Table editing state
+  const [tableWeights, setTableWeights] = useState<Record<string, Record<string, number | ''>>>({});
+  const [extraDates, setExtraDates] = useState<string[]>([]);
+  const [hasTableChanges, setHasTableChanges] = useState(false);
 
   // Get all unique dates from all kittens' weight logs
   const allDates = useMemo(() => {
@@ -73,8 +78,10 @@ export function KittenWeightTracker({ litterId, birthDate }: KittenWeightTracker
         dates.add(birthDate);
       }
     });
+    // Add extra dates from user
+    extraDates.forEach(d => dates.add(d));
     return Array.from(dates).sort();
-  }, [kittens, birthDate]);
+  }, [kittens, birthDate, extraDates]);
 
   // Helper to get consistent kitten label
   const getKittenLabel = (kitten: DbKitten, index: number) => {
@@ -212,7 +219,123 @@ export function KittenWeightTracker({ litterId, birthDate }: KittenWeightTracker
         initialWeights[kitten.id] = todayEntry?.weight ?? '';
       });
       setWeights(initialWeights);
+      
+      // Initialize table weights
+      initializeTableWeights();
+    } else {
+      // Reset on close
+      setExtraDates([]);
+      setHasTableChanges(false);
     }
+  };
+
+  // Initialize table weights from current data
+  const initializeTableWeights = () => {
+    const initial: Record<string, Record<string, number | ''>> = {};
+    allDates.forEach(date => {
+      initial[date] = {};
+      kittens.forEach(kitten => {
+        if (date === birthDate && kitten.birth_weight) {
+          initial[date][kitten.id] = kitten.birth_weight;
+        } else {
+          const entry = (kitten.weight_log || []).find(e => e.date === date);
+          initial[date][kitten.id] = entry?.weight ?? '';
+        }
+      });
+    });
+    setTableWeights(initial);
+    setHasTableChanges(false);
+  };
+
+  // Re-initialize when kittens or dates change
+  useEffect(() => {
+    if (open && kittens.length > 0) {
+      const newTableWeights: Record<string, Record<string, number | ''>> = {};
+      allDates.forEach(date => {
+        newTableWeights[date] = tableWeights[date] || {};
+        kittens.forEach(kitten => {
+          if (newTableWeights[date][kitten.id] === undefined) {
+            if (date === birthDate && kitten.birth_weight) {
+              newTableWeights[date][kitten.id] = kitten.birth_weight;
+            } else {
+              const entry = (kitten.weight_log || []).find(e => e.date === date);
+              newTableWeights[date][kitten.id] = entry?.weight ?? '';
+            }
+          }
+        });
+      });
+      setTableWeights(newTableWeights);
+    }
+  }, [allDates, kittens, open]);
+
+  const handleTableWeightChange = (date: string, kittenId: string, value: string) => {
+    setTableWeights(prev => ({
+      ...prev,
+      [date]: {
+        ...prev[date],
+        [kittenId]: value === '' ? '' : parseInt(value),
+      },
+    }));
+    setHasTableChanges(true);
+  };
+
+  const addNewDateRow = () => {
+    // Find the next date after the last one
+    const lastDate = allDates.length > 0 ? allDates[allDates.length - 1] : format(new Date(), 'yyyy-MM-dd');
+    const nextDate = format(addDays(parseISO(lastDate), 1), 'yyyy-MM-dd');
+    
+    if (!allDates.includes(nextDate)) {
+      setExtraDates(prev => [...prev, nextDate]);
+      setTableWeights(prev => ({
+        ...prev,
+        [nextDate]: {},
+      }));
+    }
+  };
+
+  const removeExtraDate = (date: string) => {
+    setExtraDates(prev => prev.filter(d => d !== date));
+    setTableWeights(prev => {
+      const copy = { ...prev };
+      delete copy[date];
+      return copy;
+    });
+    setHasTableChanges(true);
+  };
+
+  const saveTableWeights = () => {
+    const updates = kittens.map(kitten => {
+      const newLog: WeightEntry[] = [];
+      
+      allDates.forEach(date => {
+        // Skip birth date - that's stored separately
+        if (date === birthDate) return;
+        
+        const weight = tableWeights[date]?.[kitten.id];
+        if (typeof weight === 'number' && weight > 0) {
+          newLog.push({ date, weight });
+        }
+      });
+      
+      // Sort by date
+      newLog.sort((a, b) => a.date.localeCompare(b.date));
+      
+      return {
+        kittenId: kitten.id,
+        weightLog: newLog,
+      };
+    });
+
+    updateWeights.mutate(updates, {
+      onSuccess: () => {
+        toast.success('Alle vekter lagret');
+        setHasTableChanges(false);
+        setExtraDates([]);
+      },
+      onError: () => {
+        toast.error('Kunne ikke lagre vekter');
+      },
+    });
   };
 
   const handleDateChange = (date: string) => {
@@ -385,21 +508,60 @@ export function KittenWeightTracker({ litterId, birthDate }: KittenWeightTracker
             </TabsContent>
 
             <TabsContent value="table" className="space-y-4">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <p className="text-sm text-muted-foreground">
+                  Klikk i cellene for å redigere vekter direkte
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={addNewDateRow}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Legg til dag
+                  </Button>
+                  {hasTableChanges && (
+                    <Button
+                      size="sm"
+                      onClick={saveTableWeights}
+                      disabled={updateWeights.isPending}
+                    >
+                      {updateWeights.isPending ? (
+                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4 mr-1" />
+                      )}
+                      Lagre alle
+                    </Button>
+                  )}
+                </div>
+              </div>
+
               {allDates.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground border border-dashed rounded-lg">
                   <Scale className="h-10 w-10 mx-auto mb-2 opacity-50" />
                   <p>Ingen vektdata registrert ennå</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-4"
+                    onClick={addNewDateRow}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Legg til første dag
+                  </Button>
                 </div>
               ) : (
                 <div className="border rounded-lg overflow-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="font-semibold">Dato</TableHead>
+                        <TableHead className="font-semibold w-32">Dato</TableHead>
                         {kittens.map((kitten, index) => (
                           <TableHead 
                             key={kitten.id} 
-                            className="text-center"
+                            className="text-center min-w-[100px]"
                             style={{ 
                               backgroundColor: `${KITTEN_COLORS[index % KITTEN_COLORS.length]}20`,
                             }}
@@ -407,61 +569,102 @@ export function KittenWeightTracker({ litterId, birthDate }: KittenWeightTracker
                             {getKittenLabel(kitten, index)}
                           </TableHead>
                         ))}
+                        <TableHead className="w-12"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {allDates.map(date => (
-                        <TableRow key={date}>
-                          <TableCell className="font-medium">
-                            {formatDateLabel(date)}
-                          </TableCell>
-                          {kittens.map((kitten, index) => {
-                            let weight: number | null = null;
-                            if (date === birthDate && kitten.birth_weight) {
-                              weight = kitten.birth_weight;
-                            } else {
-                              const entry = (kitten.weight_log || []).find(e => e.date === date);
-                              weight = entry?.weight || null;
-                            }
-                            const warning = getWarningForCell(kitten.id, date);
-                            
-                            return (
-                              <TableCell 
-                                key={kitten.id} 
-                                className={`text-center relative ${
-                                  warning?.type === 'decrease' 
-                                    ? 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 font-semibold' 
-                                    : warning?.type === 'no_change'
-                                      ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 font-medium'
-                                      : warning?.type === 'low_gain'
-                                        ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300'
-                                        : ''
-                                }`}
-                                style={!warning ? { 
-                                  backgroundColor: `${KITTEN_COLORS[index % KITTEN_COLORS.length]}10`,
-                                } : undefined}
-                              >
-                                <div className="flex items-center justify-center gap-1">
-                                  {warning?.type === 'decrease' && (
-                                    <TrendingDown className="h-3 w-3" />
-                                  )}
-                                  {warning?.type === 'no_change' && (
-                                    <AlertTriangle className="h-3 w-3" />
-                                  )}
-                                  <span>{weight ? `${weight}g` : '-'}</span>
-                                  {warning && (
-                                    <span className="text-xs">
-                                      ({warning.change >= 0 ? '+' : ''}{warning.change})
-                                    </span>
-                                  )}
-                                </div>
-                              </TableCell>
-                            );
-                          })}
-                        </TableRow>
-                      ))}
+                      {allDates.map(date => {
+                        const isExtraDate = extraDates.includes(date);
+                        const isBirthDate = date === birthDate;
+                        
+                        return (
+                          <TableRow key={date}>
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-2">
+                                {formatDateLabel(date)}
+                                {isBirthDate && (
+                                  <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                                    Fødsel
+                                  </span>
+                                )}
+                              </div>
+                            </TableCell>
+                            {kittens.map((kitten, index) => {
+                              const value = tableWeights[date]?.[kitten.id] ?? '';
+                              const warning = getWarningForCell(kitten.id, date);
+                              
+                              // Birth weight is read-only (managed separately)
+                              if (isBirthDate && kitten.birth_weight) {
+                                return (
+                                  <TableCell 
+                                    key={kitten.id} 
+                                    className="text-center p-2"
+                                    style={{ backgroundColor: `${KITTEN_COLORS[index % KITTEN_COLORS.length]}10` }}
+                                  >
+                                    <span className="text-muted-foreground">{kitten.birth_weight}g</span>
+                                  </TableCell>
+                                );
+                              }
+                              
+                              return (
+                                <TableCell 
+                                  key={kitten.id} 
+                                  className={`text-center p-1 ${
+                                    warning?.type === 'decrease' 
+                                      ? 'bg-destructive/10' 
+                                      : warning?.type === 'no_change'
+                                        ? 'bg-amber-100 dark:bg-amber-900/40'
+                                        : warning?.type === 'low_gain'
+                                          ? 'bg-orange-50 dark:bg-orange-900/20'
+                                          : ''
+                                  }`}
+                                  style={!warning ? { 
+                                    backgroundColor: `${KITTEN_COLORS[index % KITTEN_COLORS.length]}10`,
+                                  } : undefined}
+                                >
+                                  <Input
+                                    type="number"
+                                    value={value}
+                                    onChange={(e) => handleTableWeightChange(date, kitten.id, e.target.value)}
+                                    placeholder="-"
+                                    className="h-8 text-center w-full min-w-[70px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  />
+                                </TableCell>
+                              );
+                            })}
+                            <TableCell className="p-1">
+                              {isExtraDate && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                  onClick={() => removeExtraDate(date)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
+                </div>
+              )}
+
+              {hasTableChanges && (
+                <div className="flex justify-end">
+                  <Button
+                    onClick={saveTableWeights}
+                    disabled={updateWeights.isPending}
+                  >
+                    {updateWeights.isPending ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
+                    Lagre alle endringer
+                  </Button>
                 </div>
               )}
             </TabsContent>

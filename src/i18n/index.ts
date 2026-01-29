@@ -6,10 +6,11 @@ import nb from './locales/nb.json';
 import en from './locales/en.json';
 
 // Map of language codes to their translation resources
-export const resources = {
+// All languages fall back to 'nb' (Norwegian) if not explicitly defined
+export const resources: Record<string, { translation: typeof nb }> = {
   nb: { translation: nb },
   en: { translation: en },
-} as const;
+};
 
 // Supported languages with their display names
 export const supportedLanguages: Array<{ code: string; name: string; country: string }> = [
@@ -55,10 +56,13 @@ export const supportedLanguages: Array<{ code: string; name: string; country: st
 ];
 
 // Get saved language or default to Norwegian
+// Returns the actual resource language to use (nb or en, since others fallback to nb)
 const getSavedLanguage = (): string => {
   const saved = localStorage.getItem('app_language');
   if (saved && supportedLanguages.some(lang => lang.code === saved)) {
-    return saved;
+    // Only return the saved language if we have resources for it
+    // Otherwise return 'nb' as fallback (i18next will handle display)
+    return resources[saved] ? saved : 'nb';
   }
   return 'nb'; // Default to Norwegian
 };

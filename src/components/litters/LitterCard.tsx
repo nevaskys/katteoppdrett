@@ -155,10 +155,17 @@ export function LitterCard({ litter, cats }: LitterCardProps) {
         
         {/* Birth date for active/completed */}
         {(litter.status === 'active' || litter.status === 'completed') && litter.birthDate && (
-          <div className="flex items-center gap-2 text-sm mt-2">
-            <Calendar className="h-4 w-4 text-green-600" />
-            <span className="text-muted-foreground">Født:</span>
-            <span className="font-medium">{format(new Date(litter.birthDate), 'd. MMM yyyy', { locale: nb })}</span>
+          <div className="space-y-1.5 mt-2">
+            <div className="flex items-center gap-2 text-sm">
+              <Calendar className="h-4 w-4 text-green-600" />
+              <span className="text-muted-foreground">Født:</span>
+              <span className="font-medium">{format(new Date(litter.birthDate), 'd. MMM yyyy', { locale: nb })}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Baby className="h-4 w-4 text-primary" />
+              <span className="text-muted-foreground">Leveringsklare (14 uker):</span>
+              <span className="font-medium">{format(addDays(new Date(litter.birthDate), 98), 'd. MMM yyyy', { locale: nb })}</span>
+            </div>
           </div>
         )}
         

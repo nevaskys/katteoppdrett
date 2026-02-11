@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Settings, Save, Loader2, Globe } from 'lucide-react';
+import { Settings, Save, Loader2, Globe, Lock, Palette, Sun, Moon } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,11 +17,15 @@ import {
 import { useProfile } from '@/hooks/useProfile';
 import { toast } from 'sonner';
 import { supportedLanguages, changeLanguage } from '@/i18n';
+import { useTheme } from 'next-themes';
 
 export default function SettingsPage() {
   const { t, i18n } = useTranslation();
   const { profile, loading, updateProfile } = useProfile();
+  const { theme, setTheme } = useTheme();
   const [saving, setSaving] = useState(false);
+  const [passwordData, setPasswordData] = useState({ current: '', new1: '', new2: '' });
+  const [changingPassword, setChangingPassword] = useState(false);
   const [language, setLanguage] = useState(() => {
     return i18n.language || 'nb';
   });
@@ -106,6 +111,107 @@ export default function SettingsPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Password Change */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5" />
+              Endre passord
+            </CardTitle>
+            <CardDescription>Oppdater passordet ditt</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="new_password">Nytt passord</Label>
+              <Input
+                id="new_password"
+                type="password"
+                placeholder="Minst 6 tegn"
+                value={passwordData.new1}
+                onChange={(e) => setPasswordData({ ...passwordData, new1: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm_password">Bekreft nytt passord</Label>
+              <Input
+                id="confirm_password"
+                type="password"
+                placeholder="Gjenta passordet"
+                value={passwordData.new2}
+                onChange={(e) => setPasswordData({ ...passwordData, new2: e.target.value })}
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={changingPassword}
+              onClick={async () => {
+                if (passwordData.new1.length < 6) {
+                  toast.error('Passordet må være minst 6 tegn');
+                  return;
+                }
+                if (passwordData.new1 !== passwordData.new2) {
+                  toast.error('Passordene stemmer ikke overens');
+                  return;
+                }
+                setChangingPassword(true);
+                const { error } = await supabase.auth.updateUser({ password: passwordData.new1 });
+                if (error) {
+                  toast.error('Kunne ikke endre passord: ' + error.message);
+                } else {
+                  toast.success('Passord endret!');
+                  setPasswordData({ current: '', new1: '', new2: '' });
+                }
+                setChangingPassword(false);
+              }}
+            >
+              {changingPassword ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Lock className="h-4 w-4 mr-2" />}
+              Endre passord
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Theme Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Palette className="h-5 w-5" />
+              Utseende
+            </CardTitle>
+            <CardDescription>Velg lys eller mørk modus</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant={theme === 'light' ? 'default' : 'outline'}
+                onClick={() => setTheme('light')}
+                className="flex items-center gap-2"
+              >
+                <Sun className="h-4 w-4" />
+                Lys
+              </Button>
+              <Button
+                type="button"
+                variant={theme === 'dark' ? 'default' : 'outline'}
+                onClick={() => setTheme('dark')}
+                className="flex items-center gap-2"
+              >
+                <Moon className="h-4 w-4" />
+                Mørk
+              </Button>
+              <Button
+                type="button"
+                variant={theme === 'system' ? 'default' : 'outline'}
+                onClick={() => setTheme('system')}
+                className="flex items-center gap-2"
+              >
+                System
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Language Settings */}
         <Card>
           <CardHeader>

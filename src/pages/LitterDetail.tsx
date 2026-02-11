@@ -27,6 +27,7 @@ import { InlineMatingDates } from '@/components/litters/InlineMatingDates';
 import { ActiveLitterEditor } from '@/components/litters/ActiveLitterEditor';
 import { QuickKittenEditor } from '@/components/litters/QuickKittenEditor';
 import { BirthGuide } from '@/components/litters/BirthGuide';
+import { PrintableWeightForm } from '@/components/litters/PrintableWeightForm';
 import { LitterDeadlines } from '@/components/litters/LitterDeadlines';
 import { LitterStatus, LITTER_STATUS_CONFIG } from '@/types/litter';
 import { format, differenceInDays, addDays } from 'date-fns';
@@ -232,6 +233,7 @@ export default function LitterDetail() {
             <BirthNotesEditor litter={litter} />
             <KittenWeightEditor litterId={litter.id} birthDate={litter.birthDate} />
             <KittenWeightTracker litterId={litter.id} birthDate={litter.birthDate} />
+            <PrintableWeightForm litterId={litter.id} birthDate={litter.birthDate} />
           </div>
         </div>
       )}
@@ -239,45 +241,7 @@ export default function LitterDetail() {
       {/* Dates section - single card */}
       <div className="bg-card border rounded-lg p-6">
         <h2 className="text-lg font-semibold mb-4">Informasjon</h2>
-        <div className="grid sm:grid-cols-2 gap-6">
-          {/* Parents info */}
-          <dl className="space-y-3 text-sm">
-            <div>
-              <dt className="text-muted-foreground">Mor</dt>
-              <dd className="font-medium">
-                {mother ? (
-                  <Link to={`/cats/${mother.id}`} className="text-primary hover:underline">
-                    {mother.name}
-                  </Link>
-                ) : 'Ikke valgt'}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Far</dt>
-              <dd className="font-medium">
-                {father ? (
-                  <Link to={`/cats/${father.id}`} className="text-primary hover:underline">
-                    {father.name}
-                  </Link>
-                ) : litter.externalFatherName ? (
-                  <span>
-                    {litter.externalFatherName}
-                    {litter.externalFatherPedigreeUrl && (
-                      <a 
-                        href={litter.externalFatherPedigreeUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline ml-2"
-                      >
-                        (stamtavle)
-                      </a>
-                    )}
-                  </span>
-                ) : 'Ikke valgt'}
-              </dd>
-            </div>
-          </dl>
-
+        <div className="space-y-3">
           {/* Dates info */}
           <dl className="space-y-3 text-sm">
             {(litter.matingDateFrom || litter.matingDate) && (

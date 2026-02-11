@@ -22,6 +22,7 @@ const deadlineDefinitions: DeadlineItem[] = [
   { id: 'vet-check', daysAfterBirth: 56, task: 'Veterinærsjekk og helseundersøkelse (uke 8-9)', type: 'required', category: 'Vaksinasjon & ID' },
   { id: 'first-vaccine', daysAfterBirth: 70, task: 'Første vaksine – uke 10-11', type: 'required', category: 'Vaksinasjon & ID' },
   { id: 'microchip', daysAfterBirth: 77, task: 'ID-merking (mikrochip) – uke 10-12', type: 'required', category: 'Vaksinasjon & ID' },
+  { id: 'delivery-ready', daysAfterBirth: 98, task: 'Leveringsklare (14 uker)', type: 'required', category: 'Vaksinasjon & ID' },
   { id: 'second-vaccine', daysAfterBirth: 98, task: 'Andre vaksine (3-4 uker etter første) – uke 13-15', type: 'required', category: 'Vaksinasjon & ID' },
   
   // Registrering (NRR)

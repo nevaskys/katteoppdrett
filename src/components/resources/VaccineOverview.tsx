@@ -55,7 +55,7 @@ export function VaccineOverview() {
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          Kjernevaksiner (P, C, R) anbefales for alle katter. Andre vaksiner vurderes basert på 
+          Kjernevaksiner anbefales for alle katter. Andre vaksiner vurderes basert på 
           livsstil og risiko. Snakk alltid med din veterinær om vaksinasjonsplan.
         </AlertDescription>
       </Alert>
@@ -71,7 +71,6 @@ export function VaccineOverview() {
             <div className="flex items-start justify-between">
               <div>
                 <h4 className="font-medium">{vaccine.name}</h4>
-                <span className="text-xs bg-muted px-2 py-0.5 rounded">{vaccine.abbreviation}</span>
               </div>
             </div>
             <p className="text-sm text-muted-foreground">{vaccine.description}</p>
@@ -91,7 +90,6 @@ export function VaccineOverview() {
             <div className="flex items-start justify-between">
               <div>
                 <h4 className="font-medium">{vaccine.name}</h4>
-                <span className="text-xs bg-muted px-2 py-0.5 rounded">{vaccine.abbreviation}</span>
               </div>
             </div>
             <p className="text-sm text-muted-foreground">{vaccine.description}</p>

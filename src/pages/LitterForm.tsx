@@ -163,8 +163,8 @@ export default function LitterForm() {
     const litterData = {
       name: data.name,
       status: data.status as LitterStatus,
-      motherId: data.motherId || null,
-      fatherId: data.fatherId || null,
+      motherId: data.motherId ?? existingLitter?.motherId ?? null,
+      fatherId: data.fatherId ?? existingLitter?.fatherId ?? null,
       externalFatherName: data.externalFatherName || null,
       externalFatherPedigreeUrl: data.externalFatherPedigreeUrl || null,
       matingDateFrom: data.matingDateFrom || null,

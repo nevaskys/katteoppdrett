@@ -68,7 +68,7 @@ export default function SuggestionsPage() {
           <p className="text-muted-foreground">
             {isAdmin 
               ? 'Administrer forslag fra brukere' 
-              : 'Send inn forslag til forbedringer eller rapporter problemer'}
+              : 'Send inn forslag til forbedringer, eller send e-post til nevaskys@gmail.com'}
           </p>
         </div>
         {!showForm && (

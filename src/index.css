@@ -102,6 +102,10 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "cv11", "ss01";
+    background-image: url('@/assets/paw-pattern.png');
+    background-repeat: repeat;
+    background-size: 300px 300px;
+    background-attachment: fixed;
   }
 }
 

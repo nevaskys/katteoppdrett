@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
-import { Plus, Star, FileText, Loader2 } from 'lucide-react';
+import { Plus, Star, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useJudgingResults } from '@/hooks/useJudgingResults';
 import { BulkResultsImport } from '@/components/BulkResultsImport';
+import { Badge } from '@/components/ui/badge';
 
 interface CatJudgingResultsProps {
   catId: string;
@@ -33,38 +34,35 @@ export function CatJudgingResults({ catId, catName = 'Katt' }: CatJudgingResults
       ) : results.length === 0 ? (
         <p className="text-muted-foreground text-sm">Ingen utstillingsresultater registrert</p>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {results.map(result => (
             <Link
               key={result.id}
               to={`/judging-results/${result.id}`}
-              className="flex gap-3 p-3 rounded-md hover:bg-muted/50 transition-colors -mx-3"
+              className="block p-3 rounded-md hover:bg-muted/50 transition-colors -mx-3"
             >
-              {result.images[0] ? (
-                <img
-                  src={result.images[0]}
-                  alt="Dommerseddel"
-                  className="w-12 h-16 object-cover rounded flex-shrink-0"
-                />
-              ) : (
-                <div className="w-12 h-16 bg-muted rounded flex items-center justify-center flex-shrink-0">
-                  <FileText className="h-5 w-5 text-muted-foreground/50" />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium">
-                  {new Date(result.date).toLocaleDateString('nb-NO')}
-                </p>
-                {result.show && (
-                  <p className="text-sm text-muted-foreground truncate">{result.show.name}</p>
-                )}
-                {result.judge && (
-                  <p className="text-xs text-muted-foreground truncate">
-                    Dommer: {result.judge.name}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-medium">{catName}</p>
+                    {result.result && (
+                      <Badge variant="secondary" className="text-xs">
+                        {result.result}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {new Date(result.date).toLocaleDateString('nb-NO')}
+                    {result.show && ` · ${result.show.name}`}
                   </p>
-                )}
+                  {result.judge && (
+                    <p className="text-xs text-muted-foreground">
+                      Dommer: {result.judge.name}
+                    </p>
+                  )}
+                </div>
                 {result.myRating !== undefined && (
-                  <div className="flex gap-0.5 mt-1">
+                  <div className="flex gap-0.5">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <Star
                         key={star}

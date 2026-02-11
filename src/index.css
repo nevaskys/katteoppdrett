@@ -2,95 +2,95 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Feline-inspired Design System - Warm amber, soft cream, elegant earth tones */
+/* NevaSky's Design System - Soft lavender, dusty rose, cloud-like pastels */
 
 @layer base {
   :root {
-    --background: 35 30% 96%;
-    --foreground: 25 30% 15%;
+    --background: 270 20% 97%;
+    --foreground: 270 20% 18%;
 
-    --card: 38 35% 99%;
-    --card-foreground: 25 30% 15%;
+    --card: 280 15% 99%;
+    --card-foreground: 270 20% 18%;
 
-    --popover: 38 35% 99%;
-    --popover-foreground: 25 30% 15%;
+    --popover: 280 15% 99%;
+    --popover-foreground: 270 20% 18%;
 
-    --primary: 30 65% 48%;
-    --primary-foreground: 40 40% 98%;
+    --primary: 270 30% 45%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 35 25% 91%;
-    --secondary-foreground: 25 25% 25%;
+    --secondary: 300 15% 93%;
+    --secondary-foreground: 270 20% 25%;
 
-    --muted: 35 18% 90%;
-    --muted-foreground: 25 12% 45%;
+    --muted: 280 12% 91%;
+    --muted-foreground: 270 10% 45%;
 
-    --accent: 30 30% 90%;
-    --accent-foreground: 30 50% 35%;
+    --accent: 320 18% 91%;
+    --accent-foreground: 270 30% 38%;
 
     --destructive: 0 65% 52%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 30 18% 85%;
-    --input: 30 18% 85%;
-    --ring: 30 65% 48%;
+    --border: 280 15% 87%;
+    --input: 280 15% 87%;
+    --ring: 270 30% 45%;
 
     --radius: 0.625rem;
 
     /* Status colors */
     --status-new: 200 70% 50%;
     --status-contacted: 42 85% 50%;
-    --status-waitlist: 20 60% 50%;
+    --status-waitlist: 280 60% 55%;
     --status-deposit: 150 55% 42%;
     --status-sold: 150 65% 32%;
     --status-declined: 0 50% 50%;
 
-    --sidebar-background: 35 28% 98%;
-    --sidebar-foreground: 25 25% 25%;
-    --sidebar-primary: 30 65% 48%;
-    --sidebar-primary-foreground: 40 40% 98%;
-    --sidebar-accent: 32 28% 92%;
-    --sidebar-accent-foreground: 30 50% 35%;
-    --sidebar-border: 30 18% 88%;
-    --sidebar-ring: 30 65% 48%;
+    --sidebar-background: 275 18% 98%;
+    --sidebar-foreground: 270 20% 25%;
+    --sidebar-primary: 270 30% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 300 18% 93%;
+    --sidebar-accent-foreground: 270 30% 38%;
+    --sidebar-border: 280 15% 89%;
+    --sidebar-ring: 270 30% 45%;
   }
 
   .dark {
-    --background: 25 18% 9%;
-    --foreground: 35 20% 92%;
+    --background: 270 18% 8%;
+    --foreground: 280 15% 93%;
 
-    --card: 25 18% 12%;
-    --card-foreground: 35 20% 92%;
+    --card: 270 18% 11%;
+    --card-foreground: 280 15% 93%;
 
-    --popover: 25 18% 12%;
-    --popover-foreground: 35 20% 92%;
+    --popover: 270 18% 11%;
+    --popover-foreground: 280 15% 93%;
 
-    --primary: 32 70% 55%;
-    --primary-foreground: 25 18% 8%;
+    --primary: 270 35% 58%;
+    --primary-foreground: 270 18% 8%;
 
-    --secondary: 25 14% 18%;
-    --secondary-foreground: 35 18% 88%;
+    --secondary: 270 14% 17%;
+    --secondary-foreground: 280 15% 88%;
 
-    --muted: 25 12% 16%;
-    --muted-foreground: 30 10% 58%;
+    --muted: 270 12% 15%;
+    --muted-foreground: 280 10% 58%;
 
-    --accent: 28 18% 19%;
-    --accent-foreground: 32 60% 70%;
+    --accent: 300 16% 18%;
+    --accent-foreground: 270 35% 72%;
 
     --destructive: 0 55% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 25 12% 20%;
-    --input: 25 12% 20%;
-    --ring: 32 70% 55%;
+    --border: 270 12% 19%;
+    --input: 270 12% 19%;
+    --ring: 270 35% 58%;
 
-    --sidebar-background: 25 18% 10%;
-    --sidebar-foreground: 30 12% 78%;
-    --sidebar-primary: 32 70% 55%;
-    --sidebar-primary-foreground: 25 18% 8%;
-    --sidebar-accent: 25 14% 16%;
-    --sidebar-accent-foreground: 32 60% 70%;
-    --sidebar-border: 25 12% 18%;
-    --sidebar-ring: 32 70% 55%;
+    --sidebar-background: 270 18% 9%;
+    --sidebar-foreground: 280 10% 78%;
+    --sidebar-primary: 270 35% 58%;
+    --sidebar-primary-foreground: 270 18% 8%;
+    --sidebar-accent: 270 14% 15%;
+    --sidebar-accent-foreground: 270 35% 72%;
+    --sidebar-border: 270 12% 17%;
+    --sidebar-ring: 270 35% 58%;
   }
 }
 

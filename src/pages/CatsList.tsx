@@ -26,7 +26,7 @@ export default function CatsList() {
       <div className="flex items-start gap-4">
         <div className="h-12 w-12 rounded-lg bg-accent flex items-center justify-center flex-shrink-0 overflow-hidden">
           {cat.images[0] ? (
-            <img src={cat.images[0]} alt={cat.name} className="h-full w-full object-contain" />
+            <img src={cat.images[0]} alt={cat.name} className="h-full w-full object-cover" />
           ) : (
             <CatIcon className="h-6 w-6 text-accent-foreground/50" />
           )}

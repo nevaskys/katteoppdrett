@@ -24,7 +24,7 @@ export default function CatsList() {
       className="stat-card hover:shadow-md transition-shadow group"
     >
       <div className="flex items-start gap-4">
-        <div className="h-12 w-12 rounded-lg bg-accent flex items-center justify-center flex-shrink-0 overflow-hidden">
+        <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
           {cat.images[0] ? (
             <img src={cat.images[0]} alt={cat.name} className="h-full w-full object-cover" />
           ) : (

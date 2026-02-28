@@ -53,7 +53,7 @@ export default function CatsList() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-background">
       <div className="page-header">
         <h1 className="page-title">Katter</h1>
         <Button asChild>

@@ -225,7 +225,7 @@ export function useUpdateLitterNew() {
       
       const { data, error } = await supabase
         .from('litters')
-        .update(updateData)
+        .update(updateData as never)
         .eq('id', id)
         .select()
         .single();

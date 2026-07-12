@@ -43,7 +43,8 @@ export default function TasksPage() {
   const { t } = useTranslation();
   const { data: tasks = [], isLoading: tasksLoading } = useTasks();
   const { data: cats = [], isLoading: catsLoading } = useCats();
-  const { data: litters = [], isLoading: littersLoading } = useLitters();
+  const { data: littersData, isLoading: littersLoading } = useLitters();
+  const litters = Array.isArray(littersData) ? littersData : [];
   const addTaskMutation = useAddTask();
   const updateTaskMutation = useUpdateTask();
   const deleteTaskMutation = useDeleteTask();

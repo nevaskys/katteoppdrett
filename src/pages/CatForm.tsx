@@ -32,6 +32,8 @@ import { toast } from 'sonner';
 import { useRef, useCallback, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { HealthTest, PreviousLitter } from '@/types';
+import { compressImage } from '@/lib/imageCompress';
+
 
 const DEFAULT_HEALTH_TESTS = [
   { id: 'helseattest', name: 'Helseattest', completed: false },

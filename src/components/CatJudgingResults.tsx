@@ -42,25 +42,27 @@ export function CatJudgingResults({ catId, catName = 'Katt' }: CatJudgingResults
               className="block p-3 rounded-md hover:bg-muted/50 transition-colors -mx-3"
             >
               <div className="flex items-center justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-medium">{catName}</p>
-                    {result.result && (
-                      <Badge variant="secondary" className="text-xs">
-                        {result.result}
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                <div className="flex-1 min-w-0 space-y-0.5">
+                  <p className="text-sm font-medium">
                     {new Date(result.date).toLocaleDateString('nb-NO')}
-                    {result.show && ` · ${result.show.name}`}
                   </p>
+                  {(result.show?.location || result.show?.name) && (
+                    <p className="text-xs text-muted-foreground">
+                      {result.show?.location || result.show?.name}
+                    </p>
+                  )}
                   {result.judge && (
                     <p className="text-xs text-muted-foreground">
                       Dommer: {result.judge.name}
                     </p>
                   )}
+                  {result.result && (
+                    <Badge variant="secondary" className="text-xs">
+                      {result.result}
+                    </Badge>
+                  )}
                 </div>
+
                 {result.myRating !== undefined && (
                   <div className="flex gap-0.5">
                     {[1, 2, 3, 4, 5].map((star) => (

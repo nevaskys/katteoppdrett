@@ -1,4 +1,6 @@
 import { useState, useRef } from 'react';
+import i18n from '@/i18n';
+
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { ArrowLeft, Plus, Loader2, Star, X, Camera, Upload, Sparkles, FileText, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -385,8 +387,12 @@ export default function JudgingResultForm() {
     
     try {
       const response = await supabase.functions.invoke('parse-judging-sheet', {
-        body: { imageData }
+        body: {
+          imageData,
+          language: localStorage.getItem('app_language') || i18n.language || 'nb',
+        }
       });
+
       
       if (response.error) {
         throw new Error(response.error.message);

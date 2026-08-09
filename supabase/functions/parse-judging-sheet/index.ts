@@ -8,21 +8,36 @@ const corsHeaders = {
 };
 
 // Kun håndskrevne kommentarer fra dommerseddelen
+interface JudgingSheetFields {
+  type?: string;        // Type/Typ
+  head?: string;        // Hode/Head
+  eyes?: string;        // Øyne/Eyes
+  ears?: string;        // Ører/Ears
+  coat?: string;        // Pels/Coat
+  tail?: string;        // Hale/Tail
+  condition?: string;   // Kondisjon/Condition
+  general?: string;     // Totalinntrykk/General Impression
+  result?: string;      // Resultat/Judgement
+  judgeName?: string;   // Dommer/Judge
+}
+
 interface JudgingSheetData {
   ocrText?: string;
-  structuredResult?: {
-    type?: string;        // Type/Typ
-    head?: string;        // Hode/Head
-    eyes?: string;        // Øyne/Eyes
-    ears?: string;        // Ører/Ears
-    coat?: string;        // Pels/Coat
-    tail?: string;        // Hale/Tail
-    condition?: string;   // Kondisjon/Condition
-    general?: string;     // Totalinntrykk/General Impression
-    result?: string;      // Resultat/Judgement
-    judgeName?: string;   // Dommer/Judge
-  };
+  structuredResult?: JudgingSheetFields;
+  originalResult?: JudgingSheetFields;
 }
+
+const LANGUAGE_NAMES: Record<string, string> = {
+  nb: 'norsk (bokmål)', nn: 'norsk (nynorsk)', sv: 'svenska', fi: 'suomi', da: 'dansk',
+  is: 'íslenska', de: 'Deutsch', nl: 'Nederlands', fr: 'français', it: 'italiano',
+  es: 'español', pt: 'português', en: 'English', pl: 'polski', cs: 'čeština',
+  sk: 'slovenčina', hu: 'magyar', ro: 'română', bg: 'български', hr: 'hrvatski',
+  sl: 'slovenščina', sr: 'srpski', mk: 'македонски', el: 'ελληνικά', tr: 'Türkçe',
+  ru: 'русский', uk: 'українська', be: 'беларуская', lv: 'latviešu', lt: 'lietuvių',
+  et: 'eesti', ar: 'العربية', he: 'עברית', id: 'Bahasa Indonesia', ms: 'Bahasa Melayu',
+  th: 'ไทย', zh: '中文', ja: '日本語', ko: '한국어',
+};
+
 
 serve(async (req) => {
   // Handle CORS preflight requests

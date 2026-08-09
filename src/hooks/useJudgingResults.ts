@@ -35,7 +35,7 @@ export interface JudgingResult {
   createdAt: string;
   cat?: { id: string; name: string };
   judge?: { id: string; name: string };
-  show?: { id: string; name: string };
+  show?: { id: string; name: string; location?: string };
 }
 
 interface DbJudge {
@@ -74,7 +74,7 @@ interface DbJudgingResult {
   created_at: string;
   cats?: { id: string; name: string };
   judges?: { id: string; name: string } | null;
-  shows?: { id: string; name: string } | null;
+  shows?: { id: string; name: string; location?: string | null } | null;
 }
 
 function dbToJudge(db: DbJudge): Judge {
@@ -116,7 +116,7 @@ function dbToJudgingResult(db: DbJudgingResult): JudgingResult {
     createdAt: db.created_at,
     cat: db.cats ? { id: db.cats.id, name: db.cats.name } : undefined,
     judge: db.judges ? { id: db.judges.id, name: db.judges.name } : undefined,
-    show: db.shows ? { id: db.shows.id, name: db.shows.name } : undefined,
+    show: db.shows ? { id: db.shows.id, name: db.shows.name, location: db.shows.location || undefined } : undefined,
   };
 }
 
@@ -205,7 +205,7 @@ export function useJudgingResults(catId?: string) {
           *,
           cats:cat_id(id, name),
           judges:judge_id(id, name),
-          shows:show_id(id, name)
+          shows:show_id(id, name, location)
         `)
         .order('date', { ascending: false });
       
@@ -231,7 +231,7 @@ export function useJudgingResult(id: string | undefined) {
           *,
           cats:cat_id(id, name),
           judges:judge_id(id, name),
-          shows:show_id(id, name)
+          shows:show_id(id, name, location)
         `)
         .eq('id', id)
         .maybeSingle();

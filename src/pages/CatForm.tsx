@@ -364,7 +364,7 @@ export default function CatForm() {
         <h1 className="page-title">{isEditing ? `Rediger ${existingCat.name}` : 'Legg til katt'}</h1>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="stat-card space-y-6">
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="stat-card space-y-6">
         {/* Sammenleggbar stamtavle-seksjon */}
         <Collapsible open={pedigreeOpen} onOpenChange={setPedigreeOpen}>
           <div className="p-4 border-2 border-dashed border-primary/30 rounded-lg bg-primary/5">

@@ -238,23 +238,23 @@ export default function CatForm() {
     }
   }, [setValue]);
 
-  const handleFileUpload = useCallback((file: File, field: 'imageUrl' | 'pedigreeImageUrl') => {
+  const handleFileUpload = useCallback(async (file: File, field: 'imageUrl' | 'pedigreeImageUrl') => {
     if (!file.type.startsWith('image/')) {
       toast.error('Vennligst velg en bildefil');
       return;
     }
-    
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const dataUrl = e.target?.result as string;
+
+    try {
+      const dataUrl = await compressImage(file, field === 'pedigreeImageUrl' ? 1600 : 1200);
       setValue(field, dataUrl);
       toast.success('Bilde lastet opp');
-      
+
       if (field === 'pedigreeImageUrl') {
         await parsePedigreeImage(dataUrl);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch {
+      toast.error('Kunne ikke behandle bildet');
+    }
   }, [setValue, parsePedigreeImage]);
 
   const handlePaste = useCallback(async (field: 'imageUrl' | 'pedigreeImageUrl') => {
@@ -264,17 +264,13 @@ export default function CatForm() {
         const imageType = item.types.find(type => type.startsWith('image/'));
         if (imageType) {
           const blob = await item.getType(imageType);
-          const reader = new FileReader();
-          reader.onload = async (e) => {
-            const dataUrl = e.target?.result as string;
-            setValue(field, dataUrl);
-            toast.success('Bilde limt inn fra utklippstavlen');
-            
-            if (field === 'pedigreeImageUrl') {
-              await parsePedigreeImage(dataUrl);
-            }
-          };
-          reader.readAsDataURL(blob);
+          const dataUrl = await compressImage(blob, field === 'pedigreeImageUrl' ? 1600 : 1200);
+          setValue(field, dataUrl);
+          toast.success('Bilde limt inn fra utklippstavlen');
+
+          if (field === 'pedigreeImageUrl') {
+            await parsePedigreeImage(dataUrl);
+          }
           return;
         }
       }
@@ -283,6 +279,7 @@ export default function CatForm() {
       toast.error('Kunne ikke lese utklippstavlen');
     }
   }, [setValue, parsePedigreeImage]);
+
 
   const handlePedigreeUrlBlur = useCallback(async () => {
     const url = watch('pedigreeImageUrl');

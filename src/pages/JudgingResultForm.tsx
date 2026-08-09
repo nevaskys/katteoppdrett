@@ -385,8 +385,12 @@ export default function JudgingResultForm() {
     
     try {
       const response = await supabase.functions.invoke('parse-judging-sheet', {
-        body: { imageData }
+        body: {
+          imageData,
+          language: localStorage.getItem('app_language') || i18n.language || 'nb',
+        }
       });
+
       
       if (response.error) {
         throw new Error(response.error.message);

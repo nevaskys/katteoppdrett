@@ -290,7 +290,18 @@ export default function CatForm() {
     }
   }, [watch, parsePedigreeImage]);
 
-  const onSubmit = (data: CatFormData) => {
+  const onSubmit = async (data: CatFormData) => {
+    // Sikre at store bilder alltid komprimeres før lagring
+    let image = data.imageUrl || '';
+    if (image.startsWith('data:') && image.length > 700_000) {
+      try {
+        image = await compressImage(image);
+      } catch {
+        toast.error('Bildet er for stort å lagre');
+        return;
+      }
+    }
+
     const catData = {
       name: data.name,
       breed: data.breed,
@@ -301,7 +312,7 @@ export default function CatForm() {
       emsCode: data.emsCode || undefined,
       healthTests: healthTests,
       healthNotes: data.healthNotes || undefined,
-      images: data.imageUrl ? [data.imageUrl] : [],
+      images: image ? [image] : [],
       pedigreeImage: data.pedigreeImageUrl || undefined,
       previousLitters: previousLitters.filter(l => l.birthDate),
     };
@@ -312,6 +323,10 @@ export default function CatForm() {
           toast.success('Katt oppdatert');
           navigate('/cats');
         },
+        onError: (err: any) => {
+          console.error('Update cat failed:', err);
+          toast.error(err?.message || 'Kunne ikke lagre katten');
+        },
       });
     } else {
       addCatMutation.mutate(catData as any, {
@@ -319,9 +334,18 @@ export default function CatForm() {
           toast.success('Katt lagt til');
           navigate('/cats');
         },
+        onError: (err: any) => {
+          console.error('Add cat failed:', err);
+          toast.error(err?.message || 'Kunne ikke lagre katten');
+        },
       });
     }
   };
+
+  const onInvalid = () => {
+    toast.error('Fyll ut alle påkrevde felt (merket med *)');
+  };
+
 
   if (catLoading) {
     return (

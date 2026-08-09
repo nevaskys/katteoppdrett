@@ -68,7 +68,10 @@ serve(async (req) => {
       );
     }
 
-    const { imageData } = await req.json();
+    const { imageData, language } = await req.json();
+    const langCode = typeof language === 'string' ? language.split('-')[0] : 'nb';
+    const targetLanguage = LANGUAGE_NAMES[langCode] ?? LANGUAGE_NAMES.nb;
+
     
     if (!imageData) {
       return new Response(

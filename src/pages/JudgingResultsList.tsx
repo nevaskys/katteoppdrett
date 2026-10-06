@@ -41,6 +41,8 @@ interface CatGroup {
   results: JudgingResult[];
 }
 
+const normJudge = (n: string) => n.trim().toLowerCase().replace(/\s+/g, ' ');
+
 export default function JudgingResultsList() {
   const { data: results = [], isLoading } = useJudgingResults();
   const { data: judges = [] } = useJudges();

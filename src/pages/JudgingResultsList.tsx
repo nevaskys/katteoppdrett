@@ -64,7 +64,7 @@ export default function JudgingResultsList() {
 
   const filteredResults = useMemo(() => {
     let filtered = results;
-    if (selectedJudgeId) filtered = filtered.filter(r => r.judgeId === selectedJudgeId);
+    if (selectedJudgeId) filtered = filtered.filter(r => r.judge && normJudge(r.judge.name) === selectedJudgeId);
     if (selectedShowId) filtered = filtered.filter(r => r.showId === selectedShowId);
     if (selectedCatId) filtered = filtered.filter(r => r.catId === selectedCatId);
     if (selectedResult) filtered = filtered.filter(r => r.result === selectedResult);
@@ -273,7 +273,9 @@ export default function JudgingResultsList() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle dommere</SelectItem>
-                {judges.map(j => <SelectItem key={j.id} value={j.id}>{j.name}</SelectItem>)}
+                {Array.from(new Map(judges.map(j => [normJudge(j.name), j.name.trim()])).entries())
+                  .sort((a, b) => a[1].localeCompare(b[1], 'nb'))
+                  .map(([key, name]) => <SelectItem key={key} value={key}>{name}</SelectItem>)}
               </SelectContent>
             </Select>
           )}

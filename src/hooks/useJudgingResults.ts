@@ -142,9 +142,14 @@ export function useAddJudge() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
       
+      const name = judge.name.trim().replace(/\s+/g, ' ');
+      const { data: existing } = await supabase.from('judges').select('*').ilike('name', name);
+      const match = (existing as DbJudge[] | null)?.find(j => j.name.trim().replace(/\s+/g, ' ').toLowerCase() === name.toLowerCase());
+      if (match) return dbToJudge(match);
+
       const { data, error } = await supabase
         .from('judges')
-        .insert({ name: judge.name, country: judge.country || null, organization: judge.organization || null, user_id: user.id })
+        .insert({ name, country: judge.country || null, organization: judge.organization || null, user_id: user.id })
         .select()
         .single();
       if (error) throw error;
@@ -176,6 +181,13 @@ export function useAddShow() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
       
+      const showKey = (n: string) => n.toLowerCase().replace(/[^a-z0-9æøåäöü]/g, '');
+      let existingQuery = supabase.from('shows').select('*');
+      existingQuery = show.date ? existingQuery.eq('date', show.date) : existingQuery.is('date', null);
+      const { data: existing } = await existingQuery;
+      const match = (existing as DbShow[] | null)?.find(s => showKey(s.name) === showKey(show.name));
+      if (match) return dbToShow(match);
+
       const { data, error } = await supabase
         .from('shows')
         .insert({ 

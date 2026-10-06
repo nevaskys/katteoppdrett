@@ -87,10 +87,11 @@ export default function JudgingResultsList() {
     results.forEach(result => {
       if (!result.judgeId || !result.judge) return;
       
-      if (!groups.has(result.judgeId)) {
-        groups.set(result.judgeId, {
-          judgeId: result.judgeId,
-          judgeName: result.judge.name,
+      const key = result.judge.name.trim().toLowerCase().replace(/\s+/g, ' ');
+      if (!groups.has(key)) {
+        groups.set(key, {
+          judgeId: key,
+          judgeName: result.judge.name.trim(),
           results: [],
           cats: new Set(),
           avgRating: null,
@@ -98,7 +99,7 @@ export default function JudgingResultsList() {
         });
       }
       
-      const group = groups.get(result.judgeId)!;
+      const group = groups.get(key)!;
       group.results.push(result);
       if (result.cat?.name) {
         group.cats.add(result.cat.name);

@@ -314,7 +314,8 @@ VIKTIG:
             content: imageContent
           }
         ],
-        max_tokens: 4000,
+        max_tokens: 16000,
+        response_format: { type: 'json_object' },
       }),
     });
 
@@ -345,6 +346,10 @@ VIKTIG:
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         pedigreeData = JSON.parse(jsonMatch[0]);
+      } else if (content.trim().startsWith('{')) {
+        // Truncated JSON: cut at last complete property and close
+        let t = content.slice(0, content.lastIndexOf('},') + 1).replace(/,\s*$/, '');
+        pedigreeData = JSON.parse(t + '\n}');
       } else {
         throw new Error('Ingen JSON funnet i respons');
       }

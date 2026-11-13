@@ -10,8 +10,10 @@ export default function CatsList() {
   const { data: cats = [], isLoading } = useCats();
 
   const [showRetired, setShowRetired] = useState(false);
-  const active = cats.filter(cat => !cat.retired);
+  const [showBorrowed, setShowBorrowed] = useState(false);
   const retiredCats = cats.filter(cat => cat.retired);
+  const borrowedCats = cats.filter(cat => !cat.retired && cat.loanStatus === 'borrowed');
+  const active = cats.filter(cat => !cat.retired && cat.loanStatus !== 'borrowed');
   const femaleCats = active.filter(cat => cat.gender === 'female');
   const maleCats = active.filter(cat => cat.gender === 'male');
 
@@ -116,6 +118,23 @@ export default function CatsList() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {borrowedCats.length > 0 && (
+        <div className="space-y-3 pt-4 border-t">
+          <button
+            onClick={() => setShowBorrowed(!showBorrowed)}
+            className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+          >
+            <ChevronDown className={`h-4 w-4 transition-transform ${showBorrowed ? '' : '-rotate-90'}`} />
+            Lånt inn ({borrowedCats.length})
+          </button>
+          {showBorrowed && (
+            <div className="grid md:grid-cols-2 gap-3 opacity-80">
+              {borrowedCats.map(cat => <CatCard key={cat.id} cat={cat} />)}
+            </div>
+          )}
         </div>
       )}
 

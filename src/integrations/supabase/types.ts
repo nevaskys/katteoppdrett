@@ -25,6 +25,8 @@ export type Database = {
           gender: string
           id: string
           images: string[] | null
+          loan_party: string | null
+          loan_status: string
           name: string
           notes: string | null
           owner: string | null
@@ -44,6 +46,8 @@ export type Database = {
           gender: string
           id?: string
           images?: string[] | null
+          loan_party?: string | null
+          loan_status?: string
           name: string
           notes?: string | null
           owner?: string | null
@@ -63,6 +67,8 @@ export type Database = {
           gender?: string
           id?: string
           images?: string[] | null
+          loan_party?: string | null
+          loan_status?: string
           name?: string
           notes?: string | null
           owner?: string | null

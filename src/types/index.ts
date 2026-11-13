@@ -30,6 +30,8 @@ export interface Cat {
   images: string[];
   pedigreeImage?: string;
   retired?: boolean;
+  loanStatus?: 'own' | 'borrowed' | 'lent_out';
+  loanParty?: string;
   previousLitters?: PreviousLitter[];
   createdAt: string;
 }

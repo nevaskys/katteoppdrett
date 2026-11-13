@@ -29,6 +29,13 @@
       "when": 1794603538814,
       "tag": "0003_cats_retired",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794604204118,
+      "tag": "0004_cats_loan_status",
+      "breakpoints": true
     }
   ]
 }

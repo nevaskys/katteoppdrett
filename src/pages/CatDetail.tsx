@@ -1,6 +1,7 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit, Trash2, Archive, ArchiveRestore, Cat as CatIcon, Loader2 } from 'lucide-react';
 import { useCat, useDeleteCat, useSetCatRetired } from '@/hooks/useCats';
+import { CatLoanControl } from '@/components/CatLoanControl';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CatJudgingResults } from '@/components/CatJudgingResults';
@@ -70,6 +71,7 @@ export default function CatDetail() {
           {cat.name}
           {cat.retired && <Badge variant="secondary" className="ml-2 align-middle">Ikke i avl</Badge>}
         </h1>
+        <CatLoanControl cat={cat} />
         <Button
           variant="outline"
           onClick={() => setRetired.mutate({ id: cat.id, retired: !cat.retired })}

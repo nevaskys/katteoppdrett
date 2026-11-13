@@ -17,6 +17,8 @@ interface DbCat {
   pedigree_url: string | null;
   notes: string | null;
   retired?: boolean | null;
+  loan_status?: string | null;
+  loan_party?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -34,6 +36,8 @@ function dbToCat(db: DbCat): Cat {
     images: db.images || [],
     pedigreeImage: db.pedigree_url || undefined,
     retired: !!db.retired,
+    loanStatus: (db.loan_status as Cat['loanStatus']) || 'own',
+    loanParty: db.loan_party || undefined,
     createdAt: db.created_at,
   };
 }
@@ -153,6 +157,20 @@ export function useSetCatRetired() {
   return useMutation({
     mutationFn: async ({ id, retired }: { id: string; retired: boolean }) => {
       const { error } = await supabase.from('cats').update({ retired }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: (_, v) => {
+      queryClient.invalidateQueries({ queryKey: ['cats'] });
+      queryClient.invalidateQueries({ queryKey: ['cats', v.id] });
+    },
+  });
+}
+
+export function useSetCatLoan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, loan_status, loan_party }: { id: string; loan_status: string; loan_party: string | null }) => {
+      const { error } = await supabase.from('cats').update({ loan_status, loan_party }).eq('id', id);
       if (error) throw error;
     },
     onSuccess: (_, v) => {

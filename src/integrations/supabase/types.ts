@@ -83,6 +83,7 @@ export type Database = {
           entry_date: string | null
           id: string
           litter_id: string | null
+          receipt_images: string[]
           source: string | null
           title: string
           updated_at: string
@@ -99,6 +100,7 @@ export type Database = {
           entry_date?: string | null
           id?: string
           litter_id?: string | null
+          receipt_images?: string[]
           source?: string | null
           title: string
           updated_at?: string
@@ -115,6 +117,7 @@ export type Database = {
           entry_date?: string | null
           id?: string
           litter_id?: string | null
+          receipt_images?: string[]
           source?: string | null
           title?: string
           updated_at?: string

@@ -30,6 +30,7 @@ import {
   formatKr,
 } from '@/hooks/useCostEntries';
 import { useLittersGrouped } from '@/hooks/useLittersNew';
+import { ReceiptPicker, ReceiptThumbs } from '@/components/economy/ReceiptPicker';
 import { cn } from '@/lib/utils';
 
 export default function EconomyPage() {
@@ -44,6 +45,7 @@ export default function EconomyPage() {
   const [category, setCategory] = useState<string>('all');
   const [direction, setDirection] = useState<string>('all');
   const [open, setOpen] = useState(false);
+  const [receipts, setReceipts] = useState<string[]>([]);
   const [form, setForm] = useState({
     title: '',
     amount: '',
@@ -119,7 +121,9 @@ export default function EconomyPage() {
       date: form.date || null,
       description: form.description.trim() || null,
       litterId: form.litterId || null,
+      receiptImages: receipts,
     });
+    setReceipts([]);
     setForm({ title: '', amount: '', direction: 'expense', category: 'annet', date: '', description: '', litterId: '' });
     setOpen(false);
   };
@@ -227,6 +231,10 @@ export default function EconomyPage() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div>
+                <Label>Kvittering</Label>
+                <ReceiptPicker images={receipts} onChange={setReceipts} />
               </div>
               <div>
                 <Label htmlFor="ce-desc">Notat</Label>
@@ -389,6 +397,7 @@ export default function EconomyPage() {
                           ? ` · ${litterName.get(e.litterId)}`
                           : '')}
                     </p>
+                    <ReceiptThumbs images={e.receiptImages} />
                   </div>
                   <span
                     className={cn(

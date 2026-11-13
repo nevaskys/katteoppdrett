@@ -15,6 +15,13 @@
       "when": 1794586846526,
       "tag": "0001_create_cost_entries",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794603084547,
+      "tag": "0002_cost_entries_receipts",
+      "breakpoints": true
     }
   ]
 }

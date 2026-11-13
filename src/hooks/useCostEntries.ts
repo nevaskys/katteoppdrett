@@ -14,6 +14,7 @@ export interface CostEntry {
   category: string;
   account: string | null;
   litterId: string | null;
+  receiptImages: string[];
 }
 
 interface DbCostEntry {
@@ -27,6 +28,7 @@ interface DbCostEntry {
   category: string;
   account: string | null;
   litter_id: string | null;
+  receipt_images: string[] | null;
 }
 
 function dbToEntry(db: DbCostEntry): CostEntry {
@@ -41,6 +43,7 @@ function dbToEntry(db: DbCostEntry): CostEntry {
     category: db.category,
     account: db.account,
     litterId: db.litter_id,
+    receiptImages: db.receipt_images || [],
   };
 }
 
@@ -70,6 +73,7 @@ export function useAddCostEntry() {
       date: string | null;
       description?: string | null;
       litterId?: string | null;
+      receiptImages?: string[];
     }) => {
       if (!user) throw new Error('Ikke logget inn');
       const { error } = await supabase.from('cost_entries').insert({
@@ -81,6 +85,7 @@ export function useAddCostEntry() {
         entry_date: input.date,
         description: input.description || null,
         litter_id: input.litterId || null,
+        receipt_images: input.receiptImages || [],
       });
       if (error) throw error;
     },

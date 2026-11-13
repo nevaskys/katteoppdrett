@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ChevronDown } from 'lucide-react';
 import { Plus, Cat as CatIcon, Loader2 } from 'lucide-react';
 import { useCats } from '@/hooks/useCats';
 import { Button } from '@/components/ui/button';
@@ -7,8 +9,11 @@ import { Badge } from '@/components/ui/badge';
 export default function CatsList() {
   const { data: cats = [], isLoading } = useCats();
 
-  const femaleCats = cats.filter(cat => cat.gender === 'female');
-  const maleCats = cats.filter(cat => cat.gender === 'male');
+  const [showRetired, setShowRetired] = useState(false);
+  const active = cats.filter(cat => !cat.retired);
+  const retiredCats = cats.filter(cat => cat.retired);
+  const femaleCats = active.filter(cat => cat.gender === 'female');
+  const maleCats = active.filter(cat => cat.gender === 'male');
 
   if (isLoading) {
     return (
@@ -105,6 +110,23 @@ export default function CatsList() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {retiredCats.length > 0 && (
+        <div className="space-y-3 pt-4 border-t">
+          <button
+            onClick={() => setShowRetired(!showRetired)}
+            className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+          >
+            <ChevronDown className={`h-4 w-4 transition-transform ${showRetired ? '' : '-rotate-90'}`} />
+            Kastrert / ikke lenger i avl ({retiredCats.length})
+          </button>
+          {showRetired && (
+            <div className="grid md:grid-cols-2 gap-3 opacity-80">
+              {retiredCats.map(cat => <CatCard key={cat.id} cat={cat} />)}
+            </div>
+          )}
         </div>
       )}
     </div>

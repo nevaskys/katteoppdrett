@@ -30,6 +30,7 @@ export type Database = {
           owner: string | null
           pedigree_url: string | null
           registration_number: string | null
+          retired: boolean
           updated_at: string
           user_id: string
         }
@@ -48,6 +49,7 @@ export type Database = {
           owner?: string | null
           pedigree_url?: string | null
           registration_number?: string | null
+          retired?: boolean
           updated_at?: string
           user_id: string
         }
@@ -66,6 +68,7 @@ export type Database = {
           owner?: string | null
           pedigree_url?: string | null
           registration_number?: string | null
+          retired?: boolean
           updated_at?: string
           user_id?: string
         }

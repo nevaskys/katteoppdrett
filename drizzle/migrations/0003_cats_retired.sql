@@ -1,0 +1,1 @@
+ALTER TABLE public.cats ADD COLUMN IF NOT EXISTS retired boolean NOT NULL DEFAULT false;

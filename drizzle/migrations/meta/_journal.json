@@ -22,6 +22,13 @@
       "when": 1794603084547,
       "tag": "0002_cost_entries_receipts",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794603538814,
+      "tag": "0003_cats_retired",
+      "breakpoints": true
     }
   ]
 }

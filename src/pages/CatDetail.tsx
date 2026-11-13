@@ -1,6 +1,6 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash2, Cat as CatIcon, Loader2 } from 'lucide-react';
-import { useCat, useDeleteCat } from '@/hooks/useCats';
+import { ArrowLeft, Edit, Trash2, Archive, ArchiveRestore, Cat as CatIcon, Loader2 } from 'lucide-react';
+import { useCat, useDeleteCat, useSetCatRetired } from '@/hooks/useCats';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CatJudgingResults } from '@/components/CatJudgingResults';
@@ -22,6 +22,7 @@ export default function CatDetail() {
   const navigate = useNavigate();
   const { data: cat, isLoading } = useCat(id);
   const deleteCatMutation = useDeleteCat();
+  const setRetired = useSetCatRetired();
 
   if (isLoading) {
     return (
@@ -65,7 +66,18 @@ export default function CatDetail() {
         <Button variant="ghost" size="icon" asChild>
           <Link to="/cats"><ArrowLeft className="h-5 w-5" /></Link>
         </Button>
-        <h1 className="page-title flex-1">{cat.name}</h1>
+        <h1 className="page-title flex-1">
+          {cat.name}
+          {cat.retired && <Badge variant="secondary" className="ml-2 align-middle">Ikke i avl</Badge>}
+        </h1>
+        <Button
+          variant="outline"
+          onClick={() => setRetired.mutate({ id: cat.id, retired: !cat.retired })}
+          disabled={setRetired.isPending}
+        >
+          {cat.retired ? <ArchiveRestore className="h-4 w-4 sm:mr-2" /> : <Archive className="h-4 w-4 sm:mr-2" />}
+          <span className="hidden sm:inline">{cat.retired ? 'Tilbake i avl' : 'Kastrert / ikke i avl'}</span>
+        </Button>
         <Button variant="outline" asChild>
           <Link to={`/cats/${cat.id}/edit`}><Edit className="h-4 w-4 mr-2" /> Edit</Link>
         </Button>

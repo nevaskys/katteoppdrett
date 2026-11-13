@@ -29,6 +29,7 @@ export interface Cat {
   healthNotes?: string;
   images: string[];
   pedigreeImage?: string;
+  retired?: boolean;
   previousLitters?: PreviousLitter[];
   createdAt: string;
 }

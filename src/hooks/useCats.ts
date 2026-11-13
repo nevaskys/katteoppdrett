@@ -16,6 +16,7 @@ interface DbCat {
   images: string[] | null;
   pedigree_url: string | null;
   notes: string | null;
+  retired?: boolean | null;
   created_at: string;
   updated_at: string;
 }
@@ -32,6 +33,7 @@ function dbToCat(db: DbCat): Cat {
     emsCode: db.ems_code || undefined,
     images: db.images || [],
     pedigreeImage: db.pedigree_url || undefined,
+    retired: !!db.retired,
     createdAt: db.created_at,
   };
 }
@@ -142,6 +144,20 @@ export function useDeleteCat() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cats'] });
+    },
+  });
+}
+
+export function useSetCatRetired() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, retired }: { id: string; retired: boolean }) => {
+      const { error } = await supabase.from('cats').update({ retired }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: (_, v) => {
+      queryClient.invalidateQueries({ queryKey: ['cats'] });
+      queryClient.invalidateQueries({ queryKey: ['cats', v.id] });
     },
   });
 }

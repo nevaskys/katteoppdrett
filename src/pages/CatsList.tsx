@@ -1,13 +1,44 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { ChevronDown } from 'lucide-react';
 import { Plus, Cat as CatIcon, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { useCats } from '@/hooks/useCats';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Cat } from '@/types';
+
+// One light query for the whole page: which litter letters belong to which cat.
+function useLitterLettersByCat() {
+  return useQuery({
+    queryKey: ['litter-letters-by-cat'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('litters')
+        .select('name, mother_id, father_id')
+        .order('name');
+      if (error) throw error;
+      const map = new Map<string, string[]>();
+      const add = (catId: string | null, name: string) => {
+        if (!catId || !name) return;
+        const list = map.get(catId) ?? [];
+        if (!list.includes(name)) list.push(name);
+        map.set(catId, list);
+      };
+      (data ?? []).forEach((l: { name: string; mother_id: string | null; father_id: string | null }) => {
+        add(l.mother_id, l.name);
+        add(l.father_id, l.name);
+      });
+      map.forEach(list => list.sort((a, b) => a.localeCompare(b, 'nb')));
+      return map;
+    },
+  });
+}
 
 export default function CatsList() {
   const { data: cats = [], isLoading } = useCats();
+  const { data: litterLetters } = useLitterLettersByCat();
 
   const [showRetired, setShowRetired] = useState(false);
   const [showBorrowed, setShowBorrowed] = useState(false);
@@ -25,45 +56,51 @@ export default function CatsList() {
     );
   }
 
-  const CatCard = ({ cat }: { cat: typeof cats[0] }) => (
-    <Link
-      to={`/cats/${cat.id}`}
-      className="stat-card hover:shadow-md transition-shadow group"
-    >
-      <div className="flex items-start gap-4">
-        <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
-          {cat.images[0] ? (
-            <img src={cat.images[0]} alt={cat.name} className="h-full w-full object-cover" />
-          ) : (
-            <CatIcon className="h-6 w-6 text-accent-foreground/50" />
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors break-words">
-            {cat.name}
-          </h3>
-          <p className="text-sm text-muted-foreground">{cat.breed}</p>
-          <div className="flex items-center gap-2 mt-2 flex-wrap">
-            <Badge 
-              className={cat.gender === 'female' 
-                ? 'bg-pink-100 text-pink-700 hover:bg-pink-100 border-pink-200' 
-                : 'bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200'
-              }
-            >
-              {cat.gender === 'female' ? '♀ Hunn' : '♂ Hann'}
-            </Badge>
-            <span className="text-xs text-muted-foreground">{cat.emsCode || cat.color}</span>
+  const CatCard = ({ cat }: { cat: Cat }) => {
+    const letters = litterLetters?.get(cat.id) ?? [];
+    const born = cat.birthDate ? new Date(cat.birthDate).toLocaleDateString('nb-NO') : '';
+    return (
+      <Link
+        to={`/cats/${cat.id}`}
+        className="stat-card block hover:shadow-md transition-shadow group"
+      >
+        <div className="flex items-start gap-4">
+          <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+            {cat.images[0] ? (
+              <img src={cat.images[0]} alt={cat.name} className="h-full w-full object-cover" />
+            ) : (
+              <CatIcon className="h-6 w-6 text-accent-foreground/50" />
+            )}
           </div>
-          {(cat.loanStatus === 'borrowed' || cat.loanStatus === 'lent_out') && (
-            <div className="mt-2">
-              {cat.loanStatus === 'borrowed' && <Badge variant="outline" className="font-normal">Lånt inn{cat.loanParty ? ` fra ${cat.loanParty}` : ''}</Badge>}
-              {cat.loanStatus === 'lent_out' && <Badge variant="outline" className="font-normal">Lånt ut{cat.loanParty ? ` til ${cat.loanParty}` : ''}</Badge>}
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors break-words">
+              {cat.name}
+            </h3>
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <Badge
+                className={cat.gender === 'female'
+                  ? 'bg-pink-100 text-pink-700 hover:bg-pink-100 border-pink-200'
+                  : 'bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200'
+                }
+              >
+                {cat.gender === 'female' ? '♀ Hunn' : '♂ Hann'}
+              </Badge>
+              <span className="text-xs text-muted-foreground">{cat.emsCode || cat.color}</span>
+              {born && <span className="text-xs text-muted-foreground">Født {born}</span>}
             </div>
-          )}
+            {letters.length > 0 && (
+              <p className="text-sm text-foreground/80 mt-2">Kull {letters.join(', ')}</p>
+            )}
+            {cat.loanStatus === 'lent_out' && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Lånt ut{cat.loanParty ? ` til ${cat.loanParty}` : ''}
+              </p>
+            )}
+          </div>
         </div>
-      </div>
-    </Link>
-  );
+      </Link>
+    );
+  };
 
   return (
     <div className="space-y-6 bg-background">

@@ -4,6 +4,7 @@ import { useCat, useDeleteCat } from '@/hooks/useCats';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CatJudgingResults } from '@/components/CatJudgingResults';
+import { CatLitters } from '@/components/CatLitters';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -142,6 +143,7 @@ export default function CatDetail() {
             </div>
           )}
 
+          <CatLitters catId={cat.id} />
           {/* Judging Results Section */}
           <CatJudgingResults catId={cat.id} catName={cat.name} />
         </div>

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Plus, Users, Loader2 } from 'lucide-react';
+import { Plus, Users, Loader2, BarChart3 } from 'lucide-react';
 import { useLittersGrouped } from '@/hooks/useLittersNew';
 import { useCats } from '@/hooks/useCats';
 import { Button } from '@/components/ui/button';
@@ -33,9 +33,14 @@ export default function LittersList() {
             Administrer kull fra planlegging til ferdig
           </p>
         </div>
-        <Button asChild>
-          <Link to="/litters/new"><Plus className="h-4 w-4 mr-2" /> Nytt kull</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link to="/litters/stats"><BarChart3 className="h-4 w-4 mr-2" /> Statistikk</Link>
+          </Button>
+          <Button asChild>
+            <Link to="/litters/new"><Plus className="h-4 w-4 mr-2" /> Nytt kull</Link>
+          </Button>
+        </div>
       </div>
 
       {totalLitters === 0 ? (

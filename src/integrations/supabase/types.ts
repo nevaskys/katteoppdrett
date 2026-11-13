@@ -71,6 +71,65 @@ export type Database = {
         }
         Relationships: []
       }
+      cost_entries: {
+        Row: {
+          account: string | null
+          amount: number
+          category: string
+          created_at: string
+          date_label: string | null
+          description: string | null
+          direction: string
+          entry_date: string | null
+          id: string
+          litter_id: string | null
+          source: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account?: string | null
+          amount: number
+          category?: string
+          created_at?: string
+          date_label?: string | null
+          description?: string | null
+          direction?: string
+          entry_date?: string | null
+          id?: string
+          litter_id?: string | null
+          source?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account?: string | null
+          amount?: number
+          category?: string
+          created_at?: string
+          date_label?: string | null
+          description?: string | null
+          direction?: string
+          entry_date?: string | null
+          id?: string
+          litter_id?: string | null
+          source?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cost_entries_litter_id_fkey"
+            columns: ["litter_id"]
+            isOneToOne: false
+            referencedRelation: "litters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ideas: {
         Row: {
           category: string | null

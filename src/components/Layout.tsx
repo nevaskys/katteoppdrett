@@ -1,7 +1,7 @@
 import { ReactNode, useState, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Cat, Users, CheckSquare, Home, Menu, X, Heart, LogOut, Award, Lightbulb, Settings, MessageSquarePlus } from 'lucide-react';
+import { Cat, Users, CheckSquare, Home, Menu, X, Heart, LogOut, Award, Lightbulb, Settings, MessageSquarePlus, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -25,6 +25,7 @@ const allNavItems: NavItem[] = [
   { path: '/cats', labelKey: 'nav.cats', icon: Cat },
   { path: '/litters', labelKey: 'nav.litters', icon: Users },
   { path: '/judging-results', labelKey: 'nav.results', icon: Award },
+  { path: '/economy', labelKey: 'nav.economy', icon: Wallet },
   { path: '/test-mating', labelKey: 'nav.testMating', icon: Heart },
   { path: '/tasks', labelKey: 'nav.tasks', icon: CheckSquare },
   { path: '/ideas', labelKey: 'nav.ideas', icon: Lightbulb, adminOnly: true },

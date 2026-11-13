@@ -16,6 +16,7 @@ import LitterDetail from "./pages/LitterDetail";
 import LitterForm from "./pages/LitterForm";
 
 import LitterStats from "./pages/LitterStats";
+import EconomyPage from "./pages/EconomyPage";
 import TasksPage from "./pages/TasksPage";
 import TestMating from "./pages/TestMating";
 import JudgingResultsList from "./pages/JudgingResultsList";
@@ -53,6 +54,7 @@ const App = () => (
                     <Route path="/litters/new" element={<LitterForm />} />
                     <Route path="/litters/:id" element={<LitterDetail />} />
                     <Route path="/litters/:id/edit" element={<LitterForm />} />
+                    <Route path="/economy" element={<EconomyPage />} />
                     <Route path="/tasks" element={<TasksPage />} />
                     <Route path="/tasks/new" element={<TasksPage />} />
                     <Route path="/test-mating" element={<TestMating />} />

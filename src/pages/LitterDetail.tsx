@@ -29,6 +29,7 @@ import { QuickKittenEditor } from '@/components/litters/QuickKittenEditor';
 import { BirthGuide } from '@/components/litters/BirthGuide';
 import { PrintableWeightForm } from '@/components/litters/PrintableWeightForm';
 import { LitterDeadlines } from '@/components/litters/LitterDeadlines';
+import { LitterCosts } from '@/components/LitterCosts';
 import { LitterStatus, LITTER_STATUS_CONFIG } from '@/types/litter';
 import { format, differenceInDays, addDays } from 'date-fns';
 import { nb } from 'date-fns/locale';
@@ -283,6 +284,9 @@ export default function LitterDetail() {
           </dl>
         </div>
       </div>
+
+      {/* Litter economy */}
+      <LitterCosts litterId={litter.id} litterName={litter.name} />
 
       {/* Pregnancy Calendar - show for pending status */}
       {(litter.status === 'pending' || litter.status === 'active') && (litter.matingDateFrom || litter.matingDate) && (

@@ -16,7 +16,7 @@ export default function LitterStats() {
     queryKey: ['litter-stats'],
     queryFn: async () => {
       const [l, k, c] = await Promise.all([
-        supabase.from('litters').select('id,name,mother_id,birth_date,mating_date,mating_date_from,mating_date_to,kitten_count'),
+        supabase.from('litters').select('id,name,notes,mother_id,birth_date,mating_date,mating_date_from,mating_date_to,kitten_count'),
         supabase.from('kittens').select('litter_id,gender,complication_type,birth_weight'),
         supabase.from('cats').select('id,name'),
       ]);
@@ -31,7 +31,7 @@ export default function LitterStats() {
     return <div className="flex justify-center h-64 items-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
   }
 
-  const born = data.litters.filter(l => l.birth_date);
+  const born = data.litters.filter(l => l.birth_date || (l.kitten_count ?? 0) > 0);
   const kittensOf = (id: string) => data.kittens.filter(k => k.litter_id === id);
   const sizeOf = (l: typeof born[number]) => kittensOf(l.id).length || l.kitten_count || 0;
   const gestation = (l: typeof born[number]) => {
@@ -48,22 +48,29 @@ export default function LitterStats() {
 
   const gestHist = Object.entries(gests.reduce<Record<number, number>>((a, d) => ({ ...a, [d]: (a[d] || 0) + 1 }), {}))
     .map(([d, n]) => ({ dag: `${d}`, kull: n }));
-  const byYear = Object.entries(born.reduce<Record<string, number[]>>((a, l) => {
+  const byYear = Object.entries(born.filter(l => l.birth_date).reduce<Record<string, number[]>>((a, l) => {
     const y = l.birth_date!.slice(0, 4); (a[y] ||= []).push(sizeOf(l)); return a;
   }, {})).sort().map(([y, s]) => ({ år: y, snitt: +(avg(s) ?? 0).toFixed(1) }));
 
-  const mothers = data.cats.map(cat => {
-    const ls = born.filter(l => l.mother_id === cat.id);
-    if (!ls.length) return null;
+  const motherName = (l: typeof born[number]) => {
+    const cat = data.cats.find(c => c.id === l.mother_id);
+    if (cat) return cat.name;
+    const m = l.notes?.match(/Foreldre:\s*([^+]+)\+/);
+    return m ? m[1].trim() : null;
+  };
+  const groups = born.reduce<Record<string, typeof born>>((a, l) => {
+    const n = motherName(l); if (n) (a[n] ||= []).push(l); return a;
+  }, {});
+  const mothers = Object.entries(groups).map(([name, ls]) => {
     const ks = ls.flatMap(l => kittensOf(l.id));
     const g = ls.map(gestation).filter((n): n is number => n != null && n > 50 && n < 75);
     return {
-      name: cat.name, kull: ls.length,
+      name, kull: ls.length,
       snitt: avg(ls.map(sizeOf)),
       dag: g.length ? `${Math.min(...g)}–${Math.max(...g)}` : '–',
       komp: ks.filter(k => isComp(k.complication_type)).length, total: ks.length,
     };
-  }).filter(Boolean) as { name: string; kull: number; snitt: number | null; dag: string; komp: number; total: number }[];
+  }).sort((a, b) => b.kull - a.kull);
 
   const Stat = ({ label, value }: { label: string; value: string }) => (
     <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">{label}</p><p className="text-2xl font-semibold">{value}</p></CardContent></Card>
@@ -79,7 +86,7 @@ export default function LitterStats() {
         <Stat label="Fødte kull" value={`${born.length}`} />
         <Stat label="Snitt kattunger/kull" value={fmt(avg(sizes))} />
         <Stat label="Snitt drektighet (dager)" value={fmt(avg(gests))} />
-        <Stat label="Komplikasjoner" value={allKittens.length ? `${Math.round(comps.length / allKittens.length * 100)} %` : '–'} />
+        <Stat label="Kattunger døde/komplikasjoner" value={allKittens.length ? `${Math.round(comps.length / allKittens.length * 100)} %` : '–'} />
         <Stat label="Hanner / hunner" value={`${allKittens.filter(k => k.gender === 'male').length} / ${allKittens.filter(k => k.gender === 'female').length}`} />
         <Stat label="Snitt fødselsvekt" value={weights.length ? `${Math.round(avg(weights)!)} g` : '–'} />
       </div>

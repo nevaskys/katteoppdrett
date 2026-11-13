@@ -50,10 +50,14 @@ export default function CatsList() {
             >
               {cat.gender === 'female' ? '♀ Hunn' : '♂ Hann'}
             </Badge>
-            {cat.loanStatus === 'borrowed' && <Badge variant="outline">Lånt inn{cat.loanParty ? ` fra ${cat.loanParty}` : ''}</Badge>}
-            {cat.loanStatus === 'lent_out' && <Badge variant="outline">Lånt ut{cat.loanParty ? ` til ${cat.loanParty}` : ''}</Badge>}
             <span className="text-xs text-muted-foreground">{cat.emsCode || cat.color}</span>
           </div>
+          {(cat.loanStatus === 'borrowed' || cat.loanStatus === 'lent_out') && (
+            <div className="mt-2">
+              {cat.loanStatus === 'borrowed' && <Badge variant="outline" className="font-normal">Lånt inn{cat.loanParty ? ` fra ${cat.loanParty}` : ''}</Badge>}
+              {cat.loanStatus === 'lent_out' && <Badge variant="outline" className="font-normal">Lånt ut{cat.loanParty ? ` til ${cat.loanParty}` : ''}</Badge>}
+            </div>
+          )}
         </div>
       </div>
     </Link>

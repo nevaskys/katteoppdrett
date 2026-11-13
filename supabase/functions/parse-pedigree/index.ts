@@ -267,9 +267,28 @@ VIKTIG:
           console.error('Failed to fetch image:', imageResponse.status, imageResponse.statusText);
           throw new Error(`Kunne ikke hente bilde: ${imageResponse.status}`);
         }
+        const ctype = imageResponse.headers.get('content-type') || '';
+        if (ctype.includes('text/html')) {
+          const html = await imageResponse.text();
+          const text = html
+            .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+            .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+            .replace(/<\/(td|th|div|p|tr|li|br)>/gi, '\n')
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
+            .replace(/&#(\d+);/g, (_m, n) => String.fromCharCode(Number(n)))
+            .replace(/[ \t]+/g, ' ').replace(/\n\s*\n+/g, '\n')
+            .slice(0, 60000);
+          console.log('Fetched HTML pedigree page, text length:', text.length);
+          imageContent = [{ type: "text", text: `${pedigreePrompt}\n\nStamtavlen er gitt som tekst fra en nettside (ikke bilde). Tabellen er lest kolonne for kolonne: foreldre, besteforeldre, osv.\n\n${text}` }];
+        } else {
         const imageBlob = await imageResponse.blob();
         const arrayBuffer = await imageBlob.arrayBuffer();
-        const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+        const bytes = new Uint8Array(arrayBuffer);
+        let bin = '';
+        for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+        const base64 = btoa(bin);
         const mimeType = imageResponse.headers.get('content-type') || 'image/png';
         const dataUrl = `data:${mimeType};base64,${base64}`;
         
@@ -284,6 +303,7 @@ VIKTIG:
             text: pedigreePrompt
           }
         ];
+        }
       } catch (urlError) {
         console.error('Error fetching image from URL:', urlError);
         return new Response(

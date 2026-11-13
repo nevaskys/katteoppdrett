@@ -104,6 +104,21 @@ export type Database = {
         }
         Relationships: []
       }
+      import_staging: {
+        Row: {
+          id: number
+          stmt: string
+        }
+        Insert: {
+          id?: number
+          stmt: string
+        }
+        Update: {
+          id?: number
+          stmt?: string
+        }
+        Relationships: []
+      }
       judges: {
         Row: {
           country: string | null
